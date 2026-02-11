@@ -1,0 +1,85 @@
+import sys
+
+import wandb
+from wandb.integration.sb3 import WandbCallback
+from stable_baselines3 import SAC
+from stable_baselines3.common.logger import Logger, HumanOutputFormat
+from stable_baselines3.common.callbacks import EvalCallback, CallbackList
+from gymnasium import Env
+
+from benchmark import make_benchmark
+from common import WandbWriter, EnvEvalCallback
+
+BENCHMARK = ['hammer-v3', 'push-back-v3', 'stick-pull-v3']
+CONFIG = {
+    'policy': 'MlpPolicy',
+    'device': 'cpu',
+    'total_timesteps': 10_000,
+    'seed': 42,
+    'eval_freq': 1000,
+}
+
+def make_logger() -> Logger:
+    return Logger(
+        folder='../.logs',
+        output_formats=[HumanOutputFormat(sys.stdout), WandbWriter()],
+    )
+
+def make_model(run_id: str, env: Env) -> SAC:
+    sac = SAC(
+        CONFIG['policy'],
+        env=env,
+        device=CONFIG['device'],
+        verbose=1,
+        tensorboard_log=f'runs/{run_id}',
+        gamma=0.99,
+        learning_rate=1e-3,
+        batch_size=128,
+        learning_starts=10_000,
+    )
+
+    return sac
+
+def main() -> None:
+    config = CONFIG
+
+    run = wandb.init(
+        project='test-crl',
+        config=config,
+        monitor_gym=True,
+    )
+
+    envs_train, envs_test = make_benchmark(42, BENCHMARK)
+    model = make_model(run.id, envs_train[0])
+    model.set_logger(make_logger())
+    wandb_callback = WandbCallback(
+        gradient_save_freq=0,
+        model_save_path=f'models/{run.id}',
+        verbose=2,
+    )
+
+    for i, env in enumerate(envs_train):
+        model.set_env(env)
+        eval_callbacks = [
+            EnvEvalCallback(
+                eval_env_id=BENCHMARK[j],
+                eval_env=envs_test[j],
+                eval_freq=CONFIG['eval_freq']
+            ) for j in range(i + 1)
+        ]
+        model.learn(
+            total_timesteps=CONFIG['total_timesteps'],
+            reset_num_timesteps=False,
+            callback=CallbackList(eval_callbacks + [wandb_callback]),
+        )
+        env.close()
+
+    for env in envs_test:
+        env.close()
+
+    run.finish()
+
+
+if __name__ == '__main__':
+    main()
+
