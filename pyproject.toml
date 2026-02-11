@@ -1,0 +1,15 @@
+[project]
+name = "crl-stability-gap"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "metaworld>=3.0.0",
+    "opencv-python>=4.13.0.92",
+    "rich>=14.3.2",
+    "stable-baselines3>=2.7.1",
+    "tensorboard>=2.20.0",
+    "tqdm>=4.67.3",
+    "wandb>=0.24.2",
+]
