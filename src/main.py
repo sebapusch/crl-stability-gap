@@ -1,5 +1,6 @@
 import sys
 
+import torch.cuda
 import wandb
 from wandb.integration.sb3 import WandbCallback
 from stable_baselines3 import SAC
@@ -10,16 +11,21 @@ from gymnasium import Env
 from benchmark import make_benchmark
 from common import WandbWriter, EnvEvalCallback
 
-BENCHMARK = ['hammer-v3', 'push-back-v3', 'stick-pull-v3']
+BENCHMARK = ['hammer-v3']#, 'push-back-v3', 'stick-pull-v3']
 CONFIG = {
-    'policy':           'MlpPolicy',
-    'device':           'cpu',
-    'total_timesteps':  20_000,
-    'seed':             42,
-    'eval_freq':        1000,
-    'lr':               3e-4,
-    'batch_size':       256,
-    'learning_starts':  10_000,
+    'policy':          'MlpPolicy',
+    'architecture':    [256, 256, 256],
+    'device':          'cuda' if torch.cuda.is_available() else 'cpu',
+    'total_timesteps': 1_000_000,
+    'seed':            42,
+    'eval_freq':       20_000,
+    'lr':              3e-4,
+    'batch_size':      512,
+    'learning_starts': 10_000,
+    'tau':             0.005,
+    'gamma':           0.99,
+    'train_freq':      1,
+    'gradient_steps':  1,
 }
 
 def make_logger() -> Logger:
@@ -37,6 +43,9 @@ def make_model(env: Env) -> SAC:
         learning_rate=CONFIG['lr'],
         batch_size=CONFIG['batch_size'],
         learning_starts=CONFIG['learning_starts'],
+        policy_kwargs={
+            'net_arch': CONFIG['architecture']
+        },
     )
     sac.set_logger(make_logger())
 

@@ -90,17 +90,17 @@ class EnvEvalCallback(EvalCallback):
                     f"Eval num_timesteps={self.num_timesteps}, " f"episode_reward={mean_reward:.2f} +/- {std_reward:.2f}")
                 print(f"Episode length: {mean_ep_length:.2f} +/- {std_ep_length:.2f}")
             # Add to current Logger
-            self.logger.record(f"{self.env_id}/eval/mean_reward", float(mean_reward))
-            self.logger.record(f"{self.env_id}/eval/mean_ep_length", mean_ep_length)
+            self.logger.record(f"eval/{self.env_id}/mean_reward", float(mean_reward))
+            self.logger.record(f"eval/{self.env_id}/mean_ep_length", mean_ep_length)
 
             if len(self._is_success_buffer) > 0:
                 success_rate = np.mean(self._is_success_buffer)
                 if self.verbose >= 1:
                     print(f"Success rate: {100 * success_rate:.2f}%")
-                self.logger.record(f"{self.env_id}//success_rate", success_rate)
+                self.logger.record(f"eval/{self.env_id}/success_rate", success_rate)
 
             # Dump log so the evaluation results are printed with the correct timestep
-            self.logger.record(f"{self.env_id}/time/total_timesteps", self.num_timesteps, exclude="tensorboard")
+            self.logger.record(f"time/{self.env_id}/total_timesteps", self.num_timesteps, exclude="tensorboard")
             self.logger.dump(self.num_timesteps)
 
             if mean_reward > self.best_mean_reward:

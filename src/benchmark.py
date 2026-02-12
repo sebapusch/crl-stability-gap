@@ -20,16 +20,17 @@ class SuccessToIsSuccess(gym.Wrapper):
             return obs, rew, terminated, truncated, info
 
 
-def _make_mt1(env_name: str, seed: int) -> VectorEnv:
+def _make_mt1(env_name: str, seed: int, training: bool) -> VectorEnv:
     env = gym.make('Meta-World/MT1', env_name=env_name, seed=seed)
     env = SuccessToIsSuccess(env)
     env = Monitor(env)
     env = DummyVecEnv(env_fns=[lambda: env])
     env = VecNormalize(
         env,
+        training=training,
         norm_obs=True,
-        norm_reward=True,
-        clip_obs=10.0
+        norm_reward=training,
+        clip_obs=10.0,
     )
     env.reset()
 
@@ -37,8 +38,8 @@ def _make_mt1(env_name: str, seed: int) -> VectorEnv:
 
 
 def make_benchmark(seed: int, benchmark: list[str]) -> (list[VectorEnv], list[VectorEnv]):
-    envs_train = [_make_mt1(env, seed)     for env in benchmark]
-    envs_test  = [_make_mt1(env, seed + 1) for env in benchmark]
+    envs_train = [_make_mt1(env, seed, True)      for env in benchmark]
+    envs_test  = [_make_mt1(env, seed + 1, False) for env in benchmark]
 
     return envs_train, envs_test
 
