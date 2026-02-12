@@ -12,11 +12,14 @@ from common import WandbWriter, EnvEvalCallback
 
 BENCHMARK = ['hammer-v3', 'push-back-v3', 'stick-pull-v3']
 CONFIG = {
-    'policy': 'MlpPolicy',
-    'device': 'cpu',
-    'total_timesteps': 10_000,
-    'seed': 42,
-    'eval_freq': 1000,
+    'policy':           'MlpPolicy',
+    'device':           'cpu',
+    'total_timesteps':  20_000,
+    'seed':             42,
+    'eval_freq':        1000,
+    'lr':               3e-4,
+    'batch_size':       256,
+    'learning_starts':  10_000,
 }
 
 def make_logger() -> Logger:
@@ -25,18 +28,17 @@ def make_logger() -> Logger:
         output_formats=[HumanOutputFormat(sys.stdout), WandbWriter()],
     )
 
-def make_model(run_id: str, env: Env) -> SAC:
+def make_model(env: Env) -> SAC:
     sac = SAC(
         CONFIG['policy'],
         env=env,
         device=CONFIG['device'],
         verbose=1,
-        tensorboard_log=f'runs/{run_id}',
-        gamma=0.99,
-        learning_rate=1e-3,
-        batch_size=128,
-        learning_starts=10_000,
+        learning_rate=CONFIG['lr'],
+        batch_size=CONFIG['batch_size'],
+        learning_starts=CONFIG['learning_starts'],
     )
+    sac.set_logger(make_logger())
 
     return sac
 
@@ -50,8 +52,7 @@ def main() -> None:
     )
 
     envs_train, envs_test = make_benchmark(42, BENCHMARK)
-    model = make_model(run.id, envs_train[0])
-    model.set_logger(make_logger())
+    model = make_model(envs_train[0])
     wandb_callback = WandbCallback(
         gradient_save_freq=0,
         model_save_path=f'models/{run.id}',
@@ -67,6 +68,7 @@ def main() -> None:
                 eval_freq=CONFIG['eval_freq']
             ) for j in range(i + 1)
         ]
+        model.replay_buffer.reset()
         model.learn(
             total_timesteps=CONFIG['total_timesteps'],
             reset_num_timesteps=False,

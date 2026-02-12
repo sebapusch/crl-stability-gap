@@ -1,8 +1,8 @@
 import gymnasium as gym
+from gymnasium.vector import VectorEnv
 import metaworld
-import numpy as np
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 from stable_baselines3.common.monitor import Monitor
-from gymnasium import Env
 
 
 class SuccessToIsSuccess(gym.Wrapper):
@@ -20,24 +20,25 @@ class SuccessToIsSuccess(gym.Wrapper):
             return obs, rew, terminated, truncated, info
 
 
-def make_benchmark(seed: int, benchmark: list[str]) -> (list[Env], list[Env]):
-    envs_train = []
-    envs_test = []
+def _make_mt1(env_name: str, seed: int) -> VectorEnv:
+    env = gym.make('Meta-World/MT1', env_name=env_name, seed=seed)
+    env = SuccessToIsSuccess(env)
+    env = Monitor(env)
+    env = DummyVecEnv(env_fns=[lambda: env])
+    env = VecNormalize(
+        env,
+        norm_obs=True,
+        norm_reward=True,
+        clip_obs=10.0
+    )
+    env.reset()
 
-    for env_name in benchmark:
-        env_train = gym.make('Meta-World/MT1', env_name=env_name, seed=seed)
-        env_test  = gym.make('Meta-World/MT1', env_name=env_name, seed=seed + 1)
+    return env
 
-        env_train = SuccessToIsSuccess(env_train)
-        env_train = Monitor(env_train)
-        env_train.reset()
 
-        env_test = SuccessToIsSuccess(env_test)
-        env_test = Monitor(env_test)
-        env_test.reset()
-
-        envs_train.append(env_train)
-        envs_test.append(env_test)
+def make_benchmark(seed: int, benchmark: list[str]) -> (list[VectorEnv], list[VectorEnv]):
+    envs_train = [_make_mt1(env, seed)     for env in benchmark]
+    envs_test  = [_make_mt1(env, seed + 1) for env in benchmark]
 
     return envs_train, envs_test
 
