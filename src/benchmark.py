@@ -9,13 +9,6 @@ from metaworld.wrappers import RandomTaskSelectWrapper, AutoTerminateOnSuccessWr
 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 from stable_baselines3.common.type_aliases import GymEnv
 
-class SuccessToIsSuccess(gym.Wrapper):
-    def step(self, action: NDArray) -> tuple[NDArray, SupportsFloat, bool, bool, dict]:
-        obs, reward, terminated, truncated, info = self.env.step(action)
-        info['is_success'] = info.get("success", False)
-        return obs, reward, terminated, truncated, info
-
-
 def make_mt1(env_name: str,
              seed: int,
              render_mode: str | None = None) -> GymEnv:
@@ -32,10 +25,9 @@ def make_mt1(env_name: str,
 
     tasks = mt1.train_tasks
 
-    env = RandomTaskSelectWrapper(env, tasks[:1])
+    env = RandomTaskSelectWrapper(env, tasks)
     env = AutoTerminateOnSuccessWrapper(env)
     env = TimeLimit(env, max_episode_steps=300)
-    env = SuccessToIsSuccess(env)
 
     env.reset(seed=seed)
     env.action_space.seed(seed)
