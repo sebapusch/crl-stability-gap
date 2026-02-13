@@ -12,12 +12,13 @@ from gymnasium import Env
 from stable_baselines3.common.type_aliases import GymEnv
 
 from benchmark import make_benchmark
-from common import WandbWriter, EnvEvalCallback, RegisterVideoCallback
+from callbacks import EnvEvalCallback, RegisterVideoCallback
+from integration import WandbWriter
 
-BENCHMARK = ['hammer-v3']#,'push-back-v3', 'stick-pull-v3']
+BENCHMARK = ['hammer-v3', 'push-back-v3', 'stick-pull-v3']
 CONFIG = {
     'policy':          'MlpPolicy',
-    # 'architecture':    [256, 256, 256],
+    'architecture':    [256, 256, 256],
     'device':          'cuda' if torch.cuda.is_available() else 'cpu',
     'total_timesteps': 1_000_000,
     'seed':            42,
@@ -83,9 +84,9 @@ def make_callbacks(env_ix: int, envs_test: list[GymEnv]) -> list[BaseCallback]:
     for i in range(env_ix + 1):
         callbacks.append(
             EnvEvalCallback(
-                eval_env_id=BENCHMARK[i],
+                eval_id=BENCHMARK[i],
                 eval_env=envs_test[i],
-                eval_freq=CONFIG['eval_freq']
+                eval_freq=CONFIG['eval_freq'],
             )
         )
 
