@@ -11,21 +11,26 @@ from gymnasium import Env
 from benchmark import make_benchmark
 from common import WandbWriter, EnvEvalCallback
 
-BENCHMARK = ['hammer-v3']#, 'push-back-v3', 'stick-pull-v3']
+import math
+import numpy as np
+from policy import ContinualWorldMlpPolicy
+
+BENCHMARK = ['hammer-v3','push-back-v3', 'stick-pull-v3']
 CONFIG = {
-    'policy':          'MlpPolicy',
-    'architecture':    [256, 256, 256],
+    'policy':          ContinualWorldMlpPolicy,
+    'architecture':    [256, 256, 256, 256],
     'device':          'cuda' if torch.cuda.is_available() else 'cpu',
     'total_timesteps': 1_000_000,
     'seed':            42,
     'eval_freq':       20_000,
-    'lr':              3e-4,
-    'batch_size':      512,
+    'lr':              1e-3,
+    'batch_size':      128,
     'learning_starts': 10_000,
     'tau':             0.005,
     'gamma':           0.99,
     'train_freq':      1,
     'gradient_steps':  1,
+    'target_output_std': 0.089,
 }
 
 def make_logger() -> Logger:
@@ -35,6 +40,12 @@ def make_logger() -> Logger:
     )
 
 def make_model(env: Env) -> SAC:
+    # Calculate target entropy based on target_output_std
+    # From continual_world/continualworld/sac/sac.py
+    target_output_std = CONFIG['target_output_std']
+    target_1d_entropy = np.log(target_output_std * math.sqrt(2 * math.pi * math.e))
+    target_entropy = float(np.prod(env.action_space.shape) * target_1d_entropy)
+
     sac = SAC(
         CONFIG['policy'],
         env=env,
@@ -43,6 +54,8 @@ def make_model(env: Env) -> SAC:
         learning_rate=CONFIG['lr'],
         batch_size=CONFIG['batch_size'],
         learning_starts=CONFIG['learning_starts'],
+        ent_coef='auto',
+        target_entropy=target_entropy,
         policy_kwargs={
             'net_arch': CONFIG['architecture']
         },

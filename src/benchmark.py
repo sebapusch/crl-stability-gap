@@ -1,45 +1,48 @@
 import gymnasium as gym
 from gymnasium.vector import VectorEnv
 import metaworld
-from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
-from stable_baselines3.common.monitor import Monitor
+from gymnasium.wrappers import TimeLimit
+from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
+import numpy as np
 
+from wrappers import SuccessCounter, OneHotAdder, RandomizationWrapper
 
-class SuccessToIsSuccess(gym.Wrapper):
-    def step(self, action):
-        out = self.env.step(action)
-        if len(out) == 4:
-            obs, rew, done, info = out
-            if "is_success" not in info and "success" in info:
-                info["is_success"] = float(info["success"])
-            return obs, rew, done, info
-        else:
-            obs, rew, terminated, truncated, info = out
-            if "is_success" not in info and "success" in info:
-                info["is_success"] = float(info["success"])
-            return obs, rew, terminated, truncated, info
+def _make_mt1(env_name: str, seed: int) -> gym.Env:
+    saved_random_state = np.random.get_state()
+    np.random.seed(1)
+    mt1 = metaworld.MT1(env_name)
+    np.random.set_state(saved_random_state)
+    
+    if env_name not in mt1.train_classes:
+         raise ValueError(f"Environment {env_name} not found in MT1 train classes")
+    
+    env_cls = mt1.train_classes[env_name]
+    env = env_cls()
 
+    env = RandomizationWrapper(env, mt1.train_tasks, "random_init_all")
+    env = OneHotAdder(env, one_hot_idx=0, one_hot_len=1)
+    env = TimeLimit(env, max_episode_steps=200)
+    env = SuccessCounter(env)
 
-def _make_mt1(env_name: str, seed: int, training: bool) -> VectorEnv:
-    env = gym.make('Meta-World/MT1', env_name=env_name, seed=seed)
-    env = SuccessToIsSuccess(env)
-    env = Monitor(env)
-    env = DummyVecEnv(env_fns=[lambda: env])
-    env = VecNormalize(
-        env,
-        training=training,
-        norm_obs=True,
-        norm_reward=training,
-        clip_obs=10.0,
-    )
-    env.reset()
-
+    env.reset(seed=seed)
+    env.action_space.seed(seed)
+    env.observation_space.seed(seed)
+    
     return env
 
+def _make_vec_env(env_name: str, seed: int) -> VectorEnv:
+    def make_env():
+        return _make_mt1(env_name, seed)
 
-def make_benchmark(seed: int, benchmark: list[str]) -> (list[VectorEnv], list[VectorEnv]):
-    envs_train = [_make_mt1(env, seed, True)      for env in benchmark]
-    envs_test  = [_make_mt1(env, seed + 1, False) for env in benchmark]
+    env = DummyVecEnv([make_env])
+    env = VecMonitor(env)
+    
+    return env
+
+def make_benchmark(seed: int, benchmark: list[str]) -> tuple[list[VectorEnv], list[VectorEnv]]:
+    envs_train = [_make_vec_env(env, seed)      for env in benchmark]
+    envs_test  = [_make_vec_env(env, seed + 1)  for env in benchmark]
 
     return envs_train, envs_test
+
 
