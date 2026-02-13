@@ -1,9 +1,5 @@
-from typing import SupportsFloat
-
-import gymnasium as gym
 import numpy as np
 import metaworld
-from numpy.typing import NDArray
 from gymnasium.wrappers import TimeLimit
 from metaworld.wrappers import RandomTaskSelectWrapper, AutoTerminateOnSuccessWrapper, OneHotWrapper
 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
