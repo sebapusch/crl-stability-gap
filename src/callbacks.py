@@ -127,14 +127,18 @@ class EnvEvalCallback(EventCallback):
         mean_reward, std_reward = np.mean(episode_rewards), np.std(episode_rewards)
         mean_ep_length, std_ep_length = np.mean(episode_lengths), np.std(episode_lengths)
         self.last_mean_reward = float(mean_reward)
-        success_rate = np.mean(self._is_success_buffer) if len(self._is_success_buffer) > 0 else 0
 
-        self.logger.record(f"eval/{self.eval_id}/mean_reward", float(mean_reward))
-        self.logger.record(f"eval/{self.eval_id}/mean_ep_length", mean_ep_length)
-        self.logger.record(f"eval/{self.eval_id}/success_rate", success_rate)
+        self.logger.record(f'eval/{self.eval_id}/mean_reward', float(mean_reward))
+        self.logger.record(f'eval/{self.eval_id}/mean_ep_length', mean_ep_length)
+
+        if len(self._is_success_buffer) == 0:
+            print('WARNING: Success buffer is empty, unable to compute success rate')
+        else:
+            success_rate = np.mean(self._is_success_buffer)
+            self.logger.record(f'eval/{self.eval_id}/success_rate', success_rate)
+
         # Dump log so the evaluation results are printed with the correct timestep
         self.logger.record(f"time/{self.eval_id}/total_timesteps", self.num_timesteps, exclude="tensorboard")
-
         self.logger.dump(self.num_timesteps)
 
         if mean_reward > self.best_mean_reward:

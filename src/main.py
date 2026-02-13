@@ -8,7 +8,7 @@ from gymnasium import Env
 from benchmark import make_benchmark
 from integration import WandbWriter
 from args import get_args
-from src.callbacks import make_callbacks
+from callbacks import make_callbacks
 
 
 def make_logger() -> Logger:
@@ -24,8 +24,8 @@ def make_model(
         batch_size: int = 128,
         learning_starts: int = 10_000,
         gamme: int = 0.99,
-        train_freq: int | (int, str) = (1, 'episode'), # finish episode
-        gradient_steps: int = -1,                      # then do 500 gradient steps
+        train_freq: int | tuple[int, str] = (1, 'episode'), # finish episode
+        gradient_steps: int = -1,                           # then do 500 gradient steps
         tau: float = 0.005,
         net_arch: list[int] | None = None,
 ) -> SAC:
