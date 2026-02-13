@@ -1,9 +1,20 @@
+from typing import SupportsFloat
+
+import gymnasium as gym
 import numpy as np
 import metaworld
+from numpy.typing import NDArray
 from gymnasium.wrappers import TimeLimit
 from metaworld.wrappers import RandomTaskSelectWrapper, AutoTerminateOnSuccessWrapper, OneHotWrapper
 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 from stable_baselines3.common.type_aliases import GymEnv
+
+class SuccessToIsSuccess(gym.Wrapper):
+    def step(self, action: NDArray) -> tuple[NDArray, SupportsFloat, bool, bool, dict]:
+        obs, reward, terminated, truncated, info = self.env.step(action)
+        info['is_success'] = info.get("success", False)
+        return obs, reward, terminated, truncated, info
+
 
 def make_mt1(env_name: str,
              seed: int,
@@ -21,9 +32,10 @@ def make_mt1(env_name: str,
 
     tasks = mt1.train_tasks
 
-    env = RandomTaskSelectWrapper(env, tasks)
+    env = RandomTaskSelectWrapper(env, tasks[:1])
     env = AutoTerminateOnSuccessWrapper(env)
     env = TimeLimit(env, max_episode_steps=300)
+    env = SuccessToIsSuccess(env)
 
     env.reset(seed=seed)
     env.action_space.seed(seed)
