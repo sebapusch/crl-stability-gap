@@ -5,7 +5,7 @@ import numpy as np
 import metaworld
 from numpy.typing import NDArray
 from gymnasium.wrappers import TimeLimit
-from metaworld.wrappers import RandomTaskSelectWrapper, AutoTerminateOnSuccessWrapper, OneHotWrapper
+from metaworld.wrappers import RandomTaskSelectWrapper, AutoTerminateOnSuccessWrapper
 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 from stable_baselines3.common.type_aliases import GymEnv
 
@@ -32,7 +32,7 @@ def make_mt1(env_name: str,
 
     tasks = mt1.train_tasks
 
-    env = RandomTaskSelectWrapper(env, tasks[:1])
+    env = RandomTaskSelectWrapper(env, tasks)
     env = AutoTerminateOnSuccessWrapper(env)
     env = TimeLimit(env, max_episode_steps=300)
     env = SuccessToIsSuccess(env)
