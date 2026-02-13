@@ -132,7 +132,7 @@ class RegisterVideoCallback(EventCallback):
         super().__init__()
 
     def _on_step(self) -> bool:
-        if self.n_calls < 1 and self.n_calls % self.frequency != 0:
+        if self.n_calls < 1 or self.n_calls % self.frequency != 0:
             return True
 
         frames = []
