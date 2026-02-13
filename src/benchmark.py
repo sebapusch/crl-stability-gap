@@ -16,9 +16,12 @@ class SuccessToIsSuccess(gym.Wrapper):
         return obs, reward, terminated, truncated, info
 
 
-def make_mt1(env_name: str,
-             seed: int,
-             render_mode: str | None = None) -> GymEnv:
+def make_mt1(
+    env_name: str,
+    seed: int,
+    render_mode: str | None = None,
+    max_episode_step: int = 500,
+) -> GymEnv:
     saved_random_state = np.random.get_state()
     np.random.seed(1)
     mt1 = metaworld.MT1(env_name)
@@ -33,7 +36,7 @@ def make_mt1(env_name: str,
     tasks = mt1.train_tasks
 
     env = RandomTaskSelectWrapper(env, tasks)
-    env = TimeLimit(env, max_episode_steps=300)
+    env = TimeLimit(env, max_episode_steps=max_episode_step)
     env = SuccessToIsSuccess(env)
 
     env.reset(seed=seed)

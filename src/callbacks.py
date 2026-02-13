@@ -1,15 +1,57 @@
-from typing import Any
+from __future__ import annotations
+
+from typing import Any, Callable
 
 import numpy as np
 import wandb
 import metaworld
+from wandb.integration.sb3 import WandbCallback
 from stable_baselines3.common.callbacks import (EventCallback,
                                                 BaseCallback,
+                                                CallbackList,
                                                 sync_envs_normalization,
                                                 evaluate_policy)
 from stable_baselines3.common.type_aliases import GymEnv
 
 from benchmark import make_mt1
+
+
+def make_callbacks(
+        benchmark: list[str],
+        envs_test: list[GymEnv],
+        eval_freq: int,
+        video_freq: int,
+) -> Callable[[int], CallbackList]:
+    wandb_callback = WandbCallback(gradient_save_freq=1000, verbose=2)
+
+    def make(env_ix: int) -> CallbackList:
+        """
+        List of callbacks for each continual learning environment iteration
+
+        evaluate current environment + all previous ones
+        """
+        callbacks: list[BaseCallback] = [wandb_callback]
+
+        if video_freq > 0:
+            callbacks.append(
+                RegisterVideoCallback(
+                    video_freq,
+                    benchmark[env_ix],
+                ),
+            )
+
+        for i in range(env_ix + 1):
+            callbacks.append(
+                EnvEvalCallback(
+                    eval_id=benchmark[i],
+                    eval_env=envs_test[i],
+                    eval_freq=eval_freq,
+                )
+            )
+
+        return CallbackList(callbacks)
+
+    return make
 
 
 class EnvEvalCallback(EventCallback):

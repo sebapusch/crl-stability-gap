@@ -12,4 +12,4 @@ source .venv/bin/activate
 module load CUDA/12.6.0
 export MUJOCO_GL="egl"
 
-python src/main.py
+python src/main.py "$@"
