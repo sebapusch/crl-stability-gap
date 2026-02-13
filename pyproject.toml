@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "metaworld>=3.0.0",
+    "moviepy>=2.2.1",
     "opencv-python>=4.13.0.92",
     "rich>=14.3.2",
     "stable-baselines3>=2.7.1",

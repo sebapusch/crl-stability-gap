@@ -1,13 +1,24 @@
+from typing import SupportsFloat
+
 import gymnasium as gym
-from gymnasium.vector import VectorEnv
-import metaworld
-from gymnasium.wrappers import TimeLimit
-from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 import numpy as np
+import metaworld
+from numpy.typing import NDArray
+from gymnasium.wrappers import TimeLimit
+from metaworld.wrappers import RandomTaskSelectWrapper, AutoTerminateOnSuccessWrapper, OneHotWrapper
+from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
+from stable_baselines3.common.type_aliases import GymEnv
 
-from wrappers import SuccessCounter, OneHotAdder, RandomizationWrapper
+class SuccessToIsSuccess(gym.Wrapper):
+    def step(self, action: NDArray) -> tuple[NDArray, SupportsFloat, bool, bool, dict]:
+        obs, reward, terminated, truncated, info = self.env.step(action)
+        info['is_success'] = info.get("success", False)
+        return obs, reward, terminated, truncated, info
 
-def _make_mt1(env_name: str, seed: int) -> gym.Env:
+
+def make_mt1(env_name: str,
+             seed: int,
+             render_mode: str | None = None) -> GymEnv:
     saved_random_state = np.random.get_state()
     np.random.seed(1)
     mt1 = metaworld.MT1(env_name)
@@ -17,12 +28,14 @@ def _make_mt1(env_name: str, seed: int) -> gym.Env:
          raise ValueError(f"Environment {env_name} not found in MT1 train classes")
     
     env_cls = mt1.train_classes[env_name]
-    env = env_cls()
+    env = env_cls(render_mode=render_mode)
 
-    env = RandomizationWrapper(env, mt1.train_tasks, "random_init_all")
-    env = OneHotAdder(env, one_hot_idx=0, one_hot_len=1)
-    env = TimeLimit(env, max_episode_steps=200)
-    env = SuccessCounter(env)
+    tasks = mt1.train_tasks
+
+    env = RandomTaskSelectWrapper(env, tasks[:1])
+    env = AutoTerminateOnSuccessWrapper(env)
+    env = TimeLimit(env, max_episode_steps=300)
+    env = SuccessToIsSuccess(env)
 
     env.reset(seed=seed)
     env.action_space.seed(seed)
@@ -30,16 +43,16 @@ def _make_mt1(env_name: str, seed: int) -> gym.Env:
     
     return env
 
-def _make_vec_env(env_name: str, seed: int) -> VectorEnv:
+def _make_vec_env(env_name: str, seed: int) -> GymEnv:
     def make_env():
-        return _make_mt1(env_name, seed)
+        return make_mt1(env_name, seed)
 
     env = DummyVecEnv([make_env])
     env = VecMonitor(env)
     
     return env
 
-def make_benchmark(seed: int, benchmark: list[str]) -> tuple[list[VectorEnv], list[VectorEnv]]:
+def make_benchmark(seed: int, benchmark: list[str]) -> tuple[list[GymEnv], list[GymEnv]]:
     envs_train = [_make_vec_env(env, seed)      for env in benchmark]
     envs_test  = [_make_vec_env(env, seed + 1)  for env in benchmark]
 

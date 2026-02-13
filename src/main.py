@@ -2,27 +2,27 @@ import sys
 
 import torch.cuda
 import wandb
+import math
+import numpy as np
 from wandb.integration.sb3 import WandbCallback
 from stable_baselines3 import SAC
 from stable_baselines3.common.logger import Logger, HumanOutputFormat
-from stable_baselines3.common.callbacks import EvalCallback, CallbackList
+from stable_baselines3.common.callbacks import CallbackList, BaseCallback
 from gymnasium import Env
+from stable_baselines3.common.type_aliases import GymEnv
 
 from benchmark import make_benchmark
-from common import WandbWriter, EnvEvalCallback
+from common import WandbWriter, EnvEvalCallback, RegisterVideoCallback
 
-import math
-import numpy as np
-from policy import ContinualWorldMlpPolicy
-
-BENCHMARK = ['hammer-v3','push-back-v3', 'stick-pull-v3']
+BENCHMARK = ['hammer-v3']#,'push-back-v3', 'stick-pull-v3']
 CONFIG = {
-    'policy':          ContinualWorldMlpPolicy,
-    'architecture':    [256, 256, 256, 256],
+    'policy':          'MlpPolicy',
+    # 'architecture':    [256, 256, 256],
     'device':          'cuda' if torch.cuda.is_available() else 'cpu',
     'total_timesteps': 1_000_000,
     'seed':            42,
     'eval_freq':       20_000,
+    'video_freq':      100_000,
     'lr':              1e-3,
     'batch_size':      128,
     'learning_starts': 10_000,
@@ -56,13 +56,40 @@ def make_model(env: Env) -> SAC:
         learning_starts=CONFIG['learning_starts'],
         ent_coef='auto',
         target_entropy=target_entropy,
-        policy_kwargs={
-            'net_arch': CONFIG['architecture']
-        },
+    #     policy_kwargs={
+    #         'net_arch': CONFIG['architecture']
+    #     },
     )
     sac.set_logger(make_logger())
 
     return sac
+
+def make_callbacks(env_ix: int, envs_test: list[GymEnv]) -> list[BaseCallback]:
+    callbacks: list[BaseCallback] = [
+        WandbCallback(
+            gradient_save_freq=1000,
+            verbose=2,
+        )
+    ]
+
+    if CONFIG['video_freq'] > 0:
+        callbacks.append(
+            RegisterVideoCallback(
+                CONFIG['video_freq'],
+                BENCHMARK[0],
+            ),
+        )
+
+    for i in range(env_ix + 1):
+        callbacks.append(
+            EnvEvalCallback(
+                eval_env_id=BENCHMARK[i],
+                eval_env=envs_test[i],
+                eval_freq=CONFIG['eval_freq']
+            )
+        )
+
+    return callbacks
 
 def main() -> None:
     config = CONFIG
@@ -75,26 +102,14 @@ def main() -> None:
 
     envs_train, envs_test = make_benchmark(42, BENCHMARK)
     model = make_model(envs_train[0])
-    wandb_callback = WandbCallback(
-        gradient_save_freq=0,
-        model_save_path=f'models/{run.id}',
-        verbose=2,
-    )
 
     for i, env in enumerate(envs_train):
         model.set_env(env)
-        eval_callbacks = [
-            EnvEvalCallback(
-                eval_env_id=BENCHMARK[j],
-                eval_env=envs_test[j],
-                eval_freq=CONFIG['eval_freq']
-            ) for j in range(i + 1)
-        ]
         model.replay_buffer.reset()
         model.learn(
             total_timesteps=CONFIG['total_timesteps'],
             reset_num_timesteps=False,
-            callback=CallbackList(eval_callbacks + [wandb_callback]),
+            callback=CallbackList(make_callbacks(i, envs_test)),
         )
         env.close()
 

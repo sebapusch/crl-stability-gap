@@ -4,9 +4,14 @@ import numpy as np
 from stable_baselines3.common.logger import KVWriter
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import sync_envs_normalization
-from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.callbacks import EvalCallback, EventCallback
 import wandb
 from typing import Any
+import metaworld
+from gymnasium.wrappers import TimeLimit, RecordVideo
+
+from benchmark import make_mt1
+
 
 class WandbWriter(KVWriter):
     def write(self, key_values: dict[str, Any], key_excluded: dict[str, Any], step: int = 0) -> None:
@@ -118,3 +123,38 @@ class EnvEvalCallback(EvalCallback):
                 continue_training = continue_training and self._on_event()
 
         return continue_training
+
+class RegisterVideoCallback(EventCallback):
+    def __init__(self, frequency: int, env_name: str, seed: int = 1):
+        self.frequency = frequency
+        self.env = make_mt1(env_name, seed, 'rgb_array')
+        self.task = metaworld.MT1(env_name).train_tasks[0]
+        self.seed = seed
+
+        super().__init__()
+
+    def _on_step(self) -> bool:
+        if self.n_calls < 1 and self.n_calls % self.frequency != 0:
+            return True
+
+        frames = []
+
+        obs, _ = self.env.reset(seed=self.seed)
+        self.env.unwrapped.set_task(self.task)
+
+        for _ in range(500):
+            action, _ = self.model.predict(obs, deterministic=True)
+            obs, reward, terminated, truncated, info = self.env.step(action)
+
+            frame = self.env.render()
+
+            frame = np.moveaxis(frame, -1, 0).astype(np.uint8)
+            frames.append(frame)
+
+            if terminated or truncated:
+                break
+        frames_array = np.array(frames)
+
+        wandb.log({'video': wandb.Video(frames_array, fps=30, format='mp4')}, step=self.n_calls)
+
+        return True
