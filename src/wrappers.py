@@ -18,7 +18,8 @@ class SuccessCounter(gym.Wrapper):
 
     def step(self, action: Any) -> Tuple[Any, float, bool, bool, Dict[str, Any]]:
         obs, reward, terminated, truncated, info = self.env.step(action)
-        if info.get("success", False):
+        info['is_success'] = info.get("success", False)
+        if info['is_success']:
             self.current_success = True
         if terminated or truncated:
             self.successes.append(self.current_success)
