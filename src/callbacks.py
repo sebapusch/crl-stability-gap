@@ -1,12 +1,9 @@
-import os
-import sys
 from typing import Any
 
 import numpy as np
 import wandb
 import metaworld
-from stable_baselines3.common.callbacks import (EvalCallback,
-                                                EventCallback,
+from stable_baselines3.common.callbacks import (EventCallback,
                                                 BaseCallback,
                                                 sync_envs_normalization,
                                                 evaluate_policy)
@@ -70,6 +67,9 @@ class EnvEvalCallback(EventCallback):
                     "see https://stable-baselines3.readthedocs.io/en/master/guide/callbacks.html#evalcallback "
                     "and warning above."
                 ) from e
+
+        # reset buffer
+        self._is_success_buffer = []
 
         episode_rewards, episode_lengths = evaluate_policy(
             self.model,
