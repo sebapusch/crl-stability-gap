@@ -15,7 +15,7 @@ from benchmark import make_benchmark
 from callbacks import EnvEvalCallback, RegisterVideoCallback
 from integration import WandbWriter
 
-BENCHMARK = ['reach-v3', 'push-back-v3', 'stick-pull-v3']
+BENCHMARK = ['reach-v3', 'push-v3', 'pick-place-v3']
 CONFIG = {
     'policy':          'MlpPolicy',
     'architecture':    [256, 256, 256],
@@ -23,7 +23,7 @@ CONFIG = {
     'total_timesteps': 1_000_000,
     'seed':            42,
     'eval_freq':       20_000,
-    'video_freq':      100_000,
+    'video_freq':      20_000,
     'lr':              1e-3,
     'batch_size':      128,
     'learning_starts': 10_000,
