@@ -8,10 +8,8 @@ from stable_baselines3.common.callbacks import EvalCallback, EventCallback
 import wandb
 from typing import Any
 import metaworld
-from gymnasium.wrappers import TimeLimit, RecordVideo
 
 from benchmark import make_mt1
-
 
 class WandbWriter(KVWriter):
     def write(self, key_values: dict[str, Any], key_excluded: dict[str, Any], step: int = 0) -> None:
@@ -155,6 +153,6 @@ class RegisterVideoCallback(EventCallback):
                 break
         frames_array = np.array(frames)
 
-        wandb.log({'video': wandb.Video(frames_array, fps=30, format='mp4')}, step=self.n_calls)
+        wandb.log({'video': wandb.Video(frames_array, fps=30, format='mp4')})
 
         return True
