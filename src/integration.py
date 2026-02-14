@@ -16,5 +16,3 @@ class WandbWriter(KVWriter):
 
         if log_dict:
             wandb.log(log_dict, step=step)
-
-

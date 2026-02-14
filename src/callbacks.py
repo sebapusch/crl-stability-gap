@@ -163,7 +163,6 @@ class RegisterVideoCallback(EventCallback):
     def __init__(self, frequency: int, env_name: str, seed: int = 1):
         self.frequency = frequency
         self.env = make_mt1(env_name, seed, 'rgb_array')
-        self.task = metaworld.MT1(env_name).train_tasks[0]
         self.seed = seed
 
         super().__init__()
@@ -175,7 +174,6 @@ class RegisterVideoCallback(EventCallback):
         frames = []
 
         obs, _ = self.env.reset(seed=self.seed)
-        self.env.unwrapped.set_task(self.task)
 
         for _ in range(500):
             action, _ = self.model.predict(obs, deterministic=True)
