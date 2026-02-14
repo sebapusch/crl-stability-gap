@@ -319,6 +319,11 @@ class SAC(OffPolicyAlgorithm):
             progress_bar=progress_bar,
         )
 
+    def reset_optim(self) -> None:
+        self.ent_coef_optimizer.state.clear()
+        self.actor.optimizer.state.clear()
+        self.critic.optimizer.state.clear()
+
     def _excluded_save_params(self) -> list[str]:
         return super()._excluded_save_params() + ["actor", "critic", "critic_target"]  # noqa: RUF005
 
