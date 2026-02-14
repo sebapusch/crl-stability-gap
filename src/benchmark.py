@@ -1,19 +1,11 @@
-from typing import SupportsFloat
-
-import gymnasium as gym
 import numpy as np
 import metaworld
-from numpy.typing import NDArray
 from gymnasium.wrappers import TimeLimit
 from metaworld.wrappers import RandomTaskSelectWrapper
 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 from stable_baselines3.common.type_aliases import GymEnv
 
-class SuccessToIsSuccess(gym.Wrapper):
-    def step(self, action: NDArray) -> tuple[NDArray, SupportsFloat, bool, bool, dict]:
-        obs, reward, terminated, truncated, info = self.env.step(action)
-        info['is_success'] = info.get("success", False)
-        return obs, reward, terminated, truncated, info
+from wrappers import SuccessToIsSuccess
 
 
 def make_mt1(
@@ -26,10 +18,10 @@ def make_mt1(
     np.random.seed(1)
     mt1 = metaworld.MT1(env_name)
     np.random.set_state(saved_random_state)
-    
+
     if env_name not in mt1.train_classes:
          raise ValueError(f"Environment {env_name} not found in MT1 train classes")
-    
+
     env_cls = mt1.train_classes[env_name]
     env = env_cls(render_mode=render_mode)
 
@@ -42,7 +34,7 @@ def make_mt1(
     env.reset(seed=seed)
     env.action_space.seed(seed)
     env.observation_space.seed(seed)
-    
+
     return env
 
 def _make_vec_env(env_name: str, seed: int) -> GymEnv:

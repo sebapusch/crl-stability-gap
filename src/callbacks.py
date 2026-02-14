@@ -4,7 +4,6 @@ from typing import Any, Callable
 
 import numpy as np
 import wandb
-import metaworld
 from wandb.integration.sb3 import WandbCallback
 from stable_baselines3.common.callbacks import (EventCallback,
                                                 BaseCallback,
@@ -20,6 +19,7 @@ def make_callbacks(
         benchmark: list[str],
         envs_test: list[GymEnv],
         eval_freq: int,
+        n_eval_episodes: int,
         video_freq: int,
 ) -> Callable[[int], CallbackList]:
     wandb_callback = WandbCallback(gradient_save_freq=1000, verbose=2)
@@ -46,6 +46,7 @@ def make_callbacks(
                     eval_id=benchmark[i],
                     eval_env=envs_test[i],
                     eval_freq=eval_freq,
+                    n_eval_episodes=n_eval_episodes,
                 )
             )
 
@@ -90,7 +91,7 @@ class EnvEvalCallback(EventCallback):
         info = locals_['info']
 
         if locals_['done']:
-            maybe_is_success = info.get('success')
+            maybe_is_success = info.get('is_success')
             if maybe_is_success is not None:
                 self._is_success_buffer.append(maybe_is_success)
 

@@ -38,5 +38,10 @@ def get_args() -> Namespace:
         default=1e-3,
         type=float,
     )
+    parser.add_argument(
+        '--n_eval_episodes',
+        default=10,
+        type=int,
+    )
 
     return parser.parse_args()
