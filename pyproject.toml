@@ -8,9 +8,11 @@ dependencies = [
     "metaworld>=3.0.0",
     "moviepy>=2.2.1",
     "opencv-python>=4.13.0.92",
+    "pandas>=2.3.3",
     "rich>=14.3.2",
-    "stable-baselines3>=2.7.1",
     "tensorboard>=2.20.0",
+    "torch>=2.10.0",
     "tqdm>=4.67.3",
+    "triton>=3.6.0",
     "wandb>=0.24.2",
 ]
