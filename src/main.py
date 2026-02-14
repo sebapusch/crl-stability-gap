@@ -87,6 +87,11 @@ def main(
     for i, env in enumerate(envs_train):
         model.set_env(env)
         model.replay_buffer.reset()
+
+        model.ent_coef_optimizer.state.clear()
+        model.actor.optimizer.state.clear()
+        model.critic.optimizer.state.clear()
+
         model.learn(
             total_timesteps=total_timesteps,
             reset_num_timesteps=False,
