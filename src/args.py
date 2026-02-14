@@ -1,7 +1,7 @@
 import argparse
 from argparse import Namespace
 
-BENCHMARK = ['reach-v3', 'push-v3', 'pick-place-v3']
+BENCHMARK = ['reach-v3', 'push-v3', 'peg-unplug-side-v3']
 
 
 def get_args() -> Namespace:
