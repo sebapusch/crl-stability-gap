@@ -38,10 +38,5 @@ def get_args() -> Namespace:
         default=1e-3,
         type=float,
     )
-    parser.add_argument(
-        '--eval_freq',
-        default=20_000,
-        type=int,
-    )
 
     return parser.parse_args()

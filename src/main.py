@@ -60,6 +60,7 @@ def main(
         total_timesteps: int,
         video_freq: int,
         eval_freq: int,
+        lr: float,
 ) -> None:
     run = wandb.init(
         project='test-crl',
@@ -70,7 +71,8 @@ def main(
     model = make_model(
         envs_train[0],
         device='cuda' if torch.cuda.is_available() else 'cpu',
-        net_arch=[256, 256, 256]
+        net_arch=[256, 256, 256],
+        lr=lr,
     )
 
     callbacks = make_callbacks(
