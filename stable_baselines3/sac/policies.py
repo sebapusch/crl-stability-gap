@@ -61,6 +61,7 @@ class Actor(BasePolicy):
         use_expln: bool = False,
         clip_mean: float = 2.0,
         normalize_images: bool = True,
+        layer_norm: bool = False,
     ):
         super().__init__(
             observation_space,
@@ -82,7 +83,7 @@ class Actor(BasePolicy):
         self.clip_mean = clip_mean
 
         action_dim = get_action_dim(self.action_space)
-        latent_pi_net = create_mlp(features_dim, -1, net_arch, activation_fn)
+        latent_pi_net = create_mlp(features_dim, -1, net_arch, activation_fn, layer_norm=layer_norm)
         self.latent_pi = nn.Sequential(*latent_pi_net)
         last_layer_dim = net_arch[-1] if len(net_arch) > 0 else features_dim
 
@@ -229,6 +230,7 @@ class SACPolicy(BasePolicy):
         optimizer_kwargs: dict[str, Any] | None = None,
         n_critics: int = 2,
         share_features_extractor: bool = False,
+        layer_norm: bool = False,
     ):
         super().__init__(
             observation_space,
@@ -264,14 +266,16 @@ class SACPolicy(BasePolicy):
             "clip_mean": clip_mean,
         }
         self.actor_kwargs.update(sde_kwargs)
+        self.actor_kwargs.update({
+            'layer_norm': layer_norm,
+        })
         self.critic_kwargs = self.net_args.copy()
-        self.critic_kwargs.update(
-            {
-                "n_critics": n_critics,
-                "net_arch": critic_arch,
-                "share_features_extractor": share_features_extractor,
-            }
-        )
+        self.critic_kwargs.update({
+            "n_critics": n_critics,
+            'layer_norm': layer_norm,
+            "net_arch": critic_arch,
+            "share_features_extractor": share_features_extractor,
+        })
 
         self.share_features_extractor = share_features_extractor
 

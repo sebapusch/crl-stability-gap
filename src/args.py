@@ -40,8 +40,13 @@ def get_args() -> Namespace:
     )
     parser.add_argument(
         '--n_eval_episodes',
-        default=10,
+        default=15,
         type=int,
+    )
+    parser.add_argument(                # In the continual_world paper the architecture is:
+        '--layer_norm',    # Input -> FC(256) -> LayerNorm -> FC(256) -> FC(256) -> FC(256)
+        default=True,                   # This argument controls whether to add layer norm
+        type=bool,                      # to our network.
     )
 
     return parser.parse_args()

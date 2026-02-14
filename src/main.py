@@ -28,8 +28,11 @@ def make_model(
         gradient_steps: int = -1,                           # then do 500 gradient steps
         tau: float = 0.005,
         net_arch: list[int] | None = None,
+        layer_norm: bool = False,
 ) -> SAC:
-    policy_kwargs = {}
+    policy_kwargs: dict[str, bool | list[int]] = {
+        'layer_norm': layer_norm,
+    }
     if net_arch:
         policy_kwargs['net_arch'] = net_arch
 
@@ -62,6 +65,7 @@ def main(
         eval_freq: int,
         n_eval_episodes: int,
         lr: float,
+        layer_norm: bool,
 ) -> None:
     run = wandb.init(
         project='test-crl',
@@ -72,7 +76,8 @@ def main(
     model = make_model(
         envs_train[0],
         device='cuda' if torch.cuda.is_available() else 'cpu',
-        net_arch=[256, 256, 256],
+        net_arch=[256, 256, 256, 256],
+        layer_norm=layer_norm,
         lr=lr,
     )
 
