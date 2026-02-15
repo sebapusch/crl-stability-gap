@@ -212,3 +212,6 @@ models
 .idea
 continual_world
 logs
+output/*
+|output
+!output/.gitkeep

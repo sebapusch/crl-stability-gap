@@ -58,5 +58,10 @@ def get_args() -> Namespace:
         default='crl',
         type=str,
     )
+    parser.add_argument(
+        '--wandb_name',
+        default=None,
+        type=str,
+    )
 
     return parser.parse_args()

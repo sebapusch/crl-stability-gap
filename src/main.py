@@ -1,3 +1,4 @@
+import os
 import sys
 from typing import Any
 
@@ -5,7 +6,7 @@ import torch.cuda
 import wandb
 from stable_baselines3 import SAC
 from stable_baselines3.common.type_aliases import GymEnv
-from stable_baselines3.common.logger import Logger, HumanOutputFormat
+from stable_baselines3.common.logger import Logger, HumanOutputFormat, CSVOutputFormat
 
 from benchmark import make_benchmark
 from integration import WandbWriter
@@ -13,14 +14,23 @@ from args import get_args
 from callbacks import make_callbacks
 
 
-def make_logger() -> Logger:
+def make_logger(run_name: str) -> Logger:
+    csv_path = os.path.abspath(os.path.join(
+        __file__, '..', '..', 'outputs', f'{run_name}.csv')
+    )
+
     return Logger(
         folder='../.logs',
-        output_formats=[HumanOutputFormat(sys.stdout), WandbWriter()],
+        output_formats=[
+            HumanOutputFormat(sys.stdout),
+            WandbWriter(),
+            CSVOutputFormat(csv_path)
+        ],
     )
 
 def make_model(
         benchmark: list[GymEnv],
+        run_name: str,
         device: str,
         lr: float = 1e-3,
         batch_size: int = 128,
@@ -60,7 +70,7 @@ def make_model(
         ent_coef='auto',
     )
 
-    sac.set_logger(make_logger())
+    sac.set_logger(make_logger(run_name))
 
     return sac
 
@@ -76,8 +86,10 @@ def main(
         layer_norm: bool,
         multi_head_output: bool,
         wandb_project: str,
+        wandb_name: str | None,
 ) -> None:
     run = wandb.init(
+        name=wandb_name,
         project=wandb_project,
         monitor_gym=True,
     )
@@ -85,6 +97,7 @@ def main(
     envs_train, envs_test = make_benchmark(seed, benchmark=benchmark)
     model = make_model(
         envs_train,
+        run_name=run.name,
         device='cuda' if torch.cuda.is_available() else 'cpu',
         net_arch=[256, 256, 256, 256],
         layer_norm=layer_norm,
