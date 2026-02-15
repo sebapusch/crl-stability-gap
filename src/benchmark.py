@@ -42,7 +42,7 @@ def make_mt1(
 
 def _make_vec_env(env_name: str, seed: int, task_ix: int, num_tasks: int) -> GymEnv:
     def make_env():
-        return make_mt1(env_name, seed)
+        return make_mt1(env_name, seed, task_ix=task_ix, num_tasks=num_tasks)
 
     env = DummyVecEnv([make_env])
     env = VecMonitor(env)
