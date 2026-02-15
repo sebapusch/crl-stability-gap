@@ -21,6 +21,7 @@ def make_callbacks(
         eval_freq: int,
         n_eval_episodes: int,
         video_freq: int,
+        eval_all: bool,
 ) -> Callable[[int], CallbackList]:
     wandb_callback = WandbCallback(gradient_save_freq=1000, verbose=2)
 
@@ -40,7 +41,8 @@ def make_callbacks(
                 ),
             )
 
-        for i in range(env_ix + 1):
+        rng = range(len(benchmark) if eval_all else env_ix + 1 )
+        for i in rng:
             callbacks.append(
                 EnvEvalCallback(
                     eval_id=benchmark[i],

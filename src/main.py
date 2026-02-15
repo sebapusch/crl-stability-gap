@@ -111,6 +111,7 @@ def main(
         video_freq=video_freq,
         eval_freq=eval_freq,
         n_eval_episodes=n_eval_episodes,
+        eval_all=True,
     )
 
     for i, env in enumerate(envs_train):
