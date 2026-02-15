@@ -168,14 +168,14 @@ class Actor(BasePolicy):
         latent_pi = self.latent_pi(features)
         mean_actions = self.mu(latent_pi)
 
-        mean_actions = _choose_head(mean_actions, obs, self.n_heads)
+        mean_actions = choose_head(mean_actions, obs, self.n_heads)
 
         if self.use_sde:
             return mean_actions, self.log_std, dict(latent_sde=latent_pi) # type: ignore[operator]
 
         # Unstructured exploration (Original implementation)
         log_std = self.log_std(latent_pi)  # type: ignore[operator]
-        log_std = _choose_head(log_std, obs, self.n_heads)
+        log_std = choose_head(log_std, obs, self.n_heads)
 
         # Original Implementation to cap the standard deviation
         log_std = th.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
