@@ -1,7 +1,10 @@
 import sys
+from typing import Any
+
 import torch.cuda
 import wandb
 from stable_baselines3 import SAC
+from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.common.logger import Logger, HumanOutputFormat
 from gymnasium import Env
 
@@ -18,7 +21,7 @@ def make_logger() -> Logger:
     )
 
 def make_model(
-        env: Env,
+        benchmark: list[GymEnv],
         device: str,
         lr: float = 1e-3,
         batch_size: int = 128,
@@ -29,17 +32,23 @@ def make_model(
         tau: float = 0.005,
         net_arch: list[int] | None = None,
         layer_norm: bool = False,
+        multi_head_output: bool = True,
 ) -> SAC:
-    policy_kwargs: dict[str, bool | list[int]] = {
+    assert len(benchmark) > 0, 'Invalid benchmark'
+
+    policy_kwargs: dict[str, Any] = {
         'layer_norm': layer_norm,
     }
     if net_arch:
         policy_kwargs['net_arch'] = net_arch
 
+    if multi_head_output and len(benchmark) > 1:
+        policy_kwargs['n_heads'] = len(benchmark)
+
     sac = SAC(
         policy='MlpPolicy',
         policy_kwargs=policy_kwargs,
-        env=env,
+        env=benchmark[0],
         device=device,
         verbose=1,
         learning_rate=lr,
@@ -66,19 +75,21 @@ def main(
         n_eval_episodes: int,
         lr: float,
         layer_norm: bool,
+        multi_head_output: bool,
 ) -> None:
-    run = wandb.init(
-        project='test-crl',
-        monitor_gym=True,
-    )
+    # run = wandb.init(
+    #     project='test-crl',
+    #     monitor_gym=True,
+    # )
 
     envs_train, envs_test = make_benchmark(seed, benchmark=benchmark)
     model = make_model(
-        envs_train[0],
+        envs_train,
         device='cuda' if torch.cuda.is_available() else 'cpu',
         net_arch=[256, 256, 256, 256],
         layer_norm=layer_norm,
         lr=lr,
+        multi_head_output=multi_head_output,
     )
 
     callbacks = make_callbacks(

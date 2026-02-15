@@ -115,6 +115,7 @@ def create_mlp(
     pre_linear_modules: list[type[nn.Module]] | None = None,
     post_linear_modules: list[type[nn.Module]] | None = None,
     layer_norm: bool = False,
+    n_heads: int = 1,
 ) -> list[nn.Module]:
     """
     Create a multi layer perceptron (MLP), which is
@@ -140,6 +141,7 @@ def create_mlp(
         output layer (output_dim > 0). The number of input features is passed to
         the module's constructor.
     :param layer_norm: whether to add layer norm after first layer.
+    :param n_heads: the number of output heads
     :return: The list of layers of the neural network
     """
 
@@ -181,7 +183,7 @@ def create_mlp(
         for module in pre_linear_modules:
             modules.append(module(last_layer_dim))
 
-        modules.append(nn.Linear(last_layer_dim, output_dim, bias=with_bias))
+        modules.append(nn.Linear(last_layer_dim, output_dim * n_heads, bias=with_bias))
     if squash_output:
         modules.append(nn.Tanh())
     return modules

@@ -35,6 +35,29 @@ from stable_baselines3.common.utils import get_device, is_vectorized_observation
 
 SelfBaseModel = TypeVar("SelfBaseModel", bound="BaseModel")
 
+def choose_head(out: th.Tensor, obs: th.Tensor, num_heads: int) -> th.Tensor:
+    """
+    For multi-head output, choose appropriate head.
+
+    We assume that task number is one-hot encoded as a part of observation.
+
+    :param out: multi-head output tensor from the model
+    :param obs: observation batch. We assume that last num_heads dims is one-hot encoding of task
+    :param num_heads: number of heads
+    :return th.Tensor: output for the appropriate head
+    """
+    batch_size = out.shape[0]
+
+    # 1. Unflatten to (Batch, Num_Heads, Features)
+    out = out.reshape(batch_size, num_heads, -1)
+
+    # 2. Get the index of the active head (0, 1, 2...)
+    # equivalent to argmax of the one-hot encoding
+    head_indices = obs[:, -num_heads:].argmax(dim=1)
+
+    # 3. Select the specific head for each batch item
+    # We use 'arange' for the batch dim and 'head_indices' for the head dim
+    return out[th.arange(batch_size), head_indices]
 
 class BaseModel(nn.Module):
     """
@@ -950,6 +973,7 @@ class ContinuousCritic(BaseModel):
         n_critics: int = 2,
         share_features_extractor: bool = True,
         layer_norm: bool = False,
+        n_heads: int = 1,
     ):
         super().__init__(
             observation_space,
@@ -963,9 +987,17 @@ class ContinuousCritic(BaseModel):
         self.layer_norm = layer_norm
         self.share_features_extractor = share_features_extractor
         self.n_critics = n_critics
+        self.n_heads = n_heads
         self.q_networks: list[nn.Module] = []
         for idx in range(n_critics):
-            q_net_list = create_mlp(features_dim + action_dim, 1, net_arch, activation_fn, layer_norm=layer_norm)
+            q_net_list = create_mlp(
+                features_dim + action_dim,
+                1,
+                net_arch,
+                activation_fn,
+                layer_norm=layer_norm,
+                n_heads=n_heads,
+            )
             q_net = nn.Sequential(*q_net_list)
             self.add_module(f"qf{idx}", q_net)
             self.q_networks.append(q_net)
@@ -976,7 +1008,13 @@ class ContinuousCritic(BaseModel):
         with th.set_grad_enabled(not self.share_features_extractor):
             features = self.extract_features(obs, self.features_extractor)
         qvalue_input = th.cat([features, actions], dim=1)
-        return tuple(q_net(qvalue_input) for q_net in self.q_networks)
+
+        final_out = []
+        for q_net in self.q_networks:
+            out = q_net(qvalue_input)
+            out = choose_head(out, obs, self.n_heads)
+            final_out.append(out)
+        return tuple(final_out)
 
     def q1_forward(self, obs: th.Tensor, actions: th.Tensor) -> th.Tensor:
         """

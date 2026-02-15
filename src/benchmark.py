@@ -1,7 +1,7 @@
 import numpy as np
 import metaworld
 from gymnasium.wrappers import TimeLimit
-from metaworld.wrappers import RandomTaskSelectWrapper
+from metaworld.wrappers import RandomTaskSelectWrapper, OneHotWrapper
 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 from stable_baselines3.common.type_aliases import GymEnv
 
@@ -13,6 +13,8 @@ def make_mt1(
     seed: int,
     render_mode: str | None = None,
     max_episode_step: int = 500,
+    task_ix: int = 0,
+    num_tasks: int = 1,
 ) -> GymEnv:
     saved_random_state = np.random.get_state()
     np.random.seed(1)
@@ -28,6 +30,7 @@ def make_mt1(
     tasks = mt1.train_tasks
 
     env = RandomTaskSelectWrapper(env, tasks)
+    env = OneHotWrapper(env, task_ix, num_tasks)
     env = TimeLimit(env, max_episode_steps=max_episode_step)
     env = SuccessToIsSuccess(env)
 
@@ -37,7 +40,7 @@ def make_mt1(
 
     return env
 
-def _make_vec_env(env_name: str, seed: int) -> GymEnv:
+def _make_vec_env(env_name: str, seed: int, task_ix: int, num_tasks: int) -> GymEnv:
     def make_env():
         return make_mt1(env_name, seed)
 
@@ -47,8 +50,10 @@ def _make_vec_env(env_name: str, seed: int) -> GymEnv:
     return env
 
 def make_benchmark(seed: int, benchmark: list[str]) -> tuple[list[GymEnv], list[GymEnv]]:
-    envs_train = [_make_vec_env(env, seed)      for env in benchmark]
-    envs_test  = [_make_vec_env(env, seed + 1)  for env in benchmark]
+    envs_train, envs_test = [], []
+    for i, env in enumerate(benchmark):
+        envs_train.append(_make_vec_env(env, seed, i, len(benchmark)))
+        envs_test.append(_make_vec_env(env, seed + 1, i, len(benchmark)))
 
     return envs_train, envs_test
 

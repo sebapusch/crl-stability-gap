@@ -5,7 +5,7 @@ from gymnasium import spaces
 from torch import nn
 
 from stable_baselines3.common.distributions import SquashedDiagGaussianDistribution, StateDependentNoiseDistribution
-from stable_baselines3.common.policies import BasePolicy, ContinuousCritic
+from stable_baselines3.common.policies import BasePolicy, ContinuousCritic, choose_head
 from stable_baselines3.common.preprocessing import get_action_dim
 from stable_baselines3.common.torch_layers import (
     BaseFeaturesExtractor,
@@ -62,6 +62,7 @@ class Actor(BasePolicy):
         clip_mean: float = 2.0,
         normalize_images: bool = True,
         layer_norm: bool = False,
+        n_heads: int = 1,
     ):
         super().__init__(
             observation_space,
@@ -81,9 +82,16 @@ class Actor(BasePolicy):
         self.use_expln = use_expln
         self.full_std = full_std
         self.clip_mean = clip_mean
+        self.n_heads = n_heads
 
         action_dim = get_action_dim(self.action_space)
-        latent_pi_net = create_mlp(features_dim, -1, net_arch, activation_fn, layer_norm=layer_norm)
+        latent_pi_net = create_mlp(
+            features_dim,
+            -1,
+            net_arch,
+            activation_fn,
+            layer_norm=layer_norm,
+        )
         self.latent_pi = nn.Sequential(*latent_pi_net)
         last_layer_dim = net_arch[-1] if len(net_arch) > 0 else features_dim
 
@@ -92,7 +100,10 @@ class Actor(BasePolicy):
                 action_dim, full_std=full_std, use_expln=use_expln, learn_features=True, squash_output=True
             )
             self.mu, self.log_std = self.action_dist.proba_distribution_net(
-                latent_dim=last_layer_dim, latent_sde_dim=last_layer_dim, log_std_init=log_std_init
+                latent_dim=last_layer_dim,
+                latent_sde_dim=last_layer_dim,
+                log_std_init=log_std_init,
+                n_heads=n_heads,
             )
             # Avoid numerical issues by limiting the mean of the Gaussian
             # to be in [-clip_mean, clip_mean]
@@ -100,8 +111,8 @@ class Actor(BasePolicy):
                 self.mu = nn.Sequential(self.mu, nn.Hardtanh(min_val=-clip_mean, max_val=clip_mean))
         else:
             self.action_dist = SquashedDiagGaussianDistribution(action_dim)  # type: ignore[assignment]
-            self.mu = nn.Linear(last_layer_dim, action_dim)
-            self.log_std = nn.Linear(last_layer_dim, action_dim)  # type: ignore[assignment]
+            self.mu = nn.Linear(last_layer_dim, action_dim * n_heads)
+            self.log_std = nn.Linear(last_layer_dim, action_dim * n_heads)  # type: ignore[assignment]
 
     def _get_constructor_parameters(self) -> dict[str, Any]:
         data = super()._get_constructor_parameters()
@@ -157,21 +168,28 @@ class Actor(BasePolicy):
         latent_pi = self.latent_pi(features)
         mean_actions = self.mu(latent_pi)
 
+        mean_actions = _choose_head(mean_actions, obs, self.n_heads)
+
         if self.use_sde:
-            return mean_actions, self.log_std, dict(latent_sde=latent_pi)
+            return mean_actions, self.log_std, dict(latent_sde=latent_pi) # type: ignore[operator]
+
         # Unstructured exploration (Original implementation)
         log_std = self.log_std(latent_pi)  # type: ignore[operator]
+        log_std = _choose_head(log_std, obs, self.n_heads)
+
         # Original Implementation to cap the standard deviation
         log_std = th.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
         return mean_actions, log_std, {}
 
     def forward(self, obs: PyTorchObs, deterministic: bool = False) -> th.Tensor:
         mean_actions, log_std, kwargs = self.get_action_dist_params(obs)
+
         # Note: the action is squashed
         return self.action_dist.actions_from_params(mean_actions, log_std, deterministic=deterministic, **kwargs)
 
     def action_log_prob(self, obs: PyTorchObs) -> tuple[th.Tensor, th.Tensor]:
         mean_actions, log_std, kwargs = self.get_action_dist_params(obs)
+
         # return action and associated log prob
         return self.action_dist.log_prob_from_params(mean_actions, log_std, **kwargs)
 
@@ -231,6 +249,7 @@ class SACPolicy(BasePolicy):
         n_critics: int = 2,
         share_features_extractor: bool = False,
         layer_norm: bool = False,
+        n_heads: int = 1,
     ):
         super().__init__(
             observation_space,
@@ -268,11 +287,13 @@ class SACPolicy(BasePolicy):
         self.actor_kwargs.update(sde_kwargs)
         self.actor_kwargs.update({
             'layer_norm': layer_norm,
+            'n_heads': n_heads,
         })
         self.critic_kwargs = self.net_args.copy()
         self.critic_kwargs.update({
             "n_critics": n_critics,
             'layer_norm': layer_norm,
+            'n_heads': n_heads,
             "net_arch": critic_arch,
             "share_features_extractor": share_features_extractor,
         })

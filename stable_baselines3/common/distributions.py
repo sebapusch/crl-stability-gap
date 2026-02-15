@@ -519,7 +519,7 @@ class StateDependentNoiseDistribution(Distribution):
         self.exploration_matrices = self.weights_dist.rsample((batch_size,))
 
     def proba_distribution_net(
-        self, latent_dim: int, log_std_init: float = -2.0, latent_sde_dim: int | None = None
+        self, latent_dim: int, log_std_init: float = -2.0, latent_sde_dim: int | None = None, n_heads: int = 1,
     ) -> tuple[nn.Module, nn.Parameter]:
         """
         Create the layers and parameter that represent the distribution:
@@ -530,15 +530,16 @@ class StateDependentNoiseDistribution(Distribution):
         :param log_std_init: Initial value for the log standard deviation
         :param latent_sde_dim: Dimension of the last layer of the features extractor
             for gSDE. By default, it is shared with the policy network.
+        :param n_heads: number of output heads
         :return:
         """
         # Network for the deterministic action, it represents the mean of the distribution
-        mean_actions_net = nn.Linear(latent_dim, self.action_dim)
+        mean_actions_net = nn.Linear(latent_dim, self.action_dim * n_heads)
         # When we learn features for the noise, the feature dimension
         # can be different between the policy and the noise network
         self.latent_sde_dim = latent_dim if latent_sde_dim is None else latent_sde_dim
         # Reduce the number of parameters if needed
-        log_std = th.ones(self.latent_sde_dim, self.action_dim) if self.full_std else th.ones(self.latent_sde_dim, 1)
+        log_std = th.ones(self.latent_sde_dim, self.action_dim * n_heads) if self.full_std else th.ones(self.latent_sde_dim, 1)
         # Transform it to a parameter so it can be optimized
         log_std = nn.Parameter(log_std * log_std_init, requires_grad=True)
         # Sample an exploration matrix

@@ -1,7 +1,7 @@
 import argparse
 from argparse import Namespace
 
-BENCHMARK = ['reach-v3', 'push-v3', 'peg-unplug-side-v3']
+BENCHMARK = ['reach-v3', 'hammer-v3', 'peg-unplug-side-v3']
 
 
 def get_args() -> Namespace:
@@ -43,10 +43,15 @@ def get_args() -> Namespace:
         default=15,
         type=int,
     )
-    parser.add_argument(                # In the continual_world paper the architecture is:
-        '--layer_norm',    # Input -> FC(256) -> LayerNorm -> FC(256) -> FC(256) -> FC(256)
-        default=True,                   # This argument controls whether to add layer norm
-        type=bool,                      # to our network.
+    parser.add_argument(                    # In the continual_world paper the architecture is:
+        '--layer_norm',        # Input -> FC(256) -> LayerNorm -> FC(256) -> FC(256) -> FC(256)
+        default=True,                       # This argument controls whether to add layer norm
+        type=bool,                          # to our network.
+    )
+    parser.add_argument(                    # if True: one output head per benchmark env
+        '--multi_head_output',
+        default=True,
+        type=bool,
     )
 
     return parser.parse_args()
