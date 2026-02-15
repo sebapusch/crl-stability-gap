@@ -16,9 +16,8 @@ from callbacks import make_callbacks
 
 def make_logger(run_name: str) -> Logger:
     csv_path = os.path.abspath(os.path.join(
-        __file__, '..', '..', 'outputs', f'{run_name}.csv')
+        __file__, '..', '..', 'output', f'{run_name}.csv')
     )
-    open(csv_path, 'a').close()
 
     return Logger(
         folder='../.logs',
