@@ -33,6 +33,7 @@ def make_model(
         run_name: str,
         device: str,
         lr: float = 1e-3,
+        seed: int = 42,
         batch_size: int = 128,
         learning_starts: int = 10_000,
         gamme: int = 0.99,
@@ -68,6 +69,7 @@ def make_model(
         gradient_steps=gradient_steps,
         tau=tau,
         ent_coef='auto',
+        seed=seed,
     )
 
     sac.set_logger(make_logger(run_name))
@@ -103,6 +105,7 @@ def main(
         layer_norm=layer_norm,
         lr=lr,
         multi_head_output=multi_head_output,
+        seed=seed,
     )
 
     callbacks = make_callbacks(
