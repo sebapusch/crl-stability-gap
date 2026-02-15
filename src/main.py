@@ -28,6 +28,7 @@ def make_logger(run_name: str) -> Logger:
         ],
     )
 
+
 def make_model(
         benchmark: list[GymEnv],
         run_name: str,
