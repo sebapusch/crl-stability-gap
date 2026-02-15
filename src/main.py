@@ -6,7 +6,6 @@ import wandb
 from stable_baselines3 import SAC
 from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.common.logger import Logger, HumanOutputFormat
-from gymnasium import Env
 
 from benchmark import make_benchmark
 from integration import WandbWriter
@@ -77,10 +76,10 @@ def main(
         layer_norm: bool,
         multi_head_output: bool,
 ) -> None:
-    # run = wandb.init(
-    #     project='test-crl',
-    #     monitor_gym=True,
-    # )
+    run = wandb.init(
+        project='test-crl',
+        monitor_gym=True,
+    )
 
     envs_train, envs_test = make_benchmark(seed, benchmark=benchmark)
     model = make_model(
