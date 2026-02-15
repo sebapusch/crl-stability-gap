@@ -75,9 +75,10 @@ def main(
         lr: float,
         layer_norm: bool,
         multi_head_output: bool,
+        wandb_project: str,
 ) -> None:
     run = wandb.init(
-        project='test-crl',
+        project=wandb_project,
         monitor_gym=True,
     )
 
