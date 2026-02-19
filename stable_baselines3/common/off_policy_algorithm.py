@@ -364,6 +364,9 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         """
         raise NotImplementedError()
 
+    def on_task_change(self, task_ix: int) -> None:
+        ...
+
     def _sample_action(
         self,
         learning_starts: int,
@@ -430,8 +433,7 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         self.logger.record("time/fps", fps)
         self.logger.record("time/time_elapsed", int(time_elapsed), exclude="tensorboard")
         self.logger.record("time/total_timesteps", self.num_timesteps, exclude="tensorboard")
-        if self.use_sde:
-            self.logger.record("train/std", (self.actor.get_std()).mean().item())  # type: ignore[operator]
+
 
         if len(self.ep_success_buffer) > 0:
             self.logger.record("rollout/success_rate", safe_mean(self.ep_success_buffer))

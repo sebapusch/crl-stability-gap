@@ -795,10 +795,6 @@ class BaseAlgorithm(ABC):
                 # See https://github.com/DLR-RM/stable-baselines3/issues/391
                 recursive_setattr(model, f"{name}.data", pytorch_variables[name].data)
 
-        # Sample gSDE exploration matrix, so it uses the right device
-        # see issue #44
-        if model.use_sde:
-            model.policy.reset_noise()  # type: ignore[operator]
         return model
 
     def get_parameters(self) -> dict[str, dict]:

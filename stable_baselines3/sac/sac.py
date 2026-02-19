@@ -219,10 +219,6 @@ class SAC(OffPolicyAlgorithm):
             # For n-step replay, discount factor is gamma**n_steps (when no early termination)
             discounts = replay_data.discounts if replay_data.discounts is not None else self.gamma
 
-            # We need to sample because `log_std` may have changed between two gradient steps
-            if self.use_sde:
-                self.actor.reset_noise()
-
             # Action by the current actor for the sampled state
             actions_pi, log_prob = self.actor.action_log_prob(replay_data.observations)
             log_prob = log_prob.reshape(-1, 1)

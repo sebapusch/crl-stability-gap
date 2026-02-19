@@ -55,7 +55,6 @@ class Actor(BasePolicy):
         features_extractor: nn.Module,
         features_dim: int,
         activation_fn: type[nn.Module] = nn.ReLU,
-        use_sde: bool = False,
         log_std_init: float = -3,
         full_std: bool = True,
         use_expln: bool = False,
@@ -73,7 +72,6 @@ class Actor(BasePolicy):
         )
 
         # Save arguments to re-create object at loading
-        self.use_sde = use_sde
         self.sde_features_extractor = None
         self.net_arch = net_arch
         self.features_dim = features_dim
@@ -93,26 +91,12 @@ class Actor(BasePolicy):
             layer_norm=layer_norm,
         )
         self.latent_pi = nn.Sequential(*latent_pi_net)
+
         last_layer_dim = net_arch[-1] if len(net_arch) > 0 else features_dim
 
-        if self.use_sde:
-            self.action_dist = StateDependentNoiseDistribution(
-                action_dim, full_std=full_std, use_expln=use_expln, learn_features=True, squash_output=True
-            )
-            self.mu, self.log_std = self.action_dist.proba_distribution_net(
-                latent_dim=last_layer_dim,
-                latent_sde_dim=last_layer_dim,
-                log_std_init=log_std_init,
-                n_heads=n_heads,
-            )
-            # Avoid numerical issues by limiting the mean of the Gaussian
-            # to be in [-clip_mean, clip_mean]
-            if clip_mean > 0.0:
-                self.mu = nn.Sequential(self.mu, nn.Hardtanh(min_val=-clip_mean, max_val=clip_mean))
-        else:
-            self.action_dist = SquashedDiagGaussianDistribution(action_dim)  # type: ignore[assignment]
-            self.mu = nn.Linear(last_layer_dim, action_dim * n_heads)
-            self.log_std = nn.Linear(last_layer_dim, action_dim * n_heads)  # type: ignore[assignment]
+        self.action_dist = SquashedDiagGaussianDistribution(action_dim)  # type: ignore[assignment]
+        self.mu = nn.Linear(last_layer_dim, action_dim * n_heads)
+        self.log_std = nn.Linear(last_layer_dim, action_dim * n_heads)  # type: ignore[assignment]
 
     def _get_constructor_parameters(self) -> dict[str, Any]:
         data = super()._get_constructor_parameters()
@@ -122,7 +106,6 @@ class Actor(BasePolicy):
                 net_arch=self.net_arch,
                 features_dim=self.features_dim,
                 activation_fn=self.activation_fn,
-                use_sde=self.use_sde,
                 log_std_init=self.log_std_init,
                 full_std=self.full_std,
                 use_expln=self.use_expln,
@@ -131,30 +114,6 @@ class Actor(BasePolicy):
             )
         )
         return data
-
-    def get_std(self) -> th.Tensor:
-        """
-        Retrieve the standard deviation of the action distribution.
-        Only useful when using gSDE.
-        It corresponds to ``th.exp(log_std)`` in the normal case,
-        but is slightly different when using ``expln`` function
-        (cf StateDependentNoiseDistribution doc).
-
-        :return:
-        """
-        msg = "get_std() is only available when using gSDE"
-        assert isinstance(self.action_dist, StateDependentNoiseDistribution), msg
-        return self.action_dist.get_std(self.log_std)
-
-    def reset_noise(self, batch_size: int = 1) -> None:
-        """
-        Sample new weights for the exploration matrix, when using gSDE.
-
-        :param batch_size:
-        """
-        msg = "reset_noise() is only available when using gSDE"
-        assert isinstance(self.action_dist, StateDependentNoiseDistribution), msg
-        self.action_dist.sample_weights(self.log_std, batch_size=batch_size)
 
     def get_action_dist_params(self, obs: PyTorchObs) -> tuple[th.Tensor, th.Tensor, dict[str, th.Tensor]]:
         """
@@ -169,9 +128,6 @@ class Actor(BasePolicy):
         mean_actions = self.mu(latent_pi)
 
         mean_actions = choose_head(mean_actions, obs, self.n_heads)
-
-        if self.use_sde:
-            return mean_actions, self.log_std, dict(latent_sde=latent_pi) # type: ignore[operator]
 
         # Unstructured exploration (Original implementation)
         log_std = self.log_std(latent_pi)  # type: ignore[operator]

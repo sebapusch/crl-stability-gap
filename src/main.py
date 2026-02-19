@@ -1,9 +1,12 @@
 import os
 import sys
+from re import match
 from typing import Any
 
 import torch.cuda
 import wandb
+
+from continualworld.methods.ewc import EWC_SAC
 from stable_baselines3 import SAC
 from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.common.logger import Logger, HumanOutputFormat, CSVOutputFormat
@@ -33,6 +36,8 @@ def make_model(
         benchmark: list[GymEnv],
         run_name: str,
         device: str,
+        method: str = 'fine-tune',
+        lambda_: float = 0.5,                               # parameter for EWC
         lr: float = 1e-3,
         seed: int = 42,
         batch_size: int = 128,
@@ -56,7 +61,7 @@ def make_model(
     if multi_head_output and len(benchmark) > 1:
         policy_kwargs['n_heads'] = len(benchmark)
 
-    sac = SAC(
+    default_kwargs = dict(
         policy='MlpPolicy',
         policy_kwargs=policy_kwargs,
         env=benchmark[0],
@@ -73,9 +78,20 @@ def make_model(
         seed=seed,
     )
 
-    sac.set_logger(make_logger(run_name))
+    match method:
+        case 'fine-tune':
+            model = SAC(**default_kwargs)
+        case 'ewc':
+            model = EWC_SAC(
+                lambda_=lambda_,
+                **default_kwargs,
+            )
+        case _:
+            raise ValueError(f'invalid method {method}')
 
-    return sac
+    model.set_logger(make_logger(run_name))
+
+    return model
 
 
 def main(
@@ -118,14 +134,16 @@ def main(
         eval_all=True,
     )
 
-    for i, env in enumerate(envs_train):
+    for task_ix, env in enumerate(envs_train):
         model.set_env(env)
+        model.on_task_change(task_ix)
+
         model.replay_buffer.reset()
         model.reset_optim()
         model.learn(
             total_timesteps=total_timesteps,
             reset_num_timesteps=False,
-            callback=callbacks(i),
+            callback=callbacks(task_ix),
         )
 
         env.close()

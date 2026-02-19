@@ -581,15 +581,6 @@ class ActorCriticPolicy(BasePolicy):
         )
         return data
 
-    def reset_noise(self, n_envs: int = 1) -> None:
-        """
-        Sample new weights for the exploration matrix.
-
-        :param n_envs:
-        """
-        assert isinstance(self.action_dist, StateDependentNoiseDistribution), "reset_noise() is only available when using gSDE"
-        self.action_dist.sample_weights(self.log_std, batch_size=n_envs)
-
     def _build_mlp_extractor(self) -> None:
         """
         Create the policy and value networks.
@@ -988,19 +979,29 @@ class ContinuousCritic(BaseModel):
         self.share_features_extractor = share_features_extractor
         self.n_critics = n_critics
         self.n_heads = n_heads
-        self.q_networks: list[nn.Module] = []
+
+        input_dim = features_dim + action_dim
+        last_layer_dim = net_arch[-1] if len(net_arch) > 0 else input_dim
+
+        self.q_networks_core: list[nn.Module] = []
+        self.q_networks_head: list[nn.Module] = []
+
         for idx in range(n_critics):
             q_net_list = create_mlp(
-                features_dim + action_dim,
-                1,
+                input_dim,
+                -1,
                 net_arch,
                 activation_fn,
                 layer_norm=layer_norm,
-                n_heads=n_heads,
             )
-            q_net = nn.Sequential(*q_net_list)
-            self.add_module(f"qf{idx}", q_net)
-            self.q_networks.append(q_net)
+            q_net_core = nn.Sequential(*q_net_list)
+            q_net_head = nn.Linear(last_layer_dim, n_heads)
+
+            self.add_module(f"qfc{idx}", q_net_core)
+            self.add_module(f"qfh{idx}", q_net_head)
+
+            self.q_networks_core.append(q_net_core)
+            self.q_networks_head.append(q_net_head)
 
     def forward(self, obs: th.Tensor, actions: th.Tensor) -> tuple[th.Tensor, ...]:
         # Learn the features extractor using the policy loss only
@@ -1010,10 +1011,13 @@ class ContinuousCritic(BaseModel):
         qvalue_input = th.cat([features, actions], dim=1)
 
         final_out = []
-        for q_net in self.q_networks:
-            out = q_net(qvalue_input)
-            out = choose_head(out, obs, self.n_heads)
-            final_out.append(out)
+        for q_net_core, q_net_head in zip(self.q_networks_core, self.q_networks_head):
+            x = q_net_core(qvalue_input)
+            x = q_net_head(x)
+            x = choose_head(x, obs, self.n_heads)
+
+            final_out.append(x)
+
         return tuple(final_out)
 
     def q1_forward(self, obs: th.Tensor, actions: th.Tensor) -> th.Tensor:
@@ -1024,4 +1028,9 @@ class ContinuousCritic(BaseModel):
         """
         with th.no_grad():
             features = self.extract_features(obs, self.features_extractor)
-        return self.q_networks[0](th.cat([features, actions], dim=1))
+
+        x = self.q_networks_core[0](th.cat([features, actions], dim=1))
+        x = self.q_networks_head[0](x)
+        x = choose_head(x, obs, self.n_heads)
+
+        return x

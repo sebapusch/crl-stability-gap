@@ -2,6 +2,7 @@ import argparse
 from argparse import Namespace
 
 BENCHMARK = ['reach-v3', 'hammer-v3', 'peg-unplug-side-v3']
+METHODS   = ['fine-tune', 'ewc']
 
 
 def get_args() -> Namespace:
@@ -63,5 +64,12 @@ def get_args() -> Namespace:
         default=None,
         type=str,
     )
+    parser.add_argument(
+        '--method',
+        default='fine-tune',
+        choices=METHODS,
+        type=str,
+    )
+
 
     return parser.parse_args()
