@@ -1,6 +1,7 @@
 from typing import Any, ClassVar, TypeVar
 
 import numpy as np
+import torch
 import torch as th
 from gymnasium import spaces
 from torch.nn import functional as F
@@ -199,7 +200,10 @@ class SAC(OffPolicyAlgorithm):
         self.critic = self.policy.critic
         self.critic_target = self.policy.critic_target
 
-    def train(self, gradient_steps: int, batch_size: int = 64) -> None:
+    def get_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
+        return torch.zeros([])
+
+    def train(self, gradient_steps: int, batch_size: int = 64, task_ix: int = 0) -> None:
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
         # Update optimizers learning rate
@@ -212,6 +216,7 @@ class SAC(OffPolicyAlgorithm):
 
         ent_coef_losses, ent_coefs = [], []
         actor_losses, critic_losses = [], []
+        aux_loss = torch.zeros([])
 
         for gradient_step in range(gradient_steps):
             # Sample replay buffer
@@ -264,11 +269,6 @@ class SAC(OffPolicyAlgorithm):
             assert isinstance(critic_loss, th.Tensor)  # for type checker
             critic_losses.append(critic_loss.item())  # type: ignore[union-attr]
 
-            # Optimize the critic
-            self.critic.optimizer.zero_grad()
-            critic_loss.backward()
-            self.critic.optimizer.step()
-
             # Compute actor loss
             # Alternative: actor_loss = th.mean(log_prob - qf1_pi)
             # Min over all critic networks
@@ -276,6 +276,16 @@ class SAC(OffPolicyAlgorithm):
             min_qf_pi, _ = th.min(q_values_pi, dim=1, keepdim=True)
             actor_loss = (ent_coef * log_prob - min_qf_pi).mean()
             actor_losses.append(actor_loss.item())
+
+            # Regularization
+            aux_loss = self.get_auxiliary_loss(task_ix)
+            critic_loss += aux_loss
+            actor_loss  += aux_loss
+
+            # Optimize the critic
+            self.critic.optimizer.zero_grad()
+            critic_loss.backward()
+            self.critic.optimizer.step()
 
             # Optimize the actor
             self.actor.optimizer.zero_grad()
@@ -294,6 +304,7 @@ class SAC(OffPolicyAlgorithm):
         self.logger.record("train/ent_coef", np.mean(ent_coefs))
         self.logger.record("train/actor_loss", np.mean(actor_losses))
         self.logger.record("train/critic_loss", np.mean(critic_losses))
+        self.logger.record('train/reg_loss', aux_loss)
         if len(ent_coef_losses) > 0:
             self.logger.record("train/ent_coef_loss", np.mean(ent_coef_losses))
 
@@ -305,6 +316,7 @@ class SAC(OffPolicyAlgorithm):
         tb_log_name: str = "SAC",
         reset_num_timesteps: bool = True,
         progress_bar: bool = False,
+        task_ix: int = 0,
     ) -> SelfSAC:
         return super().learn(
             total_timesteps=total_timesteps,
@@ -313,6 +325,7 @@ class SAC(OffPolicyAlgorithm):
             tb_log_name=tb_log_name,
             reset_num_timesteps=reset_num_timesteps,
             progress_bar=progress_bar,
+            task_ix=task_ix,
         )
 
     def reset_optim(self) -> None:
