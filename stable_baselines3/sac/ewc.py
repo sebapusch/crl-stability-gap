@@ -125,8 +125,12 @@ class SAC_EWC(SAC):
                 single_obs: torch.Tensor,
                 single_action: torch.Tensor,
         ) -> torch.Tensor:
-            obs_b, act_b = single_obs.unsqueeze(0), single_action.unsqueeze(0)
-            features = functional_call(self.critic.q_networks_core[0], params, (obs_b, act_b))
+            obs_b, actions_b = single_obs.unsqueeze(0), single_action.unsqueeze(0)
+            with torch.no_grad():
+                features = self.critic.extract_features(obs_b, self.critic.features_extractor)
+                qvalue_input = torch.cat([features, actions_b], dim=1)
+
+            features = functional_call(self.critic.q_networks_core[0], params, (qvalue_input,))
             q = self.critic.q_networks_head[0](features)
             return q.squeeze(0)
 
@@ -135,8 +139,12 @@ class SAC_EWC(SAC):
                 single_obs: torch.Tensor,
                 single_action: torch.Tensor,
         ) -> torch.Tensor:
-            obs_b, act_b = single_obs.unsqueeze(0), single_action.unsqueeze(0)
-            features = functional_call(self.critic.q_networks_core[1], params, (obs_b, act_b))
+            obs_b, actions_b = single_obs.unsqueeze(0), single_action.unsqueeze(0)
+            with torch.no_grad():
+                features = self.critic.extract_features(obs_b, self.critic.features_extractor)
+                qvalue_input = torch.cat([features, actions_b], dim=1)
+
+            features = functional_call(self.critic.q_networks_core[1], params, (qvalue_input,))
             q = self.critic.q_networks_head[1](features)
             return q.squeeze(0)
 
