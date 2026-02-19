@@ -30,9 +30,9 @@ def make_mt1(
     tasks = mt1.train_tasks
 
     env = RandomTaskSelectWrapper(env, tasks)
-    env = OneHotWrapper(env, task_ix, num_tasks)
     env = TimeLimit(env, max_episode_steps=max_episode_step)
     env = SuccessToIsSuccess(env)
+    env = OneHotWrapper(env, task_ix, num_tasks)
 
     env.reset(seed=seed)
     env.action_space.seed(seed)
