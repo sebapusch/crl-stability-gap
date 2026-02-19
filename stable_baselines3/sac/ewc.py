@@ -1,7 +1,5 @@
-from typing import Iterator
-
 import torch
-from torch.func import functional_call, vmap, jacrev
+from torch.func import functional_call, vmap, grad
 
 from stable_baselines3 import SAC
 from stable_baselines3.common.type_aliases import ReplayBufferSamples
@@ -100,79 +98,111 @@ class SAC_EWC(SAC):
         obs = samples.observations
         actions = samples.actions
 
+        # 1. Forward pass for the required 'std' output and to determine action dimensions
         with torch.no_grad():
             actor_features = self.actor.latent_pi(obs)
             log_std = self.actor.log_std(actor_features)
             std_standard = torch.exp(log_std)
 
-        # isolate params
+        action_dim = std_standard.shape[-1]
+
+        # 2. Isolate params for functional calls
         actor_params = dict(self.actor.latent_pi.named_parameters())
         critic1_params = dict(self.critic.q_networks_core[0].named_parameters())
         critic2_params = dict(self.critic.q_networks_core[1].named_parameters())
 
-        # setup functional wrappers for vectorized jacobians
-        def actor_mu_std_fn(
-                params: dict[str, torch.Tensor], single_obs: torch.Tensor
-        ) -> tuple[torch.Tensor, torch.Tensor]:
+        # -------------------------------------------------------------------------
+        # 3. Setup Scalar-Output Functional Wrappers
+        # By outputting a scalar (e.g., a specific action index), grad() natively
+        # returns vectors of shape [P] instead of massive Jacobian matrices.
+        # -------------------------------------------------------------------------
+        def actor_mu_k_fn(params: dict[str, torch.Tensor], single_obs: torch.Tensor, k: int) -> torch.Tensor:
             obs_b = single_obs.unsqueeze(0)
             features = functional_call(self.actor.latent_pi, params, (obs_b,))
-            mu_b, log_std_b = self.actor.mu(features), self.actor.log_std(features)
+            mu_b = self.actor.mu(features)
+            return mu_b[0, k]
 
-            return mu_b.squeeze(0), torch.exp(log_std_b.squeeze(0))
+        def actor_std_k_fn(params: dict[str, torch.Tensor], single_obs: torch.Tensor, k: int) -> torch.Tensor:
+            obs_b = single_obs.unsqueeze(0)
+            features = functional_call(self.actor.latent_pi, params, (obs_b,))
+            log_std_b = self.actor.log_std(features)
+            return torch.exp(log_std_b)[0, k]
 
         def critic1_fn(
-                params: dict[str, torch.Tensor],
-                single_obs: torch.Tensor,
-                single_action: torch.Tensor,
+                params: dict[str, torch.Tensor], single_obs: torch.Tensor, single_act: torch.Tensor
         ) -> torch.Tensor:
-            obs_b, actions_b = single_obs.unsqueeze(0), single_action.unsqueeze(0)
+            obs_b, act_b = single_obs.unsqueeze(0), single_act.unsqueeze(0)
+            # Prevent graph accumulation in the feature extractor during mapping
             with torch.no_grad():
                 features = self.critic.extract_features(obs_b, self.critic.features_extractor)
-                qvalue_input = torch.cat([features, actions_b], dim=1)
+                q_in = torch.cat([features, act_b], dim=1)
 
-            features = functional_call(self.critic.q_networks_core[0], params, (qvalue_input,))
-            q = self.critic.q_networks_head[0](features)
-            return q.squeeze(0)
+            features_core = functional_call(self.critic.q_networks_core[0], params, (q_in,))
+            q = self.critic.q_networks_head[0](features_core)
+            return q[0, 0]
 
         def critic2_fn(
-                params: dict[str, torch.Tensor],
-                single_obs: torch.Tensor,
-                single_action: torch.Tensor,
+                params: dict[str, torch.Tensor], single_obs: torch.Tensor, single_act: torch.Tensor
         ) -> torch.Tensor:
-            obs_b, actions_b = single_obs.unsqueeze(0), single_action.unsqueeze(0)
+            obs_b, act_b = single_obs.unsqueeze(0), single_act.unsqueeze(0)
             with torch.no_grad():
                 features = self.critic.extract_features(obs_b, self.critic.features_extractor)
-                qvalue_input = torch.cat([features, actions_b], dim=1)
+                q_in = torch.cat([features, act_b], dim=1)
 
-            features = functional_call(self.critic.q_networks_core[1], params, (qvalue_input,))
-            q = self.critic.q_networks_head[1](features)
-            return q.squeeze(0)
+            features_core = functional_call(self.critic.q_networks_core[1], params, (q_in,))
+            q = self.critic.q_networks_head[1](features_core)
+            return q[0, 0]
 
-        # Compute Per-Sample Jacobians using vmap + jacrev
-        batched_actor_jac_fn = vmap(jacrev(actor_mu_std_fn, argnums=0), in_dims=(None, 0))
-        actor_mu_gs, actor_std_gs = batched_actor_jac_fn(actor_params, obs)
+        # -------------------------------------------------------------------------
+        # 4. Vectorized Gradient Execution (Empirical & Analytic Fisher)
+        # -------------------------------------------------------------------------
+        # Critics: Just square the gradients and mean across the batch dimension.
+        batched_q1_grad = vmap(grad(critic1_fn, argnums=0), in_dims=(None, 0, 0))
+        q1_grads = batched_q1_grad(critic1_params, obs, actions)
+        q1_fisher = {name: g.pow(2).mean(dim=0) for name, g in q1_grads.items()}
 
-        batched_q1_jac_fn = vmap(jacrev(critic1_fn, argnums=0), in_dims=(None, 0, 0))
-        q1_gs = batched_q1_jac_fn(critic1_params, obs, actions)
+        batched_q2_grad = vmap(grad(critic2_fn, argnums=0), in_dims=(None, 0, 0))
+        q2_grads = batched_q2_grad(critic2_params, obs, actions)
+        q2_fisher = {name: g.pow(2).mean(dim=0) for name, g in q2_grads.items()}
 
-        batched_q2_jac_fn = vmap(jacrev(critic2_fn, argnums=0), in_dims=(None, 0, 0))
-        q2_gs = batched_q2_jac_fn(critic2_params, obs, actions)
+        # Actor: Accumulate across the action dimension sequentially.
+        actor_mu_fisher = {name: torch.zeros_like(p) for name, p in actor_params.items()}
+        actor_std_fisher = {name: torch.zeros_like(p) for name, p in actor_params.items()}
 
-        def compute_fisher_diagonal_trace(jac_dict: dict[str, torch.Tensor]) -> torch.Tensor:
-            trace = 0.0
-            for param_name, jac in jac_dict.items():
-                j_flat = jac.view(jac.shape[0], -1)
-                trace += j_flat.pow(2).sum(dim=1)
-            return trace
+        for k in range(action_dim):
+            # We explicitly bind `k` in the closure arguments to avoid Python late-binding loop bugs
+            def curr_mu_fn(p, o, k_idx=k):
+                return actor_mu_k_fn(p, o, k_idx)
+
+            def curr_std_fn(p, o, k_idx=k):
+                return actor_std_k_fn(p, o, k_idx)
+
+            batched_mu_grad = vmap(grad(curr_mu_fn, argnums=0), in_dims=(None, 0))
+            mu_grads_k = batched_mu_grad(actor_params, obs)
+
+            batched_std_grad = vmap(grad(curr_std_fn, argnums=0), in_dims=(None, 0))
+            std_grads_k = batched_std_grad(actor_params, obs)
+
+            # Accumulate squared gradients
+            for name in actor_params:
+                actor_mu_fisher[name] += mu_grads_k[name].pow(2).mean(dim=0)
+                actor_std_fisher[name] += std_grads_k[name].pow(2).mean(dim=0)
+
+        # -------------------------------------------------------------------------
+        # 5. Type-Hint Enforcement & Return
+        # -------------------------------------------------------------------------
+        # flatten and concatenate the dictionaries into 1D vectors per network.
+
+        def flatten_fisher(fisher_dict: dict[str, torch.Tensor]) -> torch.Tensor:
+            return torch.cat([f.flatten() for f in fisher_dict.values()])
 
         return (
-            compute_fisher_diagonal_trace(actor_mu_gs),
-            compute_fisher_diagonal_trace(actor_std_gs),
-            compute_fisher_diagonal_trace(q1_gs),
-            compute_fisher_diagonal_trace(q2_gs),
+            flatten_fisher(actor_mu_fisher),
+            flatten_fisher(actor_std_fisher),
+            flatten_fisher(q1_fisher),
+            flatten_fisher(q2_fisher),
             std_standard,
         )
-
 
 
 
