@@ -1,3 +1,5 @@
+import gc
+
 import torch
 from torch.func import functional_call, vmap, grad
 
@@ -72,17 +74,37 @@ class SAC_EWC(SAC):
             old_weight.data.copy_(new_weight)
 
     def _update_reg_weights(self, n_batches: int = 10, batch_size: int = 256) -> None:
-        all_weights = []
+        running_mean_weights = [torch.zeros_like(p, device='cpu') for p in self.old_params]
+
         for batch_ix in range(n_batches):
             batch = self.replay_buffer.sample(batch_size)
-            all_weights.append(self._get_importance_weights(batch))
 
-        mean_weights = []
-        for weights in zip(*all_weights):
-            stacked = torch.stack(weights)
-            mean_weights.append(torch.mean(stacked, dim=0))
+            # 1. Get the flat importance weights (and drop the std output we don't need here)
+            actor_mu_f, actor_std_f, q1_f, q2_f, _ = self._get_importance_weights(batch)
 
-        self._merge_reg_weights(mean_weights)
+            # 2. Combine EWC actor components
+            actor_f = (actor_mu_f + actor_std_f).detach()
+            q1_f = q1_f.detach()
+            q2_f = q2_f.detach()
+
+            # Combine all flat vectors in the exact order of self.shared_params
+            flat_batch_weights = torch.cat([actor_f, q1_f, q2_f])
+
+            # 3. Unflatten and accumulate as a running average
+            idx = 0
+            for i, p in enumerate(self.old_params):
+                numel = p.numel()
+                # Extract the chunk, reshape it to the parameter shape, and add
+                param_weight = flat_batch_weights[idx: idx + numel].view_as(p)
+                running_mean_weights[i] += (param_weight / n_batches)
+                idx += numel
+
+            # 4. Aggressively free memory before the next batch
+            del batch, actor_mu_f, actor_std_f, q1_f, q2_f, actor_f, flat_batch_weights
+            gc.collect()
+
+        # Apply to your existing merge function
+        self._merge_reg_weights(running_mean_weights)
 
     def _get_importance_weights(
             self, samples: ReplayBufferSamples,
