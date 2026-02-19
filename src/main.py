@@ -36,7 +36,7 @@ def make_model(
         run_name: str,
         device: str,
         method: str = 'fine-tune',
-        lambda_: float = 0.5,                               # parameter for EWC
+        ewc_lambda: float = 10_000.0,
         lr: float = 1e-3,
         seed: int = 42,
         batch_size: int = 128,
@@ -82,7 +82,7 @@ def make_model(
             model = SAC(**default_kwargs)
         case 'ewc':
             model = SAC_EWC(
-                lambda_=lambda_,
+                lambda_=ewc_lambda,
                 **default_kwargs,
             )
         case _:
@@ -106,6 +106,7 @@ def main(
         multi_head_output: bool,
         wandb_project: str,
         wandb_name: str | None,
+        ewc_lambda: float,
 ) -> None:
     run = wandb.init(
         name=wandb_name,
@@ -124,6 +125,7 @@ def main(
         lr=lr,
         multi_head_output=multi_head_output,
         seed=seed,
+        ewc_lambda=ewc_lambda,
     )
 
     callbacks = make_callbacks(

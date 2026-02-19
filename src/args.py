@@ -70,6 +70,10 @@ def get_args() -> Namespace:
         choices=METHODS,
         type=str,
     )
-
+    parser.add_argument(
+        '--ewc_lambda',
+        default=10_000,
+        type=float,
+    )
 
     return parser.parse_args()
