@@ -98,6 +98,7 @@ def main(
         method: str,
         seed: int,
         total_timesteps: int,
+        learning_starts: int,
         video_freq: int,
         eval_freq: int,
         n_eval_episodes: int,
@@ -118,6 +119,7 @@ def main(
     model = make_model(
         envs_train,
         method=method,
+        learning_starts=learning_starts,
         run_name=run.name,
         device='cuda' if torch.cuda.is_available() else 'cpu',
         net_arch=[256, 256, 256, 256],

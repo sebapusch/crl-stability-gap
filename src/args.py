@@ -25,6 +25,11 @@ def get_args() -> Namespace:
         type=int,
     )
     parser.add_argument(
+        '--learning_starts',
+        default=10_000,
+        type=int,
+    )
+    parser.add_argument(
         '--video_freq',
         default=20_000,
         type=int,
