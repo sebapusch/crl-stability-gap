@@ -40,7 +40,7 @@ def get_args() -> Namespace:
         type=float,
     )
     parser.add_argument(
-        '--n_eval_episodes',
+        '--n_eval_episodes',  # how many episodes to run for the evaluation rounds
         default=15,
         type=int,
     )

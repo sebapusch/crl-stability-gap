@@ -235,7 +235,6 @@ class SACPolicy(BasePolicy):
         self.actor_kwargs = self.net_args.copy()
 
         sde_kwargs = {
-            "use_sde": use_sde,
             "log_std_init": log_std_init,
             "use_expln": use_expln,
             "clip_mean": clip_mean,

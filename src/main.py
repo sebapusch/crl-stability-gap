@@ -1,13 +1,12 @@
 import os
 import sys
-from re import match
 from typing import Any
 
 import torch.cuda
 import wandb
 
-from continualworld.methods.ewc import EWC_SAC
 from stable_baselines3 import SAC
+from stable_baselines3.sac.ewc import SAC_EWC
 from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.common.logger import Logger, HumanOutputFormat, CSVOutputFormat
 
@@ -82,7 +81,7 @@ def make_model(
         case 'fine-tune':
             model = SAC(**default_kwargs)
         case 'ewc':
-            model = EWC_SAC(
+            model = SAC_EWC(
                 lambda_=lambda_,
                 **default_kwargs,
             )
@@ -96,6 +95,7 @@ def make_model(
 
 def main(
         benchmark: list[str],
+        method: str,
         seed: int,
         total_timesteps: int,
         video_freq: int,
@@ -116,6 +116,7 @@ def main(
     envs_train, envs_test = make_benchmark(seed, benchmark=benchmark)
     model = make_model(
         envs_train,
+        method=method,
         run_name=run.name,
         device='cuda' if torch.cuda.is_available() else 'cpu',
         net_arch=[256, 256, 256, 256],
