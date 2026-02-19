@@ -34,8 +34,6 @@ def make_mt1(
     env = SuccessToIsSuccess(env)
     env = OneHotWrapper(env, task_ix, num_tasks)
 
-    env.env.observation_space = env.observation_space
-
     env.reset(seed=seed)
     env.action_space.seed(seed)
     env.observation_space.seed(seed)

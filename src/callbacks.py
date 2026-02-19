@@ -34,11 +34,11 @@ def make_callbacks(
         callbacks: list[BaseCallback] = [wandb_callback]
 
         if video_freq > 0:
+            video_env = make_mt1(
+                benchmark[env_ix], seed=42, render_mode='rgb', task_ix=env_ix, num_tasks=len(envs_test)
+            )
             callbacks.append(
-                RegisterVideoCallback(
-                    video_freq,
-                    benchmark[env_ix],
-                ),
+                RegisterVideoCallback(video_freq, video_env),
             )
 
         rng = range(len(benchmark) if eval_all else env_ix + 1 )
@@ -163,9 +163,9 @@ class EnvEvalCallback(EventCallback):
 
 
 class RegisterVideoCallback(EventCallback):
-    def __init__(self, frequency: int, env_name: str, seed: int = 1):
+    def __init__(self, frequency: int, env: GymEnv, seed: int = 1):
         self.frequency = frequency
-        self.env = make_mt1(env_name, seed, 'rgb_array')
+        self.env = env
         self.seed = seed
 
         super().__init__()
