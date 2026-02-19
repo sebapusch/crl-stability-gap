@@ -264,30 +264,35 @@ class SAC(OffPolicyAlgorithm):
             # using action from the replay buffer
             current_q_values = self.critic(replay_data.observations, replay_data.actions)
 
-            # Compute critic loss
+            # ==========================================
+            # 1. OPTIMIZE CRITIC
+            # ==========================================
+            # Compute standard critic loss
             critic_loss = 0.5 * sum(F.mse_loss(current_q, target_q_values) for current_q in current_q_values)
-            assert isinstance(critic_loss, th.Tensor)  # for type checker
-            critic_losses.append(critic_loss.item())  # type: ignore[union-attr]
+            assert isinstance(critic_loss, th.Tensor)
+            critic_losses.append(critic_loss.item())
 
-            # Compute actor loss
-            # Alternative: actor_loss = th.mean(log_prob - qf1_pi)
-            # Min over all critic networks
+            # Add isolated regularization for the critic's backward pass
+            critic_aux_loss = self.get_auxiliary_loss(task_ix)
+            critic_loss += critic_aux_loss
+
+            self.critic.optimizer.zero_grad()
+            critic_loss.backward()
+            self.critic.optimizer.step()
+
+            # ==========================================
+            # 2. OPTIMIZE ACTOR
+            # ==========================================
+            # IMPORTANT: Compute actor loss NOW, using the updated critic weights
             q_values_pi = th.cat(self.critic(replay_data.observations, actions_pi), dim=1)
             min_qf_pi, _ = th.min(q_values_pi, dim=1, keepdim=True)
             actor_loss = (ent_coef * log_prob - min_qf_pi).mean()
             actor_losses.append(actor_loss.item())
 
-            # Regularization
-            aux_loss = self.get_auxiliary_loss(task_ix)
-            critic_loss += aux_loss
-            actor_loss  += aux_loss
+            # Add isolated regularization for the actor's backward pass
+            actor_aux_loss = self.get_auxiliary_loss(task_ix)
+            actor_loss += actor_aux_loss
 
-            # Optimize the critic
-            self.critic.optimizer.zero_grad()
-            critic_loss.backward()
-            self.critic.optimizer.step()
-
-            # Optimize the actor
             self.actor.optimizer.zero_grad()
             actor_loss.backward()
             self.actor.optimizer.step()
@@ -304,7 +309,7 @@ class SAC(OffPolicyAlgorithm):
         self.logger.record("train/ent_coef", np.mean(ent_coefs))
         self.logger.record("train/actor_loss", np.mean(actor_losses))
         self.logger.record("train/critic_loss", np.mean(critic_losses))
-        self.logger.record('train/reg_loss', aux_loss)
+        self.logger.record('train/reg_loss', float(aux_loss))
         if len(ent_coef_losses) > 0:
             self.logger.record("train/ent_coef_loss", np.mean(ent_coef_losses))
 
