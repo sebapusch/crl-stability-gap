@@ -35,7 +35,7 @@ def make_callbacks(
 
         if video_freq > 0:
             video_env = make_mt1(
-                benchmark[env_ix], seed=42, render_mode='rgb', task_ix=env_ix, num_tasks=len(envs_test)
+                benchmark[env_ix], seed=42, render_mode='rgb_array', task_ix=env_ix, num_tasks=len(envs_test)
             )
             callbacks.append(
                 RegisterVideoCallback(video_freq, video_env),
