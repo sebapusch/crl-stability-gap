@@ -149,6 +149,7 @@ def main(
             total_timesteps=total_timesteps,
             reset_num_timesteps=False,
             callback=callbacks(task_ix),
+            task_ix=task_ix,
         )
 
         env.close()
