@@ -142,9 +142,9 @@ def main(
     for task_ix, env in enumerate(envs_train):
         model.set_env(env)
         model.on_task_change(task_ix)
-
         model.replay_buffer.reset()
         model.reset_optim()
+
         model.learn(
             total_timesteps=total_timesteps,
             reset_num_timesteps=False,

@@ -19,12 +19,13 @@ class SAC_EWC(SAC):
     def get_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
         return self._regression_loss(task_ix)
 
-
     def on_task_change(self, task_ix: int) -> None:
-        if task_ix > 0:
-            for old_weight, new_weight in zip(self.old_params, self.shared_params):
-                old_weight.data.copy_(new_weight)
-            self._update_reg_weights()
+        if task_ix == 0:
+            return
+
+        for old_weight, new_weight in zip(self.old_params, self.shared_params):
+            old_weight.data.copy_(new_weight)
+        self._update_reg_weights()
 
     def _regression_loss(self, task_ix: int) -> torch.Tensor:
         if task_ix < 1:
@@ -74,13 +75,13 @@ class SAC_EWC(SAC):
             old_weight.data.copy_(new_weight)
 
     def _update_reg_weights(self, n_batches: int = 10, batch_size: int = 256) -> None:
-        running_mean_weights = [torch.zeros_like(p, device='cpu') for p in self.old_params]
+        running_mean_weights = [torch.zeros_like(p, device='cpu') for p in self.old_params]     #@todo properly handle device
 
         for batch_ix in range(n_batches):
             batch = self.replay_buffer.sample(batch_size)
 
-            # 1. Get the flat importance weights (and drop the std output we don't need here)
-            actor_mu_f, actor_std_f, q1_f, q2_f, _ = self._get_importance_weights(batch)
+            # 1. Get the flat importance weights
+            actor_mu_f, actor_std_f, q1_f, q2_f = self._get_importance_weights(batch)
 
             # 2. Combine EWC actor components
             actor_f = (actor_mu_f + actor_std_f).detach()
@@ -109,7 +110,6 @@ class SAC_EWC(SAC):
     def _get_importance_weights(
             self, samples: ReplayBufferSamples,
     ) -> tuple[
-        torch.Tensor,
         torch.Tensor,
         torch.Tensor,
         torch.Tensor,
@@ -223,7 +223,6 @@ class SAC_EWC(SAC):
             flatten_fisher(actor_std_fisher),
             flatten_fisher(q1_fisher),
             flatten_fisher(q2_fisher),
-            std_standard,
         )
 
 
