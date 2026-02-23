@@ -115,16 +115,21 @@ class SAC_EWC(SAC):
         torch.Tensor,
         torch.Tensor,
     ]:
+        from stable_baselines3.common.policies import choose_head
+
         assert len(self.critic.q_networks_core) == 2
 
         obs = samples.observations
         actions = samples.actions
 
+        n_heads = getattr(self.actor, "n_heads", 1)
+
         # 1. Forward pass for the required 'std' output and to determine action dimensions
         with torch.no_grad():
             actor_features = self.actor.latent_pi(obs)
             log_std = self.actor.log_std(actor_features)
-            std_standard = torch.exp(log_std)
+            log_std_head = choose_head(log_std, obs, n_heads)
+            std_standard = torch.exp(log_std_head)
 
         action_dim = std_standard.shape[-1]
 
@@ -142,13 +147,15 @@ class SAC_EWC(SAC):
             obs_b = single_obs.unsqueeze(0)
             features = functional_call(self.actor.latent_pi, params, (obs_b,))
             mu_b = self.actor.mu(features)
-            return mu_b[0, k]
+            mu_head = choose_head(mu_b, obs_b, n_heads)
+            return mu_head[0, k]
 
         def actor_std_k_fn(params: dict[str, torch.Tensor], single_obs: torch.Tensor, k: int) -> torch.Tensor:
             obs_b = single_obs.unsqueeze(0)
             features = functional_call(self.actor.latent_pi, params, (obs_b,))
             log_std_b = self.actor.log_std(features)
-            return torch.exp(log_std_b)[0, k]
+            log_std_head = choose_head(log_std_b, obs_b, n_heads)
+            return torch.exp(log_std_head)[0, k]
 
         def critic1_fn(
                 params: dict[str, torch.Tensor], single_obs: torch.Tensor, single_act: torch.Tensor
@@ -161,7 +168,8 @@ class SAC_EWC(SAC):
 
             features_core = functional_call(self.critic.q_networks_core[0], params, (q_in,))
             q = self.critic.q_networks_head[0](features_core)
-            return q[0, 0]
+            q_head = choose_head(q, obs_b, n_heads)
+            return q_head[0, 0]
 
         def critic2_fn(
                 params: dict[str, torch.Tensor], single_obs: torch.Tensor, single_act: torch.Tensor
@@ -173,7 +181,8 @@ class SAC_EWC(SAC):
 
             features_core = functional_call(self.critic.q_networks_core[1], params, (q_in,))
             q = self.critic.q_networks_head[1](features_core)
-            return q[0, 0]
+            q_head = choose_head(q, obs_b, n_heads)
+            return q_head[0, 0]
 
         # -------------------------------------------------------------------------
         # 4. Vectorized Gradient Execution (Empirical & Analytic Fisher)
@@ -205,10 +214,18 @@ class SAC_EWC(SAC):
             batched_std_grad = vmap(grad(curr_std_fn, argnums=0), in_dims=(None, 0))
             std_grads_k = batched_std_grad(actor_params, obs)
 
+            sigma_k = std_standard[:, k]
+            mu_weight = 1.0 / (sigma_k.pow(2) + 1e-8)
+            std_weight = 2.0 / (sigma_k.pow(2) + 1e-8)
+
             # Accumulate squared gradients
             for name in actor_params:
-                actor_mu_fisher[name] += mu_grads_k[name].pow(2).mean(dim=0)
-                actor_std_fisher[name] += std_grads_k[name].pow(2).mean(dim=0)
+                reshape_dims = [-1] + [1] * (mu_grads_k[name].dim() - 1)
+                mw = mu_weight.view(*reshape_dims)
+                sw = std_weight.view(*reshape_dims)
+                
+                actor_mu_fisher[name] += (mw * mu_grads_k[name].pow(2)).mean(dim=0)
+                actor_std_fisher[name] += (sw * std_grads_k[name].pow(2)).mean(dim=0)
 
         # -------------------------------------------------------------------------
         # 5. Type-Hint Enforcement & Return

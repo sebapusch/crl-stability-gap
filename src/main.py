@@ -36,11 +36,11 @@ def make_model(
         run_name: str,
         device: str,
         method: str = 'fine-tune',
-        ewc_lambda: float = 10_000.0,
+        ewc_lambda: float = 1.0,
         lr: float = 1e-3,
         seed: int = 42,
         batch_size: int = 128,
-        learning_starts: int = 10_000,
+        learning_starts: int = 1,
         gamme: int = 0.99,
         train_freq: int | tuple[int, str] = (1, 'episode'), # finish episode
         gradient_steps: int = -1,                           # then do 500 gradient steps
