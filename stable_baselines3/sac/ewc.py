@@ -8,10 +8,11 @@ from stable_baselines3.common.type_aliases import ReplayBufferSamples
 
 
 class SAC_EWC(SAC):
-    def __init__(self, lambda_: float, **kwargs) -> None:
+    def __init__(self, lambda_: float, regularize_critic: bool = False, **kwargs) -> None:
         super().__init__(**kwargs)
         self.lambda_ = lambda_
         self.old_params = self.frozen_params
+        self.regularize_critic = regularize_critic
         self.reg_weights = [
             torch.zeros_like(p, requires_grad=False) for p in self.old_params
         ]
@@ -235,11 +236,13 @@ class SAC_EWC(SAC):
         def flatten_fisher(fisher_dict: dict[str, torch.Tensor]) -> torch.Tensor:
             return torch.cat([f.flatten() for f in fisher_dict.values()])
 
+        critic_coef = 1.0 if self.regularize_critic else 0.0
+
         return (
             flatten_fisher(actor_mu_fisher),
             flatten_fisher(actor_std_fisher),
-            flatten_fisher(q1_fisher),
-            flatten_fisher(q2_fisher),
+            critic_coef * flatten_fisher(q1_fisher),
+            critic_coef * flatten_fisher(q2_fisher),
         )
 
 
