@@ -210,7 +210,6 @@ wandb
 runs
 models
 .idea
-continual_world
 logs
 output/*
 |output
