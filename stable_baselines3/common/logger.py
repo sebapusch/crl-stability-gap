@@ -10,9 +10,11 @@ from io import TextIOBase
 from typing import Any, TextIO
 
 import matplotlib.figure
-import numpy as np
 import pandas
 import torch as th
+import numpy as np
+import wandb
+
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -144,6 +146,22 @@ class SeqWriter:
         :param sequence:
         """
         raise NotImplementedError
+
+
+class WandbWriter(KVWriter):
+    def write(self, key_values: dict[str, Any], key_excluded: dict[str, Any], step: int = 0) -> None:
+        log_dict: dict[str, Any] = {}
+        for k, v in key_values.items():
+            if v is None:
+                continue
+            if isinstance(v, (np.floating, np.integer)):
+                v = v.item()
+            if isinstance(v, (int, float)):
+                log_dict[k] = v
+
+        if log_dict:
+            wandb.log(log_dict, step=step)
+
 
 
 class HumanOutputFormat(KVWriter, SeqWriter):
