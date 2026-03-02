@@ -1,5 +1,3 @@
-from typing import Callable
-
 import wandb
 
 from benchmark import make_benchmark
@@ -75,7 +73,9 @@ def main(
             seed=seed,
         )
         model.set_logger(make_logger(run.name))
-        model.replay_buffer = buffer  # type: ignore
+
+        if buffer:
+            model.replay_buffer = buffer  # type: ignore
 
         if q_state is not None:
             model.policy.q_net.load_state_dict(q_state)
