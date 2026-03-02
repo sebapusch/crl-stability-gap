@@ -19,6 +19,11 @@ def get_args() -> Namespace:
         type=str,
     )
     parser.add_argument(
+        '--project',
+        default='cartpole',
+        type=str,
+    )
+    parser.add_argument(
         '--method',
         allowed=METHODS,
         default=METHODS[0],

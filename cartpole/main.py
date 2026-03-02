@@ -7,7 +7,6 @@ from callbacks import make_callbacks
 from cartpole.benchmark import ContinualCartPole
 from cartpole.common import make_logger
 from stable_baselines3.common.buffers import MultiReplayBuffer
-from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.dqn import DQN
 from args import get_args
 
@@ -16,6 +15,7 @@ def main(
         benchmark: list[str],
         seed: int = 42,
         name_prefix: str = '',
+        project: str = '',
         method: str = 'sequential',
         eval_freq: int = 500,
         video_freq: int = 10_000,
@@ -53,7 +53,7 @@ def main(
     for ix, v in enumerate(benchmark):
         run = wandb.init(
             name=f'{name_prefix}-{v.name}',
-            project='cartpole'
+            project=project,
         )
 
         model = DQN(
