@@ -15,7 +15,7 @@ class ObsSpaceInf(gym.ObservationWrapper):
     def __init__(self, env):
         super().__init__(env)
         self.observation_space = gym.spaces.Box(
-            low=-np.inf, high=np.inf, shape=(7,), dtype=np.float32
+            low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32
         )
 
     def observation(self, obs):
