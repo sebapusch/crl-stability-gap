@@ -11,6 +11,7 @@ dependencies = [
     "moviepy>=2.2.1",
     "opencv-python>=4.13.0.92",
     "pandas>=2.3.3",
+    "pyplotlib>=0.0.56",
     "rich>=14.3.2",
     "tensorboard>=2.20.0",
     "torch>=2.10.0",

@@ -28,13 +28,14 @@ def main(
         epsilon_end: float = 0.05,
         epsilon_decay_frac: float = 0.1,
         total_timesteps: int = 200_000,
+        encode_task: bool = False,
 ):
     experience_replay = method == 'continual'
 
     benchmark = [ContinualCartPole[version] for version in (benchmark if benchmark else ['V1', 'V2', 'V3'])]
 
-    envs_train = make_benchmark(benchmark, encode_task=False, seed=seed)
-    envs_test = make_benchmark(benchmark, encode_task=False, seed=seed + 1)
+    envs_train = make_benchmark(benchmark, encode_task=encode_task, seed=seed)
+    envs_test = make_benchmark(benchmark, encode_task=encode_task, seed=seed + 1)
 
     if experience_replay:
         buffer = MultiReplayBuffer(
@@ -88,6 +89,7 @@ def main(
             video_freq=video_freq,
             n_eval_episodes=n_eval_episodes,
             eval_all=True,
+            encode_task=encode_task,
         )
 
         model.learn(

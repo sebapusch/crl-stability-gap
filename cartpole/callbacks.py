@@ -7,6 +7,7 @@ import wandb
 from wandb.integration.sb3 import WandbCallback
 
 from cartpole.benchmark import make_env, ContinualCartPole
+from metaworld.wrappers import OneHotWrapper
 from stable_baselines3.common.callbacks import (EventCallback,
                                                 BaseCallback,
                                                 CallbackList,
@@ -22,6 +23,7 @@ def make_callbacks(
         n_eval_episodes: int,
         video_freq: int,
         eval_all: bool,
+        encode_task: bool = False,
 ) -> Callable[[int], CallbackList]:
     wandb_callback = WandbCallback(gradient_save_freq=1000, verbose=2)
 
@@ -35,6 +37,8 @@ def make_callbacks(
 
         if video_freq > 0:
             video_env = make_env(benchmark[env_ix], seed=42, render_mode='rgb_array')
+            if encode_task:
+                video_env = OneHotWrapper(video_env, env_ix, len(benchmark))
             callbacks.append(
                 RegisterVideoCallback(video_freq, video_env),
             )

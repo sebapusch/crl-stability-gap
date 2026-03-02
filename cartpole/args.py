@@ -29,6 +29,10 @@ def get_args() -> Namespace:
         default=METHODS[0],
         type=str,
     )
-
+    parser.add_argument(
+        '--encode_task',
+        action='store_true',
+        help='Append a one-hot encoding of the current task index to the observation',
+    )
 
     return parser.parse_args()
