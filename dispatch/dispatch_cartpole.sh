@@ -10,4 +10,4 @@ source .venv/bin/activate
 module load CUDA/12.6.0
 export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 
-python src/cartpole/main.py "$@"
+python cartpole/main.py "$@"

@@ -25,7 +25,7 @@ def get_args() -> Namespace:
     )
     parser.add_argument(
         '--method',
-        allowed=METHODS,
+        choices=METHODS,
         default=METHODS[0],
         type=str,
     )
