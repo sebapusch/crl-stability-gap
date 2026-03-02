@@ -35,8 +35,8 @@ def main(
 
     benchmark = [ContinualCartPole[version] for version in (benchmark if benchmark else ['V1', 'V2', 'V3'])]
 
-    envs_train = make_benchmark(benchmark, encode_task=True, seed=seed)
-    envs_test = make_benchmark(benchmark, encode_task=True, seed=seed + 1)
+    envs_train = make_benchmark(benchmark, encode_task=False, seed=seed)
+    envs_test = make_benchmark(benchmark, encode_task=False, seed=seed + 1)
 
     if experience_replay:
         buffer = MultiReplayBuffer(
