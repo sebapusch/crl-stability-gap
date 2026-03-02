@@ -4,6 +4,7 @@ from collections.abc import Generator
 from typing import Any
 
 import numpy as np
+import torch
 import torch as th
 from gymnasium import spaces
 
@@ -951,4 +952,90 @@ class NStepReplayBuffer(ReplayBuffer):
             dones=self.to_torch(final_dones),
             rewards=self.to_torch(n_step_returns),
             discounts=self.to_torch(target_q_discounts),
+        )
+
+class MultiReplayBuffer:
+
+    buffers: list[ReplayBuffer]
+
+    def __init__(
+            self,
+            n_envs: int,
+            buffer_size: int,
+            observation_space: spaces.Space,
+            action_space: spaces.Space,
+            device: th.device | str = "auto",
+    ):
+        self.n_envs = n_envs
+        self.active_index = 0
+        self.device = get_device(device)
+        self.buffers = [
+            ReplayBuffer(buffer_size, observation_space, action_space, device)
+            for _ in range(n_envs)
+        ]
+
+    def increase_index(self) -> None:
+        assert self.active_index < self.n_envs - 1
+        self.active_index += 1
+
+    def decrease_index(self) -> None:
+        assert self.active_index > 0
+        self.active_index -= 1
+
+    def reset_index(self) -> None:
+        self.active_index = 0
+
+    def size(self) -> int:
+        return sum(buf.size() for buf in self.buffers[: self.active_index + 1])
+
+    def __len__(self) -> int:
+        return self.size()
+
+    def reset(self) -> None:
+        for buf in self.buffers:
+            buf.reset()
+        self.active_index = 0
+
+    def add(
+        self,
+        obs: np.ndarray,
+        next_obs: np.ndarray,
+        action: np.ndarray,
+        reward: np.ndarray,
+        done: np.ndarray,
+        infos: list[dict[str, Any]],
+    ) -> None:
+        self.buffers[self.active_index].add(obs, next_obs, action, reward, done, infos)
+
+    def sample(self, batch_size: int, env: VecNormalize | None = None) -> ReplayBufferSamples:
+        if self.active_index == 0:
+            return self.buffers[0].sample(batch_size, env)
+
+        observations = []
+        actions = []
+        next_observations = []
+        dones = []
+        rewards = []
+
+        n_active = self.active_index + 1
+
+        batch_size_per_env = batch_size // n_active
+        remainder = batch_size % n_active
+
+        for i in range(self.active_index + 1):
+            size = batch_size_per_env if i < self.active_index else batch_size_per_env + remainder
+
+            samples = self.buffers[i].sample(size, env)
+            observations.append(samples.observations)
+            actions.append(samples.actions)
+            next_observations.append(samples.next_observations)
+            dones.append(samples.dones)
+            rewards.append(samples.rewards)
+
+        return ReplayBufferSamples(
+            observations=th.cat(observations).to(self.device),
+            actions=th.cat(actions).to(self.device),
+            next_observations=th.cat(next_observations).to(self.device),
+            dones=th.cat(dones).to(self.device),
+            rewards=th.cat(rewards).to(self.device),
         )

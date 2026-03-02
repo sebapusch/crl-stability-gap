@@ -184,7 +184,7 @@ class DQN(OffPolicyAlgorithm):
         self.exploration_rate = self.exploration_schedule(self._current_progress_remaining)
         self.logger.record("rollout/exploration_rate", self.exploration_rate)
 
-    def train(self, gradient_steps: int, batch_size: int = 100) -> None:
+    def train(self, gradient_steps: int, batch_size: int = 100, task_ix: int = 0) -> None:
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
         # Update learning rate according to schedule
@@ -277,6 +277,9 @@ class DQN(OffPolicyAlgorithm):
             reset_num_timesteps=reset_num_timesteps,
             progress_bar=progress_bar,
         )
+
+    def reset_optim(self) -> None:
+        self.policy.optimizer.state.clear()
 
     def _excluded_save_params(self) -> list[str]:
         return [*super()._excluded_save_params(), "q_net", "q_net_target"]

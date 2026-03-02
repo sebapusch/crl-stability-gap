@@ -1,2 +1,2 @@
 #!/bin/bash
-PYTHONPATH=$(pwd) CUDA_VISIBLE_DEVICES= python src/main.py "$@"
+PYTHONPATH=$(pwd) CUDA_VISIBLE_DEVICES= python "$@"

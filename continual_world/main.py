@@ -8,10 +8,12 @@ import wandb
 from stable_baselines3 import SAC
 from stable_baselines3.sac.ewc import SAC_EWC
 from stable_baselines3.common.type_aliases import GymEnv
-from stable_baselines3.common.logger import Logger, HumanOutputFormat, CSVOutputFormat
+from stable_baselines3.common.logger import (Logger,
+                                             HumanOutputFormat,
+                                             CSVOutputFormat,
+                                             WandbWriter)
 
 from benchmark import make_benchmark
-from integration import WandbWriter
 from args import get_args
 from callbacks import make_callbacks
 
