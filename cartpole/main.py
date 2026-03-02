@@ -12,7 +12,7 @@ from args import get_args
 
 
 def main(
-        benchmark: list[str],
+        benchmark: list[str] | None = None,
         seed: int = 42,
         name_prefix: str = '',
         project: str = '',
@@ -33,7 +33,7 @@ def main(
 ):
     experience_replay = method == 'continual'
 
-    benchmark = [ContinualCartPole[version] for version in benchmark]
+    benchmark = [ContinualCartPole[version] for version in (benchmark if benchmark else ['V1', 'V2', 'V3'])]
 
     envs_train = make_benchmark(benchmark, encode_task=True, seed=seed)
     envs_test = make_benchmark(benchmark, encode_task=True, seed=seed + 1)
