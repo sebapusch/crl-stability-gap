@@ -313,27 +313,27 @@ def main():
                 zorder=5,
             )
 
-        # Add env labels at top
+        # Add env labels just above the plot area (in axes coordinates)
         for i, env in enumerate(TRAIN_ENVS):
-            center = (i + 0.5) * TIMESTEPS_PER_ENV
+            frac_center = (i + 0.5) / len(TRAIN_ENVS)
             ax.text(
-                center,
-                ax.get_ylim()[1],
-                f"CartPole-{env}",
+                frac_center,
+                1.02,
+                f"Train {env}",
                 ha="center",
                 va="bottom",
                 fontsize=9,
                 color="gray",
+                transform=ax.transAxes,
             )
 
         ax.set_xlabel("Total Timesteps")
         ax.set_ylabel("IQM Episodic Return")
-        ax.set_title(f"Evaluation on CartPole-{test_env}")
-        ax.title.set_y(1.1)
+        fig.suptitle(f"Evaluation on CartPole-{test_env}", fontsize=13, y=0.98)
         ax.legend()
         ax.grid(alpha=0.3)
 
-        plt.tight_layout()
+        plt.tight_layout(rect=[0, 0, 1, 0.93])
 
         # Build output filename
         parts = ["iqm"]

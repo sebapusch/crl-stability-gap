@@ -105,7 +105,7 @@ def main(
             q_state = model.policy.q_net.state_dict()
             q_target_state = model.policy.q_net_target.state_dict()
 
-        if experience_replay:
+        if experience_replay and ix < len(benchmark) - 1:
             buffer.increase_index()
 
         run.finish()
