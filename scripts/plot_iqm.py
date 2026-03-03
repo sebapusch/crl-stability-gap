@@ -2,12 +2,18 @@
 """
 Generate IQM plots with 95% CI for each test environment.
 
-Produces 3 plots (one per test env V1, V2, V3). Each plot has 3 lines
-(one per method: continual, sequential, fine_tune) showing the IQM of
-the mean reward with a shaded 95% confidence interval across 5 seeds.
+Produces 3 plots (one per test env V1, V2, V3). Each plot has lines
+(one per method) showing the IQM of the mean reward with a shaded
+95% confidence interval across 5 seeds.
+
+Usage:
+    python plot_iqm.py --methods continual sequential fine_tune
+    python plot_iqm.py --methods continual_encode --prefix encode
+    python plot_iqm.py  # defaults to continual, sequential, fine_tune
 """
 
-import os
+import argparse
+import hashlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -17,13 +23,15 @@ import tqdm
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "output" / "output"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output" / "plots"
+CACHE_DIR = Path(__file__).resolve().parent.parent / "output" / "cache"
 
-METHODS = ["continual_encode"]
+DEFAULT_METHODS = ["continual", "sequential", "fine_tune"]
 SEEDS = [1, 2, 3, 4, 5]
 TRAIN_ENVS = ["V1", "V2", "V3"]
 TEST_ENVS = ["V1", "V2", "V3"]
 TIMESTEPS_PER_ENV = 200_000
 
+# Known labels; unknown methods get auto-generated labels
 METHOD_LABELS = {
     "continual": "Continual",
     "sequential": "Sequential",
@@ -31,8 +39,32 @@ METHOD_LABELS = {
     "continual_encode": "Continual (encode)",
 }
 
+# A palette that cycles for any number of methods
+COLOR_PALETTE = [
+    "#2196F3",  # blue
+    "#FF9800",  # orange
+    "#4CAF50",  # green
+    "#E91E63",  # pink
+    "#9C27B0",  # purple
+    "#00BCD4",  # cyan
+    "#FF5722",  # deep orange
+    "#607D8B",  # blue-grey
+]
+
 N_BOOTSTRAP = 10_000
 CONFIDENCE = 0.95
+
+
+def get_label(method: str) -> str:
+    """Return a display label for a method, auto-generating if unknown."""
+    if method in METHOD_LABELS:
+        return METHOD_LABELS[method]
+    return method.replace("_", " ").title()
+
+
+def get_color(method: str, index: int) -> str:
+    """Return a color for a method, cycling through the palette."""
+    return COLOR_PALETTE[index % len(COLOR_PALETTE)]
 
 
 def interquartile_mean(values: np.ndarray) -> float:
@@ -86,7 +118,6 @@ def load_eval_data(method: str, seed: int, test_env: str) -> pd.DataFrame:
     Returns a DataFrame with columns ['timestep', 'reward'].
     """
     all_timesteps = []
-    all_rewards = []
 
     reward_col = f"eval/{test_env}/mean_reward"
     timestep_col = f"time/{test_env}/total_timesteps"
@@ -173,29 +204,101 @@ def compute_iqm_curve(method: str, test_env: str):
     return np.array(valid_ts), np.array(iqm_values), np.array(ci_lows), np.array(ci_highs)
 
 
+def make_cache_key(methods: list[str], prefix: str) -> str:
+    """Generate a short hash from the sorted methods + prefix combination."""
+    canonical = "|".join(sorted(methods)) + "||" + prefix
+    return hashlib.sha256(canonical.encode()).hexdigest()[:12]
+
+
+def cache_path_for(cache_key: str, method: str, test_env: str) -> Path:
+    """Return the CSV cache path for a specific method/test_env under a cache key."""
+    return CACHE_DIR / cache_key / f"{method}_{test_env}.csv"
+
+
+def save_to_cache(cache_key: str, method: str, test_env: str,
+                  ts: np.ndarray, iqm: np.ndarray,
+                  ci_lo: np.ndarray, ci_hi: np.ndarray):
+    """Save computed IQM curve to a CSV cache file."""
+    path = cache_path_for(cache_key, method, test_env)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    df = pd.DataFrame({
+        "timestep": ts, "iqm": iqm, "ci_low": ci_lo, "ci_high": ci_hi,
+    })
+    df.to_csv(path, index=False)
+
+
+def load_from_cache(cache_key: str, method: str, test_env: str):
+    """Load cached IQM curve. Returns (ts, iqm, ci_lo, ci_hi) or None."""
+    path = cache_path_for(cache_key, method, test_env)
+    if not path.exists():
+        return None
+    df = pd.read_csv(path)
+    return (
+        df["timestep"].values, df["iqm"].values,
+        df["ci_low"].values, df["ci_high"].values,
+    )
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Generate IQM plots with 95% CI for each test environment."
+    )
+    parser.add_argument(
+        "--methods",
+        nargs="+",
+        default=DEFAULT_METHODS,
+        help=f"Method names to plot (default: {DEFAULT_METHODS})",
+    )
+    parser.add_argument(
+        "--prefix",
+        type=str,
+        default="",
+        help="Filename prefix for output plots, e.g. 'encode' -> iqm_encode_V1.png",
+    )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Ignore cached results and recompute everything.",
+    )
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+    methods = args.methods
+    prefix = args.prefix
+    use_cache = not args.no_cache
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    colors = {
-        "continual": "#2196F3",
-        "sequential": "#FF9800",
-        "fine_tune": "#4CAF50",
-        "continual_encode": "#2196F3",
-    }
+    cache_key = make_cache_key(methods, prefix)
+    if use_cache:
+        print(f"Cache key: {cache_key}  (use --no-cache to force recompute)")
 
     for test_env in TEST_ENVS:
         fig, ax = plt.subplots(figsize=(10, 5))
 
-        for method in METHODS:
-            print(f"Computing IQM for {method} on {test_env}...")
-            ts, iqm, ci_lo, ci_hi = compute_iqm_curve(method, test_env)
+        for idx, method in enumerate(methods):
+            # Try loading from cache first
+            cached = None
+            if use_cache:
+                cached = load_from_cache(cache_key, method, test_env)
+
+            if cached is not None:
+                ts, iqm, ci_lo, ci_hi = cached
+                print(f"Loaded cached IQM for {method} on {test_env}")
+            else:
+                print(f"Computing IQM for {method} on {test_env}...")
+                ts, iqm, ci_lo, ci_hi = compute_iqm_curve(method, test_env)
+                if len(ts) > 0:
+                    save_to_cache(cache_key, method, test_env, ts, iqm, ci_lo, ci_hi)
 
             if len(ts) == 0:
                 print(f"  No data for {method}/{test_env}")
                 continue
 
-            label = METHOD_LABELS[method]
-            color = colors[method]
+            label = get_label(method)
+            color = get_color(method, idx)
             ax.plot(ts, iqm, label=label, color=color, linewidth=1.5)
             ax.fill_between(ts, ci_lo, ci_hi, alpha=0.2, color=color)
 
@@ -203,10 +306,11 @@ def main():
         for i in range(1, len(TRAIN_ENVS)):
             ax.axvline(
                 x=i * TIMESTEPS_PER_ENV,
-                color="gray",
-                linestyle="--",
-                alpha=0.5,
-                linewidth=0.8,
+                color="black",
+                linestyle="-",
+                alpha=0.6,
+                linewidth=1.5,
+                zorder=5,
             )
 
         # Add env labels at top
@@ -230,7 +334,14 @@ def main():
         ax.grid(alpha=0.3)
 
         plt.tight_layout()
-        out_path = OUTPUT_DIR / f"iqm_{test_env}_encode.png"
+
+        # Build output filename
+        parts = ["iqm"]
+        if prefix:
+            parts.append(prefix)
+        parts.append(test_env)
+        out_path = OUTPUT_DIR / f"{'_'.join(parts)}.png"
+
         fig.savefig(out_path, dpi=150)
         plt.close(fig)
         print(f"Saved {out_path}")
