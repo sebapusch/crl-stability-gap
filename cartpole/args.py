@@ -34,5 +34,10 @@ def get_args() -> Namespace:
         action='store_true',
         help='Append a one-hot encoding of the current task index to the observation',
     )
+    parser.add_argument(
+        '--balanced_sampling',
+        action='store_true',
+        help='Whether to maintain original batch size per task on when mode is "continual"',
+    )
 
     return parser.parse_args()

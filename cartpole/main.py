@@ -29,6 +29,7 @@ def main(
         epsilon_decay_frac: float = 0.1,
         total_timesteps: int = 200_000,
         encode_task: bool = False,
+        balanced_sampling: bool = False,
 ):
     experience_replay = method == 'continual'
 
@@ -43,6 +44,7 @@ def main(
             buffer_size,
             envs_train[0].observation_space,
             envs_train[0].action_space,
+            balanced_sampling=balanced_sampling,
         )
     else:
         buffer = None

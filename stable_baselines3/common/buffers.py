@@ -965,8 +965,10 @@ class MultiReplayBuffer:
             observation_space: spaces.Space,
             action_space: spaces.Space,
             device: th.device | str = "auto",
+            balanced_sampling: bool = False,
     ):
         self.n_envs = n_envs
+        self.balanced_sampling = balanced_sampling
         self.active_index = 0
         self.device = get_device(device)
         self.buffers = [
@@ -1019,8 +1021,8 @@ class MultiReplayBuffer:
 
         n_active = self.active_index + 1
 
-        batch_size_per_env = batch_size // n_active
-        remainder = batch_size % n_active
+        batch_size_per_env = batch_size if self.balanced_sampling else batch_size // n_active
+        remainder = 0 if self.balanced_sampling else batch_size % n_active
 
         for i in range(self.active_index + 1):
             size = batch_size_per_env if i < self.active_index else batch_size_per_env + remainder

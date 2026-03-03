@@ -18,7 +18,7 @@ import tqdm
 DATA_DIR = Path(__file__).resolve().parent.parent / "output" / "output"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output" / "plots"
 
-METHODS = ["continual"]
+METHODS = ["continual_encode"]
 SEEDS = [1, 2, 3, 4, 5]
 TRAIN_ENVS = ["V1", "V2", "V3"]
 TEST_ENVS = ["V1", "V2", "V3"]
@@ -28,6 +28,7 @@ METHOD_LABELS = {
     "continual": "Continual",
     "sequential": "Sequential",
     "fine_tune": "Fine-tune",
+    "continual_encode": "Continual (encode)",
 }
 
 N_BOOTSTRAP = 10_000
@@ -179,6 +180,7 @@ def main():
         "continual": "#2196F3",
         "sequential": "#FF9800",
         "fine_tune": "#4CAF50",
+        "continual_encode": "#2196F3",
     }
 
     for test_env in TEST_ENVS:
@@ -213,7 +215,7 @@ def main():
             ax.text(
                 center,
                 ax.get_ylim()[1],
-                f"Train {env}",
+                f"CartPole-{env}",
                 ha="center",
                 va="bottom",
                 fontsize=9,
@@ -222,12 +224,13 @@ def main():
 
         ax.set_xlabel("Total Timesteps")
         ax.set_ylabel("IQM Episodic Return")
-        ax.set_title(f"Evaluation on {test_env}")
+        ax.set_title(f"Evaluation on CartPole-{test_env}")
+        ax.title.set_y(1.1)
         ax.legend()
         ax.grid(alpha=0.3)
 
         plt.tight_layout()
-        out_path = OUTPUT_DIR / f"iqm_{test_env}.png"
+        out_path = OUTPUT_DIR / f"iqm_{test_env}_encode.png"
         fig.savefig(out_path, dpi=150)
         plt.close(fig)
         print(f"Saved {out_path}")

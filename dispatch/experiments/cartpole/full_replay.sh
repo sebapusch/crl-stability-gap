@@ -21,3 +21,10 @@ sbatch --time=01:30:00 dispatch/dispatch_cartpole.sh --seed 2 --project cartpole
 sbatch --time=01:30:00 dispatch/dispatch_cartpole.sh --seed 3 --project cartpole_full_replay --method continual --name_prefix continual_encode-s3 --encode_task
 sbatch --time=01:30:00 dispatch/dispatch_cartpole.sh --seed 4 --project cartpole_full_replay --method continual --name_prefix continual_encode-s4 --encode_task
 sbatch --time=01:30:00 dispatch/dispatch_cartpole.sh --seed 5 --project cartpole_full_replay --method continual --name_prefix continual_encode-s5 --encode_task
+
+
+sbatch --time=01:30:00 dispatch/dispatch_cartpole.sh --seed 1 --project cartpole_full_replay --method continual --name_prefix continual_balanced-s1 --balanced_sampling
+sbatch --time=01:30:00 dispatch/dispatch_cartpole.sh --seed 2 --project cartpole_full_replay --method continual --name_prefix continual_balanced-s2 --balanced_sampling
+sbatch --time=01:30:00 dispatch/dispatch_cartpole.sh --seed 3 --project cartpole_full_replay --method continual --name_prefix continual_balanced-s3 --balanced_sampling
+sbatch --time=01:30:00 dispatch/dispatch_cartpole.sh --seed 4 --project cartpole_full_replay --method continual --name_prefix continual_balanced-s4 --balanced_sampling
+sbatch --time=01:30:00 dispatch/dispatch_cartpole.sh --seed 5 --project cartpole_full_replay --method continual --name_prefix continual_balanced-s5 --balanced_sampling
