@@ -3,11 +3,17 @@ from argparse import Namespace
 
 
 METHODS = ['sequential', 'fine_tune', 'continual']
-
+BENCHMARK = ['V1', 'V2', 'V3']
 
 def get_args() -> Namespace:
     parser = argparse.ArgumentParser()
 
+    parser.add_argument(
+        '--benchmark',
+        default=BENCHMARK,
+        choices=BENCHMARK,
+        nargs='*',
+    )
     parser.add_argument(
         '--seed',
         default=42,
@@ -29,6 +35,7 @@ def get_args() -> Namespace:
         default=METHODS[0],
         type=str,
     )
+
     parser.add_argument(
         '--encode_task',
         action='store_true',

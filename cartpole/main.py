@@ -55,7 +55,7 @@ def main(
         run = wandb.init(
             name=f'{name_prefix}-{v.name}',
             project=project,
-            tags=[v.name, seed, method],
+            tags=[v.name, str(seed), method],
         )
 
         model = DQN(
