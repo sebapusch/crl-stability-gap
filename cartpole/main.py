@@ -28,7 +28,7 @@ def main(
         epsilon_start: float = 1.0,
         epsilon_end: float = 0.05,
         epsilon_decay_frac: float = 0.1,
-        total_timesteps: int = 200_000,
+        total_timesteps: int = 2_000,
         encode_task: bool = False,
         balanced_sampling: bool = False,
 ):
@@ -55,7 +55,7 @@ def main(
         expert_buffer = ExpertBuffer(
             buffer_size=1000,
             observation_space=envs_train[0].observation_space,
-            output_size=get_action_dim(envs_train[0].action_space),
+            output_size=2,
         )
 
     q_state, q_target_state = None, None
@@ -118,7 +118,7 @@ def main(
             q_state = model.policy.q_net.state_dict()
             q_target_state = model.policy.q_net_target.state_dict()
 
-        if method == 'behavior_cloning':
+        if method == 'behavior_cloning' and ix < len(benchmark) - 1:
             expert_buffer.populate(
                 network=model.policy.q_net_target,
                 buffer=model.replay_buffer,

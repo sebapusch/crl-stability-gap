@@ -1055,7 +1055,7 @@ class ExpertBuffer:
             device: th.device | str = "auto",
     ):
         self.buffer_size = buffer_size
-        self.device = device
+        self.device = get_device(device)
         self.observation_space = observation_space
         self.output_size = output_size
         self.pos = 0
@@ -1086,7 +1086,8 @@ class ExpertBuffer:
             outputs = network(samples.observations)
 
             self.observations[self.pos:self.pos + cur_batch_size] = np.array(samples.observations)
-            self.outputs[self.pos:self.pos + cur_batch_size] = np.array(outputs)
+            self.outputs[self.pos:self.pos + cur_batch_size] = outputs.detach().numpy()
+
 
             self.pos += cur_batch_size
             self.full = True
