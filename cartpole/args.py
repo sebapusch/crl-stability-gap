@@ -2,7 +2,7 @@ import argparse
 from argparse import Namespace
 
 
-METHODS = ['sequential', 'fine_tune', 'continual']
+METHODS = ['sequential', 'fine_tune', 'continual', 'behavior_cloning']
 BENCHMARK = ['V1', 'V2', 'V3']
 
 def get_args() -> Namespace:

@@ -13,7 +13,7 @@ from stable_baselines3.common.type_aliases import (
     DictReplayBufferSamples,
     DictRolloutBufferSamples,
     ReplayBufferSamples,
-    RolloutBufferSamples,
+    RolloutBufferSamples, ExpertSamples,
 )
 from stable_baselines3.common.utils import get_device
 from stable_baselines3.common.vec_env import VecNormalize
@@ -1041,3 +1041,67 @@ class MultiReplayBuffer:
             dones=th.cat(dones).to(self.device),
             rewards=th.cat(rewards).to(self.device),
         )
+
+
+class ExpertBuffer:
+    observations: np.ndarray
+    outputs: np.ndarray
+
+    def __init__(
+            self,
+            buffer_size: int,
+            observation_space: spaces.Space,
+            output_size: int,
+            device: th.device | str = "auto",
+    ):
+        self.buffer_size = buffer_size
+        self.device = device
+        self.observation_space = observation_space
+        self.output_size = output_size
+        self.pos = 0
+        self.full = False
+
+        self.observations = np.zeros((self.buffer_size, *self.observation_space.shape), dtype=np.float32)
+        self.outputs = np.zeros((buffer_size, output_size), dtype=np.float32)
+
+    def populate(
+            self,
+            network: th.nn.Module,
+            buffer: ReplayBuffer,
+            batch_size: int = 512,
+    ) -> None:
+
+        num_iters = self.buffer_size // batch_size
+        remainder = self.buffer_size % batch_size
+        if remainder != 0:
+            num_iters += 1
+
+        for i in range(num_iters):
+            if i == num_iters - 1 and remainder != 0:
+                cur_batch_size = remainder
+            else:
+                cur_batch_size = batch_size
+
+            samples = buffer.sample(cur_batch_size)
+            outputs = network(samples.observations)
+
+            self.observations[self.pos:self.pos + cur_batch_size] = np.array(samples.observations)
+            self.outputs[self.pos:self.pos + cur_batch_size] = np.array(outputs)
+
+            self.pos += cur_batch_size
+            self.full = True
+
+    def sample(self, batch_size: int) -> ExpertSamples:
+        if self.full:
+            batch_ixs = (np.random.randint(1, self.buffer_size, size=batch_size) + self.pos) % self.buffer_size
+        else:
+            batch_ixs = np.random.randint(0, self.pos, size=batch_size)
+
+        observations = self.observations[batch_ixs, :]
+        outputs = self.outputs[batch_ixs, :]
+
+        return ExpertSamples(
+            observations=torch.from_numpy(observations).to(self.device),
+            outputs=torch.from_numpy(outputs).to(self.device),
+        )
+

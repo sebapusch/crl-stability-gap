@@ -4,7 +4,8 @@ from benchmark import make_benchmark
 from callbacks import make_callbacks
 from cartpole.benchmark import ContinualCartPole
 from cartpole.common import make_logger
-from stable_baselines3.common.buffers import MultiReplayBuffer
+from stable_baselines3.common.buffers import MultiReplayBuffer, ExpertBuffer
+from stable_baselines3.common.preprocessing import get_action_dim
 from stable_baselines3.dqn import DQN
 from args import get_args
 
@@ -49,6 +50,14 @@ def main(
     else:
         buffer = None
 
+    expert_buffer = None
+    if method == 'behavior_cloning':
+        expert_buffer = ExpertBuffer(
+            buffer_size=1000,
+            observation_space=envs_train[0].observation_space,
+            output_size=get_action_dim(envs_train[0].action_space),
+        )
+
     q_state, q_target_state = None, None
 
     for ix, v in enumerate(benchmark):
@@ -75,6 +84,10 @@ def main(
                 'net_arch': [128, 128],
             },
             seed=seed,
+            expert_buffer=expert_buffer,
+            expert_buffer_batch_size=128,
+            behavior_cloning=method == 'behavior_cloning' and ix > 0,
+            behavior_cloning_coefficient=100,
         )
         model.set_logger(make_logger(run.name))
 
@@ -101,9 +114,15 @@ def main(
             reset_num_timesteps=False,
         )
 
-        if method in ['continual', 'fine_tune']:
+        if method in ['continual', 'fine_tune', 'behavior_cloning']:
             q_state = model.policy.q_net.state_dict()
             q_target_state = model.policy.q_net_target.state_dict()
+
+        if method == 'behavior_cloning':
+            expert_buffer.populate(
+                network=model.policy.q_net_target,
+                buffer=model.replay_buffer,
+            )
 
         if experience_replay and ix < len(benchmark) - 1:
             buffer.increase_index()

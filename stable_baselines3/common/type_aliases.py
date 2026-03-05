@@ -71,6 +71,10 @@ class RolloutReturn(NamedTuple):
     n_episodes: int
     continue_training: bool
 
+class ExpertSamples(NamedTuple):
+    observations: th.Tensor
+    outputs: th.Tensor
+
 
 class TrainFrequencyUnit(Enum):
     STEP = "step"
