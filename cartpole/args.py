@@ -20,6 +20,11 @@ def get_args() -> Namespace:
         type=int,
     )
     parser.add_argument(
+        '--batch_size',
+        default=128,
+        type=int,
+    )
+    parser.add_argument(
         '--name_prefix',
         default='',
         type=str,
