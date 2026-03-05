@@ -28,7 +28,7 @@ def main(
         epsilon_start: float = 1.0,
         epsilon_end: float = 0.05,
         epsilon_decay_frac: float = 0.1,
-        total_timesteps: int = 3000,
+        total_timesteps: int = 200_000,
         encode_task: bool = False,
         balanced_sampling: bool = False,
         behavior_cloning_coefficient: float = 100
