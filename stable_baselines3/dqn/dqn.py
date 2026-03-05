@@ -233,12 +233,12 @@ class DQN(OffPolicyAlgorithm):
                 expert_samples = self.expert_buffer.sample(self.expert_buffer_batch_size)
                 curr_q_values_on_expert_samples = self.q_net(expert_samples.observations)
 
-                loss_behaviour = th.mean(
+                loss_behavior = th.mean(
                     (curr_q_values_on_expert_samples - expert_samples.outputs) ** 2
                 )
-                losses_expert.append(loss_behaviour.item())
+                losses_expert.append(loss_behavior.item())
 
-                loss += self.behavior_cloning_coefficient * loss_behaviour
+                loss += self.behavior_cloning_coefficient * loss_behavior
 
 
             losses.append(loss.item())
