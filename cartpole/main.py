@@ -31,6 +31,7 @@ def main(
         total_timesteps: int = 200_000,
         encode_task: bool = False,
         balanced_sampling: bool = False,
+        behavior_cloning_coefficient: float = 100
 ):
     experience_replay = method == 'continual'
 
@@ -87,7 +88,7 @@ def main(
             expert_buffer=expert_buffer,
             expert_buffer_batch_size=128,
             behavior_cloning=method == 'behavior_cloning' and ix > 0,
-            behavior_cloning_coefficient=100,
+            behavior_cloning_coefficient=behavior_cloning_coefficient,
         )
         model.set_logger(make_logger(run.name))
 
