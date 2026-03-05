@@ -1052,10 +1052,12 @@ class ExpertBuffer:
             buffer_size: int,
             observation_space: spaces.Space,
             output_size: int,
+            n_tasks: int,
             device: th.device | str = "auto",
     ):
-        self.initial_buffer_size = buffer_size
-        self.buffer_size = buffer_size
+        self.n_tasks = n_tasks
+        self.buffer_size_per_task = buffer_size
+        self.buffer_size = buffer_size * n_tasks
         self.device = get_device(device)
         self.observation_space = observation_space
         self.output_size = output_size
@@ -1063,23 +1065,16 @@ class ExpertBuffer:
         self.full = False
 
         self.observations = np.zeros((self.buffer_size, *self.observation_space.shape), dtype=np.float32)
-        self.outputs = np.zeros((buffer_size, output_size), dtype=np.float32)
+        self.outputs = np.zeros((self.buffer_size, self.output_size), dtype=np.float32)
 
     def populate(
             self,
             network: th.nn.Module,
             buffer: ReplayBuffer,
             batch_size: int = 512,
-            extend: bool = True,
     ) -> None:
-
-        if extend:
-            self.buffer_size += self.initial_buffer_size
-            self.observations = np.concatenate([self.observations, np.zeros(self.initial_buffer_size, dtype=np.float32)])
-            self.outputs = np.concatenate([self.outputs, np.zeros(self.initial_buffer_size, dtype=np.float32)])
-
-        num_iters = self.buffer_size // batch_size
-        remainder = self.buffer_size % batch_size
+        num_iters = self.buffer_size_per_task // batch_size
+        remainder = self.buffer_size_per_task % batch_size
         if remainder != 0:
             num_iters += 1
 
@@ -1096,7 +1091,7 @@ class ExpertBuffer:
             self.outputs[self.pos:self.pos + cur_batch_size] = outputs.detach().numpy()
 
             self.pos += cur_batch_size
-        self.full = True
+        self.full = self.pos == self.buffer_size - 1
 
     def sample(self, batch_size: int) -> ExpertSamples:
         if self.full:

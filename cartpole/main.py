@@ -28,7 +28,7 @@ def main(
         epsilon_start: float = 1.0,
         epsilon_end: float = 0.05,
         epsilon_decay_frac: float = 0.1,
-        total_timesteps: int = 200_000,
+        total_timesteps: int = 3000,
         encode_task: bool = False,
         balanced_sampling: bool = False,
         behavior_cloning_coefficient: float = 100
@@ -55,6 +55,7 @@ def main(
     if method == 'behavior_cloning':
         expert_buffer = ExpertBuffer(
             buffer_size=1000,
+            n_tasks=len(benchmark),
             observation_space=envs_train[0].observation_space,
             output_size=2,
         )
@@ -113,6 +114,7 @@ def main(
             total_timesteps=total_timesteps,
             callback=callbacks(ix),
             reset_num_timesteps=False,
+
         )
 
         if method in ['continual', 'fine_tune', 'behavior_cloning']:
