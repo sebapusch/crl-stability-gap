@@ -41,8 +41,8 @@ class ObsLinearTransform(gym.ObservationWrapper):
 def _random_orthogonal(seed: int) -> np.ndarray:
     rng = np.random.default_rng(seed)
     m = rng.normal(size=(4, 4))
-    q, _ = np.linalg.qr(m)          # Q is orthonormal
-    if np.linalg.det(q) < 0:        # make it a proper rotation (det = +1)
+    q, _ = np.linalg.qr(m)          
+    if np.linalg.det(q) < 0:
         q[:, 0] *= -1
     return q.astype(np.float32)
 

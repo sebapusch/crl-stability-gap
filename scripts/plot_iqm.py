@@ -19,7 +19,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-import tqdm
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "output" / "output"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output" / "plots"
@@ -68,7 +67,7 @@ def get_color(method: str, index: int) -> str:
 
 
 def interquartile_mean(values: np.ndarray) -> float:
-    """Compute the interquartile mean (IQM) of an array."""
+    """Compute the interquartile mean (IQM) of a 1-D array."""
     sorted_vals = np.sort(values)
     n = len(sorted_vals)
     q1_idx = int(np.floor(n * 0.25))
@@ -78,35 +77,79 @@ def interquartile_mean(values: np.ndarray) -> float:
     return np.mean(sorted_vals[q1_idx:q3_idx])
 
 
+def interquartile_mean_batch(values: np.ndarray) -> np.ndarray:
+    """Compute IQM along axis=1 of a 2-D array (vectorised)."""
+    sorted_vals = np.sort(values, axis=1)
+    n = sorted_vals.shape[1]
+    q1_idx = int(np.floor(n * 0.25))
+    q3_idx = int(np.ceil(n * 0.75))
+    if q3_idx <= q1_idx:
+        return np.mean(sorted_vals, axis=1)
+    return np.mean(sorted_vals[:, q1_idx:q3_idx], axis=1)
+
+
 def bootstrap_iqm(seed_values: np.ndarray, n_bootstrap: int = N_BOOTSTRAP):
     """
     Compute IQM and 95% CI via bootstrap over seeds.
 
     Parameters
     ----------
-    seed_values : array of shape (n_seeds,)
+    seed_values : array of shape (n_seeds,) or (n_timesteps, n_seeds)
     n_bootstrap : number of bootstrap resamples
 
     Returns
     -------
-    iqm : float
-    ci_low : float
-    ci_high : float
+    iqm : float or array
+    ci_low : float or array
+    ci_high : float or array
     """
-    n_seeds = len(seed_values)
-    if n_seeds == 0:
-        return np.nan, np.nan, np.nan
+    if seed_values.ndim == 1:
+        # --- single-timestep path (original behaviour) ---
+        n_seeds = len(seed_values)
+        if n_seeds == 0:
+            return np.nan, np.nan, np.nan
 
+        rng = np.random.default_rng(42)
+        # Vectorised: draw all bootstrap indices at once
+        indices = rng.integers(0, n_seeds, size=(n_bootstrap, n_seeds))
+        boot_samples = seed_values[indices]          # (n_bootstrap, n_seeds)
+        boot_iqms = interquartile_mean_batch(boot_samples)
+
+        alpha = (1 - CONFIDENCE) / 2
+        ci_low = np.percentile(boot_iqms, 100 * alpha)
+        ci_high = np.percentile(boot_iqms, 100 * (1 - alpha))
+        iqm = interquartile_mean(seed_values)
+        return iqm, ci_low, ci_high
+
+    # --- batched path: seed_values is (n_timesteps, n_seeds) ---
+    n_ts, n_seeds = seed_values.shape
     rng = np.random.default_rng(42)
-    boot_iqms = np.empty(n_bootstrap)
-    for b in range(n_bootstrap):
-        sample = rng.choice(seed_values, size=n_seeds, replace=True)
-        boot_iqms[b] = interquartile_mean(sample)
+    # Same bootstrap indices for every timestep (matches original per-row RNG
+    # reset to seed 42).
+    indices = rng.integers(0, n_seeds, size=(n_bootstrap, n_seeds))
+    # boot_samples: (n_ts, n_bootstrap, n_seeds)
+    boot_samples = seed_values[:, indices]  # advanced indexing broadcasts
+
+    # Compute IQM for each (ts, bootstrap) pair
+    sorted_bs = np.sort(boot_samples, axis=2)
+    q1_idx = int(np.floor(n_seeds * 0.25))
+    q3_idx = int(np.ceil(n_seeds * 0.75))
+    if q3_idx <= q1_idx:
+        boot_iqms = np.mean(sorted_bs, axis=2)      # (n_ts, n_bootstrap)
+    else:
+        boot_iqms = np.mean(sorted_bs[:, :, q1_idx:q3_idx], axis=2)
 
     alpha = (1 - CONFIDENCE) / 2
-    ci_low = np.percentile(boot_iqms, 100 * alpha)
-    ci_high = np.percentile(boot_iqms, 100 * (1 - alpha))
-    iqm = interquartile_mean(seed_values)
+    ci_low = np.percentile(boot_iqms, 100 * alpha, axis=1)
+    ci_high = np.percentile(boot_iqms, 100 * (1 - alpha), axis=1)
+
+    # Point IQM per timestep
+    sorted_sv = np.sort(seed_values, axis=1)
+    if q3_idx <= q1_idx:
+        iqm = np.mean(sorted_sv, axis=1)
+    else:
+        iqm = np.mean(sorted_sv[:, q1_idx:q3_idx], axis=1)
+
     return iqm, ci_low, ci_high
 
 
@@ -164,44 +207,54 @@ def compute_iqm_curve(method: str, test_env: str):
     ci_high : array
     """
     # Load all seeds
-    seed_data = {}
+    seed_frames = []
     for seed in SEEDS:
         df = load_eval_data(method, seed, test_env)
         if not df.empty:
-            seed_data[seed] = df
+            df = df.copy()
+            df["seed"] = seed
+            seed_frames.append(df)
 
-    if not seed_data:
+    if not seed_frames:
         return np.array([]), np.array([]), np.array([]), np.array([])
 
-    # Get union of all timesteps across seeds
-    all_ts = set()
-    for df in seed_data.values():
-        all_ts.update(df["timestep"].values)
-    all_ts = np.sort(list(all_ts))
+    combined = pd.concat(seed_frames, ignore_index=True)
 
-    # For each timestep, collect rewards from each seed (use nearest available)
-    iqm_values = []
-    ci_lows = []
-    ci_highs = []
-    valid_ts = []
+    # Pivot to (timestep × seed) matrix; NaN where a seed has no data
+    pivot = combined.pivot_table(
+        index="timestep", columns="seed", values="reward", aggfunc="first"
+    )
+    # Keep only timesteps with >= 2 seeds present
+    seed_counts = pivot.notna().sum(axis=1)
+    pivot = pivot.loc[seed_counts >= 2]
 
-    for ts in tqdm.tqdm(all_ts):
-        rewards = []
-        for seed, df in seed_data.items():
-            # Find the exact timestep match
-            match = df.loc[df["timestep"] == ts, "reward"]
-            if len(match) > 0:
-                rewards.append(match.values[0])
+    if pivot.empty:
+        return np.array([]), np.array([]), np.array([]), np.array([])
 
-        if len(rewards) >= 2:  # Need at least 2 seeds for meaningful IQM
-            rewards = np.array(rewards)
-            iqm, cl, ch = bootstrap_iqm(rewards)
-            iqm_values.append(iqm)
-            ci_lows.append(cl)
-            ci_highs.append(ch)
-            valid_ts.append(ts)
+    valid_ts = pivot.index.values
 
-    return np.array(valid_ts), np.array(iqm_values), np.array(ci_lows), np.array(ci_highs)
+    # Group rows by their set of available seeds so we can batch-bootstrap
+    # rows that share the same seed availability pattern together.
+    present_mask = pivot.notna().values  # (n_ts, n_seed_cols)
+    # Encode each row's pattern as a hashable tuple
+    patterns = [tuple(row) for row in present_mask]
+    unique_patterns = list(set(patterns))
+
+    iqm_values = np.empty(len(valid_ts))
+    ci_lows = np.empty(len(valid_ts))
+    ci_highs = np.empty(len(valid_ts))
+
+    for pat in unique_patterns:
+        row_indices = np.array([i for i, p in enumerate(patterns) if p == pat])
+        col_mask = np.array(pat)
+        # Extract the dense (n_rows, n_present_seeds) sub-matrix
+        seed_matrix = pivot.values[np.ix_(row_indices, col_mask)]
+        iqm, cl, ch = bootstrap_iqm(seed_matrix)
+        iqm_values[row_indices] = iqm
+        ci_lows[row_indices] = cl
+        ci_highs[row_indices] = ch
+
+    return valid_ts, iqm_values, ci_lows, ci_highs
 
 
 def make_cache_key(methods: list[str], prefix: str) -> str:
@@ -260,6 +313,12 @@ def parse_args():
         action="store_true",
         help="Ignore cached results and recompute everything.",
     )
+    parser.add_argument(
+        "--env_order",
+        nargs="+",
+        default=TEST_ENVS,
+        help=f"Order of test environments (default: {TEST_ENVS})",
+    )
     return parser.parse_args()
 
 
@@ -268,14 +327,17 @@ def main():
     methods = args.methods
     prefix = args.prefix
     use_cache = not args.no_cache
+    env_order = args.env_order
+    TEST_ENVS = env_order
+    TRAIN_ENVS = env_order
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     cache_key = make_cache_key(methods, prefix)
     if use_cache:
         print(f"Cache key: {cache_key}  (use --no-cache to force recompute)")
-
-    for test_env in TEST_ENVS:
+    
+    for test_env in env_order:
         fig, ax = plt.subplots(figsize=(10, 5))
 
         for idx, method in enumerate(methods):
@@ -313,27 +375,29 @@ def main():
                 zorder=5,
             )
 
-        # Add env labels just above the plot area (in axes coordinates)
+        # Add env labels just above the plot area
+        import matplotlib.transforms as mtransforms
+        trans = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)
         for i, env in enumerate(TRAIN_ENVS):
-            frac_center = (i + 0.5) / len(TRAIN_ENVS)
+            center = (i + 0.5) * TIMESTEPS_PER_ENV
             ax.text(
-                frac_center,
+                center,
                 1.02,
                 f"Train {env}",
                 ha="center",
                 va="bottom",
                 fontsize=9,
                 color="gray",
-                transform=ax.transAxes,
+                transform=trans,
             )
 
         ax.set_xlabel("Total Timesteps")
         ax.set_ylabel("IQM Episodic Return")
-        fig.suptitle(f"Evaluation on CartPole-{test_env}", fontsize=13, y=0.98)
+        ax.set_title(f"Evaluation on CartPole-{test_env}", pad=25)
         ax.legend()
         ax.grid(alpha=0.3)
 
-        plt.tight_layout(rect=[0, 0, 1, 0.93])
+        plt.tight_layout()
 
         # Build output filename
         parts = ["iqm"]
