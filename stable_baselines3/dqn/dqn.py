@@ -238,7 +238,7 @@ class DQN(OffPolicyAlgorithm):
                 )
                 losses_expert.append(loss_behaviour.item())
 
-                loss += loss_behaviour
+                loss += self.behavior_cloning_coefficient * loss_behaviour
 
 
             losses.append(loss.item())

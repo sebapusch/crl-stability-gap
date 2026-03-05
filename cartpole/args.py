@@ -22,7 +22,7 @@ def get_args() -> Namespace:
     parser.add_argument(
         '--behavior_cloning_coefficient',
         default=100,
-        type=int,
+        type=float,
     )
     parser.add_argument(
         '--batch_size',
