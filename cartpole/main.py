@@ -22,7 +22,7 @@ def main(
         lr: float = 3e-4,
         gamma: float = 0.99,
         buffer_size: int = 50_000,
-        batch_size: int = 1024,
+        batch_size: int = 128,
         target_update: int = 1000,
         learning_starts: int = 1000,
         epsilon_start: float = 1.0,
