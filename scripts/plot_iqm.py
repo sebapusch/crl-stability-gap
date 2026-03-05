@@ -25,7 +25,7 @@ OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output" / "plots"
 CACHE_DIR = Path(__file__).resolve().parent.parent / "output" / "cache"
 
 DEFAULT_METHODS = ["continual", "sequential", "fine_tune"]
-SEEDS = [1, 2, 3, 4, 5]
+SEEDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 TRAIN_ENVS = ["V1", "V2", "V3"]
 TEST_ENVS = ["V1", "V2", "V3"]
 TIMESTEPS_PER_ENV = 200_000

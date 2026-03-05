@@ -1054,6 +1054,7 @@ class ExpertBuffer:
             output_size: int,
             device: th.device | str = "auto",
     ):
+        self.initial_buffer_size = buffer_size
         self.buffer_size = buffer_size
         self.device = get_device(device)
         self.observation_space = observation_space
@@ -1069,7 +1070,13 @@ class ExpertBuffer:
             network: th.nn.Module,
             buffer: ReplayBuffer,
             batch_size: int = 512,
+            extend: bool = True,
     ) -> None:
+
+        if extend:
+            self.buffer_size += self.initial_buffer_size
+            self.observations = np.concatenate([self.observations, np.zeros(self.initial_buffer_size, dtype=np.float32)])
+            self.outputs = np.concatenate([self.outputs, np.zeros(self.initial_buffer_size, dtype=np.float32)])
 
         num_iters = self.buffer_size // batch_size
         remainder = self.buffer_size % batch_size
@@ -1088,9 +1095,8 @@ class ExpertBuffer:
             self.observations[self.pos:self.pos + cur_batch_size] = np.array(samples.observations)
             self.outputs[self.pos:self.pos + cur_batch_size] = outputs.detach().numpy()
 
-
             self.pos += cur_batch_size
-            self.full = True
+        self.full = True
 
     def sample(self, batch_size: int) -> ExpertSamples:
         if self.full:
