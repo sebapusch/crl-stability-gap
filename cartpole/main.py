@@ -1,13 +1,40 @@
 import wandb
+from gymnasium.envs.classic_control import CartPoleEnv
+from gymnasium.envs.mujoco.inverted_pendulum_v5 import InvertedPendulumEnv
+from gymnasium import Env
 
-from benchmark import make_benchmark
 from callbacks import make_callbacks
-from cartpole.benchmark import ContinualCartPole
+from cartpole.benchmarks.permuted_env_benchmark import PermutedEnvBenchmark
 from cartpole.common import make_logger
 from stable_baselines3.common.buffers import MultiReplayBuffer, ExpertBuffer
-from stable_baselines3.common.preprocessing import get_action_dim
 from stable_baselines3.dqn import DQN
 from args import get_args
+
+def get_benchmark(
+        base_env: str | type[Env],
+        benchmark: list[str],
+        seed: int,
+        encode: bool = True,
+) -> PermutedEnvBenchmark:
+    benchmark = [int(v.strip('V')) for v in benchmark]
+
+    if isinstance(base_env, str):
+        match base_env:
+            case 'cartpole':
+                base_env_cls = CartPoleEnv
+            case 'inverted_pendulum':
+                base_env_cls = InvertedPendulumEnv
+            case _:
+                raise ValueError(f'Unknown env {base_env}')
+    else:
+        base_env_cls = base_env
+
+    return PermutedEnvBenchmark(
+        base_env_cls,               # type: ignore
+        benchmark,
+        encode,
+        seed,
+    )
 
 
 def main(
@@ -28,17 +55,21 @@ def main(
         epsilon_start: float = 1.0,
         epsilon_end: float = 0.05,
         epsilon_decay_frac: float = 0.1,
-        total_timesteps: int = 200_000,
+        total_timesteps: int = 20_000,
         encode_task: bool = False,
         balanced_sampling: bool = False,
         behavior_cloning_coefficient: float = 100
 ):
     experience_replay = method == 'continual'
 
-    benchmark = [ContinualCartPole[version] for version in (benchmark if benchmark else ['V1', 'V2', 'V3'])]
+    benchmark = get_benchmark(
+        CartPoleEnv,
+        benchmark or ['V1', 'V2', 'V3'],
+        seed,
+        encode_task,
+    )
 
-    envs_train = make_benchmark(benchmark, encode_task=encode_task, seed=seed)
-    envs_test = make_benchmark(benchmark, encode_task=encode_task, seed=seed + 1)
+    envs_train, envs_test = benchmark.make()
 
     if experience_replay:
         buffer = MultiReplayBuffer(
@@ -62,11 +93,13 @@ def main(
 
     q_state, q_target_state = None, None
 
-    for ix, v in enumerate(benchmark):
+    for ix, v in enumerate(envs_train):
+        version = f'V{benchmark.benchmark[ix]}'
+
         run = wandb.init(
-            name=f'{name_prefix}-{v.name}',
+            name=f'{name_prefix}-{version}',
             project=project,
-            tags=[v.name, str(seed), method],
+            tags=[version, str(seed), method],
         )
 
         model = DQN(

@@ -314,22 +314,30 @@ def parse_args():
         help="Ignore cached results and recompute everything.",
     )
     parser.add_argument(
-        "--env_order",
+        "--envs", "--env_order",
         nargs="+",
         default=TEST_ENVS,
-        help=f"Order of test environments (default: {TEST_ENVS})",
+        help=f"Environments to plot and their training order (default: {TEST_ENVS})",
+    )
+    parser.add_argument(
+        "--seeds",
+        nargs="+",
+        type=int,
+        default=SEEDS,
+        help=f"Seeds to include (default: {SEEDS})",
     )
     return parser.parse_args()
 
 
 def main():
+    global TRAIN_ENVS, TEST_ENVS, SEEDS
     args = parse_args()
     methods = args.methods
     prefix = args.prefix
     use_cache = not args.no_cache
-    env_order = args.env_order
-    TEST_ENVS = env_order
-    TRAIN_ENVS = env_order
+    TRAIN_ENVS = args.envs
+    TEST_ENVS = args.envs
+    SEEDS = args.seeds
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -337,7 +345,7 @@ def main():
     if use_cache:
         print(f"Cache key: {cache_key}  (use --no-cache to force recompute)")
     
-    for test_env in env_order:
+    for test_env in TEST_ENVS:
         fig, ax = plt.subplots(figsize=(10, 5))
 
         for idx, method in enumerate(methods):
@@ -371,7 +379,7 @@ def main():
                 color="black",
                 linestyle="-",
                 alpha=0.6,
-                linewidth=1.5,
+                linewidth=0.5,
                 zorder=5,
             )
 

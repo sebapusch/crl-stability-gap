@@ -6,8 +6,7 @@ import numpy as np
 import wandb
 from wandb.integration.sb3 import WandbCallback
 
-from cartpole.benchmark import make_env, ContinualCartPole
-from metaworld.wrappers import OneHotWrapper
+from cartpole.benchmarks.permuted_env_benchmark import PermutedEnvBenchmark
 from stable_baselines3.common.callbacks import (EventCallback,
                                                 BaseCallback,
                                                 CallbackList,
@@ -17,7 +16,7 @@ from stable_baselines3.common.type_aliases import GymEnv
 
 
 def make_callbacks(
-        benchmark: list[ContinualCartPole],
+        benchmark: PermutedEnvBenchmark,
         envs_test: list[GymEnv],
         eval_freq: int,
         n_eval_episodes: int,
@@ -36,18 +35,16 @@ def make_callbacks(
         callbacks: list[BaseCallback] = [wandb_callback]
 
         if video_freq > 0:
-            video_env = make_env(benchmark[env_ix], seed=42, render_mode='rgb_array')
-            if encode_task:
-                video_env = OneHotWrapper(video_env, env_ix, len(benchmark))
+            video_env = benchmark.make_single(benchmark.benchmark[env_ix], test=True, render_mode='rgb_array')
             callbacks.append(
                 RegisterVideoCallback(video_freq, video_env),
             )
 
-        rng = range(len(benchmark) if eval_all else env_ix + 1 )
+        rng = range(len(benchmark) if eval_all else env_ix + 1)
         for i in rng:
             callbacks.append(
                 EnvEvalCallback(
-                    eval_id=benchmark[i].name,
+                    eval_id=f'V{benchmark.benchmark[i]}',
                     eval_env=envs_test[i],
                     eval_freq=eval_freq,
                     n_eval_episodes=n_eval_episodes,
