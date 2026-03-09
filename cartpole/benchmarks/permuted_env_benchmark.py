@@ -1,5 +1,6 @@
 import numpy as np
 from gymnasium import Env
+from gymnasium.wrappers import TimeLimit
 
 from cartpole.benchmarks.wrappers import ObsSpaceInf, ObsLinearTransform, OneHotWrapper
 
@@ -23,6 +24,7 @@ class PermutedEnvBenchmark:
             benchmark: list[int],
             encode_task: bool,
             seed: int = 42,
+            time_limit: int | None = None
     ) -> None:
         assert len(benchmark) > 0
         assert len(benchmark) == len(set(benchmark))
@@ -33,6 +35,7 @@ class PermutedEnvBenchmark:
         self.benchmark = benchmark
         self.encode_task = encode_task
         self.seed = seed
+        self.time_limit = time_limit
 
     def make_single(self, version: int, test: bool = False, **env_kwargs) -> Env:
         if version not in self.benchmark:
@@ -51,6 +54,9 @@ class PermutedEnvBenchmark:
             env = OneHotWrapper(env, self.benchmark.index(version), len(self))
 
         seed = self.seed + version + (1 if test else 0)
+
+        if self.time_limit is not None:
+            env = TimeLimit(env, self.time_limit)
 
         env.reset(seed=seed)
         env.action_space.seed(seed)
