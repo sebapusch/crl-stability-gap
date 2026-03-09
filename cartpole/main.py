@@ -44,7 +44,7 @@ def main(
         project: str = '',
         method: str = 'sequential',
         eval_freq: int = 500,
-        video_freq: int = 10_000,
+        video_freq: int = 0,
         n_eval_episodes: int = 15,
         lr: float = 3e-4,
         gamma: float = 0.99,
@@ -55,7 +55,7 @@ def main(
         epsilon_start: float = 1.0,
         epsilon_end: float = 0.05,
         epsilon_decay_frac: float = 0.1,
-        total_timesteps: int = 20_000,
+        total_timesteps: int = 200_000,
         encode_task: bool = False,
         balanced_sampling: bool = False,
         behavior_cloning_coefficient: float = 100
@@ -140,7 +140,6 @@ def main(
             video_freq=video_freq,
             n_eval_episodes=n_eval_episodes,
             eval_all=True,
-            encode_task=encode_task,
         )
 
         model.learn(

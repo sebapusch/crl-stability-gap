@@ -22,7 +22,6 @@ def make_callbacks(
         n_eval_episodes: int,
         video_freq: int,
         eval_all: bool,
-        encode_task: bool = False,
 ) -> Callable[[int], CallbackList]:
     wandb_callback = WandbCallback(gradient_save_freq=1000, verbose=2)
 
