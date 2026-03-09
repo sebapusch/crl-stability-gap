@@ -43,7 +43,7 @@ def main(
         name_prefix: str = '',
         project: str = '',
         method: str = 'sequential',
-        eval_freq: int = 500,
+        eval_freq: int = 5000,
         video_freq: int = 0,
         n_eval_episodes: int = 15,
         lr: float = 3e-4,
@@ -139,14 +139,13 @@ def main(
             eval_freq=eval_freq,
             video_freq=video_freq,
             n_eval_episodes=n_eval_episodes,
-            eval_all=True,
+            eval_all=False,
         )
 
         model.learn(
             total_timesteps=total_timesteps,
             callback=callbacks(ix),
             reset_num_timesteps=False,
-
         )
 
         if method in ['continual', 'fine_tune', 'behavior_cloning']:
