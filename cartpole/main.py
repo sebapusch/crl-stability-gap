@@ -34,6 +34,7 @@ def get_benchmark(
         benchmark,
         encode,
         seed,
+        500
     )
 
 
