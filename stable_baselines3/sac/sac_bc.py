@@ -51,6 +51,6 @@ class SAC_BC(SAC):
         expert_mu = expert_samples.outputs[:,0:1]
         expert_log_std = expert_samples.outputs[:,1:]
 
-        kl = _gaussian_kl(expert_mu, expert_log_std, mu, log_std)
+        kl = _gaussian_kl(mu, log_std, expert_mu, expert_log_std)
 
         return self.lambda_ * kl.mean()
