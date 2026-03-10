@@ -1,4 +1,4 @@
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 0 \
   --method behavior_cloning \
@@ -11,7 +11,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --total_timesteps 40_000 \
   --eval_freq 500
 
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 1 \
   --method behavior_cloning \
@@ -24,7 +24,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --total_timesteps 40_000 \
   --eval_freq 500
 
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 2 \
   --method behavior_cloning \
@@ -37,7 +37,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --total_timesteps 40_000 \
   --eval_freq 500
 
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 3 \
   --method behavior_cloning \
@@ -50,7 +50,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --total_timesteps 40_000 \
   --eval_freq 500
 
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 4 \
   --method behavior_cloning \
@@ -63,7 +63,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --total_timesteps 40_000 \
   --eval_freq 500
 
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 5 \
   --method behavior_cloning \
@@ -76,7 +76,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --total_timesteps 40_000 \
   --eval_freq 500
 
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 6 \
   --method behavior_cloning \
@@ -89,7 +89,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --total_timesteps 40_000 \
   --eval_freq 500
 
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 7 \
   --method behavior_cloning \
@@ -102,7 +102,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --total_timesteps 40_000 \
   --eval_freq 500
 
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 8 \
   --method behavior_cloning \
@@ -115,7 +115,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --total_timesteps 40_000 \
   --eval_freq 500
 
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 9 \
   --method behavior_cloning \
