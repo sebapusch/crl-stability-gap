@@ -5,6 +5,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --project sac_ip --encode_task \
   --buffer_size 1_000_000 \
   --batch_size 256 \
+  --total_timesteps 80_000
 
 sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --seed 1 \
@@ -13,6 +14,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --project sac_ip --encode_task \
   --buffer_size 1_000_000 \
   --batch_size 256 \
+  --total_timesteps 80_000
 
 sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --seed 2 \
@@ -21,6 +23,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --project sac_ip --encode_task \
   --buffer_size 1_000_000 \
   --batch_size 256 \
+  --total_timesteps 80_000
 
 sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --seed 3 \
@@ -29,6 +32,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --project sac_ip --encode_task \
   --buffer_size 1_000_000 \
   --batch_size 256 \
+  --total_timesteps 80_000
 
 sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --seed 4 \
@@ -37,4 +41,5 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --project sac_ip --encode_task \
   --buffer_size 1_000_000 \
   --batch_size 256 \
+  --total_timesteps 80_000
 
