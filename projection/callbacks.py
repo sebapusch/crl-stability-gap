@@ -6,7 +6,7 @@ import numpy as np
 import wandb
 from wandb.integration.sb3 import WandbCallback
 
-from cartpole.benchmarks.permuted_env_benchmark import PermutedEnvBenchmark
+from projection.benchmarks.permuted_env_benchmark import PermutedEnvBenchmark
 from stable_baselines3.common.callbacks import (EventCallback,
                                                 BaseCallback,
                                                 CallbackList,

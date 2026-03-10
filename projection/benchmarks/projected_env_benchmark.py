@@ -2,7 +2,7 @@ import numpy as np
 from gymnasium import Env
 from gymnasium.wrappers import TimeLimit
 
-from cartpole.benchmarks.wrappers import ObsSpaceInf, ObsLinearTransform, OneHotWrapper
+from projection.benchmarks.wrappers import ObsSpaceInf, ObsLinearTransform, OneHotWrapper
 
 
 PERMUTATION_SEEDS = range(90, 200)
@@ -17,7 +17,7 @@ def _random_orthogonal(seed: int, size: int) -> np.ndarray:
     return q.astype(np.float32)
 
 
-class PermutedEnvBenchmark:
+class ProjectedEnvBenchmark:
     def __init__(
             self,
             env_class: type[Env],

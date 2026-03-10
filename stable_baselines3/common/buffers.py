@@ -1,7 +1,7 @@
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Generator
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 import torch
@@ -1069,7 +1069,7 @@ class ExpertBuffer:
 
     def populate(
             self,
-            network: th.nn.Module,
+            network: th.nn.Module | Callable[[th.Tensor], th.Tensor],
             buffer: ReplayBuffer,
             batch_size: int = 512,
     ) -> None:
