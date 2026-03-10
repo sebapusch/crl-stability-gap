@@ -8,6 +8,7 @@
 cd /scratch/$USER/crl-stability-gap
 source .venv/bin/activate
 module load CUDA/12.6.0
+export MUJOCO_GL="egl"
 export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 
 python cartpole/main.py "$@"
