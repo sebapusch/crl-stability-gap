@@ -6,7 +6,7 @@ import numpy as np
 import wandb
 from wandb.integration.sb3 import WandbCallback
 
-from projection.benchmarks.permuted_env_benchmark import PermutedEnvBenchmark
+from projection.benchmarks.projected_env_benchmark import ProjectedEnvBenchmark
 from stable_baselines3.common.callbacks import (EventCallback,
                                                 BaseCallback,
                                                 CallbackList,
@@ -16,7 +16,7 @@ from stable_baselines3.common.type_aliases import GymEnv
 
 
 def make_callbacks(
-        benchmark: PermutedEnvBenchmark,
+        benchmark: ProjectedEnvBenchmark,
         envs_test: list[GymEnv],
         eval_freq: int,
         n_eval_episodes: int,

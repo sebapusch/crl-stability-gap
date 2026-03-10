@@ -65,9 +65,10 @@ def get_args() -> Namespace:
         help='Whether to maintain original batch size per task on when mode is "continual"',
     )
     parser.add_argument(
-        '--eval_single',
+        '--eval_all',
         action='store_false',
-        help='Whether to only evaluate the environment the agent is currently training on',
+        default=True,
+        help='Whether to only evaluate all environments in the benchmark on every evaluation step',
     )
 
     # ── Training hyperparameters ────────────────────────────────────
