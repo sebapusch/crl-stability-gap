@@ -113,8 +113,6 @@ def _build_sac(
         assert expert_buffer is not None
 
         return SAC_BC(
-            env=train_env,
-            num_tasks=num_tasks,
             expert_buffer=expert_buffer,
             expert_buffer_batch_size=128,
             lambda_=behavior_cloning_coefficient,
@@ -274,11 +272,16 @@ def main(
             eval_all=eval_all,
         )
 
-        model.learn(
-            total_timesteps=total_timesteps,
-            callback=callbacks(ix),
-            reset_num_timesteps=False,
-        )
+        learn_kwargs = {
+            'total_timesteps': total_timesteps,
+            'callback': callbacks(ix),
+            'reset_num_timesteps': False,
+        }
+
+        if not use_dqn:
+            learn_kwargs['task_ix'] = ix
+
+        model.learn(**learn_kwargs)
 
         # ── Post-training bookkeeping ───────────────────────────────
         if method in TRANSFER_METHODS:
