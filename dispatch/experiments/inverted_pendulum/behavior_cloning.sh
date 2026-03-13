@@ -2,7 +2,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 0 \
   --method behavior_cloning \
-  --name_prefix beahvior_cloning_sac-s0 \
+  --name_prefix behavior_cloning_sac-s0 \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
@@ -15,7 +15,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 1 \
   --method behavior_cloning \
-  --name_prefix beahvior_cloning_sac-s1 \
+  --name_prefix behavior_cloning_sac-s1 \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
@@ -28,7 +28,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 2 \
   --method behavior_cloning \
-  --name_prefix beahvior_cloning_sac-s2 \
+  --name_prefix behavior_cloning_sac-s2 \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
@@ -41,7 +41,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 3 \
   --method behavior_cloning \
-  --name_prefix beahvior_cloning_sac-s3 \
+  --name_prefix behavior_cloning_sac-s3 \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
@@ -54,7 +54,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 4 \
   --method behavior_cloning \
-  --name_prefix beahvior_cloning_sac-s4 \
+  --name_prefix behavior_cloning_sac-s4 \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
@@ -67,7 +67,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 5 \
   --method behavior_cloning \
-  --name_prefix beahvior_cloning_sac-s5 \
+  --name_prefix behavior_cloning_sac-s5 \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
@@ -80,7 +80,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 6 \
   --method behavior_cloning \
-  --name_prefix beahvior_cloning_sac-s6 \
+  --name_prefix behavior_cloning_sac-s6 \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
@@ -93,7 +93,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 7 \
   --method behavior_cloning \
-  --name_prefix beahvior_cloning_sac-s7 \
+  --name_prefix behavior_cloning_sac-s7 \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
@@ -106,7 +106,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 8 \
   --method behavior_cloning \
-  --name_prefix beahvior_cloning_sac-s8 \
+  --name_prefix behavior_cloning_sac-s8 \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
@@ -119,7 +119,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 9 \
   --method behavior_cloning \
-  --name_prefix beahvior_cloning_sac-s9 \
+  --name_prefix behavior_cloning_sac-s9 \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
