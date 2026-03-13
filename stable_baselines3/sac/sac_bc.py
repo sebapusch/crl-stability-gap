@@ -39,17 +39,17 @@ class SAC_BC(SAC):
             self.replay_buffer,
         )
 
-
-    def get_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
+    def get_actor_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
         if task_ix == 0:
             return torch.zeros([])
 
+        action_dim = self.action_space.shape[0]
         expert_samples = self.expert_buffer.sample(self.expert_buffer_batch_size)
 
         mu, log_std, _ = self.actor.get_action_dist_params(expert_samples.observations)
 
-        expert_mu = expert_samples.outputs[:,0:1]
-        expert_log_std = expert_samples.outputs[:,1:]
+        expert_mu = expert_samples.outputs[:, :action_dim]
+        expert_log_std = expert_samples.outputs[:, action_dim:]
 
         kl = _gaussian_kl(mu, log_std, expert_mu, expert_log_std)
 

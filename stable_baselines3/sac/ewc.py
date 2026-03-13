@@ -17,7 +17,10 @@ class SAC_EWC(SAC):
             torch.zeros_like(p, requires_grad=False) for p in self.old_params
         ]
 
-    def get_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
+    def get_actor_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
+        return self._regression_loss(task_ix)
+
+    def get_critic_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
         return self._regression_loss(task_ix)
 
     def on_task_change(self, task_ix: int) -> None:

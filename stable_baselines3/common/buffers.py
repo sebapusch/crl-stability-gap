@@ -1078,20 +1078,21 @@ class ExpertBuffer:
         if remainder != 0:
             num_iters += 1
 
-        for i in range(num_iters):
-            if i == num_iters - 1 and remainder != 0:
-                cur_batch_size = remainder
-            else:
-                cur_batch_size = batch_size
+        with torch.no_grad():
+            for i in range(num_iters):
+                if i == num_iters - 1 and remainder != 0:
+                    cur_batch_size = remainder
+                else:
+                    cur_batch_size = batch_size
 
-            samples = buffer.sample(cur_batch_size)
-            outputs = network(samples.observations)
+                samples = buffer.sample(cur_batch_size)
+                outputs = network(samples.observations)
 
-            self.observations[self.pos:self.pos + cur_batch_size] = np.array(samples.observations)
-            self.outputs[self.pos:self.pos + cur_batch_size] = outputs.detach().numpy()
+                self.observations[self.pos:self.pos + cur_batch_size] = samples.observations.detach().cpu().numpy()
+                self.outputs[self.pos:self.pos + cur_batch_size] = outputs.detach().cpu().numpy()
 
-            self.pos += cur_batch_size
-        self.full = self.pos == self.buffer_size - 1
+                self.pos += cur_batch_size
+        self.full = self.pos >= self.buffer_size
 
     def sample(self, batch_size: int) -> ExpertSamples:
         if self.full:

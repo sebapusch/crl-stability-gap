@@ -148,11 +148,11 @@ def _load_weights(model: DQN | SAC, state: dict) -> None:
         model.critic_target.load_state_dict(state['critic_target'])
 
 
-def _get_actor_dist(model: SAC) -> Callable[[torch.Tensor], torch.Tensor]:
-    def get_dist(obs: torch.Tensor) -> torch.Tensor:
+def _get_expert_targets(model: SAC) -> Callable[[torch.Tensor], torch.Tensor]:
+    def get_targets(obs: torch.Tensor) -> torch.Tensor:
         mu, log_std, _ = model.actor.get_action_dist_params(obs)
         return torch.concat([mu, log_std], 1)
-    return get_dist
+    return get_targets
 
 
 # ── Main training loop ──────────────────────────────────────────────
@@ -202,12 +202,15 @@ def main(
     # ── DQN-specific expert buffer (behavior cloning only) ──────────
     expert_buffer = None
     if method == 'behavior_cloning':
+        if use_dqn:
+            expert_output_size = envs_train[0].action_space.n
+        else:
+            expert_output_size = 2 * envs_train[0].action_space.shape[0]
         expert_buffer = ExpertBuffer(
             buffer_size=expert_buffer_size,
             n_tasks=len(bench),
             observation_space=envs_train[0].observation_space,
-            output_size=2,      # hard-coded both for DQN on cartpole and for SAC
-                                # actor on inverted pendulum
+            output_size=expert_output_size,
         )
 
     saved_weights: dict | None = None
@@ -290,7 +293,7 @@ def main(
         is_last_task = ix >= len(bench) - 1
 
         if method == 'behavior_cloning' and not is_last_task:
-            network = model.q_net_target if use_dqn else _get_actor_dist(model)
+            network = model.q_net_target if use_dqn else _get_expert_targets(model)
             expert_buffer.populate(
                 network=network,
                 buffer=model.replay_buffer,

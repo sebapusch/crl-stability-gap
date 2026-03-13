@@ -200,7 +200,10 @@ class SAC(OffPolicyAlgorithm):
         self.critic = self.policy.critic
         self.critic_target = self.policy.critic_target
 
-    def get_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
+    def get_actor_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
+        return torch.zeros([])
+
+    def get_critic_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
         return torch.zeros([])
 
     def train(self, gradient_steps: int, batch_size: int = 64, task_ix: int = 0) -> None:
@@ -274,7 +277,7 @@ class SAC(OffPolicyAlgorithm):
             critic_losses.append(critic_loss.item())
 
             # Add isolated regularization for the critic's backward pass
-            critic_aux_loss = self.get_auxiliary_loss(task_ix)
+            critic_aux_loss = self.get_critic_auxiliary_loss(task_ix)
             critic_loss += critic_aux_loss
 
             self.critic.optimizer.zero_grad()
@@ -291,7 +294,7 @@ class SAC(OffPolicyAlgorithm):
             actor_losses.append(actor_loss.item())
 
             # Add isolated regularization for the actor's backward pass
-            actor_aux_loss = self.get_auxiliary_loss(task_ix)
+            actor_aux_loss = self.get_actor_auxiliary_loss(task_ix)
             actor_loss += actor_aux_loss
 
             self.actor.optimizer.zero_grad()
