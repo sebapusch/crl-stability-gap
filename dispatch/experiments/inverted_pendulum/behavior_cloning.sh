@@ -6,7 +6,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
-  --behavior_cloning_coefficient 1 \
+  --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
   --total_timesteps 40_000 \
   --eval_freq 500
@@ -19,7 +19,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
-  --behavior_cloning_coefficient 1 \
+  --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
   --total_timesteps 40_000 \
   --eval_freq 500
@@ -32,7 +32,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
-  --behavior_cloning_coefficient 1 \
+  --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
   --total_timesteps 40_000 \
   --eval_freq 500
@@ -45,7 +45,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
-  --behavior_cloning_coefficient 1 \
+  --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
   --total_timesteps 40_000 \
   --eval_freq 500
@@ -58,7 +58,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
-  --behavior_cloning_coefficient 1 \
+  --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
   --total_timesteps 40_000 \
   --eval_freq 500
@@ -71,7 +71,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
-  --behavior_cloning_coefficient 1 \
+  --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
   --total_timesteps 40_000 \
   --eval_freq 500
@@ -84,7 +84,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
-  --behavior_cloning_coefficient 1 \
+  --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
   --total_timesteps 40_000 \
   --eval_freq 500
@@ -97,7 +97,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
-  --behavior_cloning_coefficient 1 \
+  --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
   --total_timesteps 40_000 \
   --eval_freq 500
@@ -110,7 +110,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
-  --behavior_cloning_coefficient 1 \
+  --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
   --total_timesteps 40_000 \
   --eval_freq 500
@@ -123,7 +123,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_bc --encode_task \
   --buffer_size 1_000_000 \
   --expert_buffer_size 10_000 \
-  --behavior_cloning_coefficient 1 \
+  --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
   --total_timesteps 40_000 \
   --eval_freq 500
