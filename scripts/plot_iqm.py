@@ -28,7 +28,7 @@ DEFAULT_METHODS = ["continual", "sequential", "fine_tune"]
 SEEDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 TRAIN_ENVS = ["V1", "V2", "V3"]
 TEST_ENVS = ["V1", "V2", "V3"]
-TIMESTEPS_PER_ENV = 200_000
+TIMESTEPS_PER_ENV = 40_000
 
 # Known labels; unknown methods get auto-generated labels
 METHOD_LABELS = {
@@ -326,6 +326,12 @@ def parse_args():
         default=SEEDS,
         help=f"Seeds to include (default: {SEEDS})",
     )
+    parser.add_argument(
+        "--timesteps",
+        type=int,
+        default=TIMESTEPS_PER_ENV,
+        help=f"Timesteps per environment (default: {TIMESTEPS_PER_ENV})",
+    )
     return parser.parse_args()
 
 
@@ -338,6 +344,7 @@ def main():
     TRAIN_ENVS = args.envs
     TEST_ENVS = args.envs
     SEEDS = args.seeds
+    TIMESTEPS_PER_ENV = args.timesteps
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
