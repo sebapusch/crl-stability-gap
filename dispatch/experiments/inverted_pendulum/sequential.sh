@@ -1,4 +1,4 @@
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 0 \
   --method sequential \
@@ -9,7 +9,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --total_timesteps 30_000 \
   --eval_freq 2500
 
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 1 \
   --method sequential \
@@ -20,7 +20,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --total_timesteps 30_000 \
   --eval_freq 2500
 
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 2 \
   --method sequential \
@@ -31,7 +31,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --total_timesteps 30_000 \
   --eval_freq 2500
 
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 3 \
   --method sequential \
@@ -42,7 +42,7 @@ sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
   --total_timesteps 30_000 \
   --eval_freq 2500
 
-sbatch --time=01:00:00 dispatch/dispatch_projection.sh \
+sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum \
   --seed 4 \
   --method sequential \
