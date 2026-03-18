@@ -6,7 +6,7 @@ from gymnasium.envs.classic_control import CartPoleEnv
 from gymnasium.envs.mujoco.inverted_pendulum_v5 import InvertedPendulumEnv
 from gymnasium import Env
 
-from args import get_args
+from args import get_args, parse_eval_freq
 from callbacks import make_callbacks
 from projection.benchmarks.projected_env_benchmark import ProjectedEnvBenchmark
 from projection.common import make_logger
@@ -163,7 +163,7 @@ def main(
         name_prefix: str = '',
         project: str = '',
         method: str = 'sequential',
-        eval_freq: int = 500,
+        eval_freq: int | list[tuple[int, int]] = 500,
         video_freq: int = 0,
         n_eval_episodes: int = 15,
         lr: float = 3e-4,
@@ -309,4 +309,6 @@ def main(
 
 
 if __name__ == '__main__':
-    main(**vars(get_args()))
+    args = vars(get_args())
+    args['eval_freq'] = parse_eval_freq(args['eval_freq'], args['total_timesteps'])
+    main(**args)
