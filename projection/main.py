@@ -117,7 +117,7 @@ def _build_sac(
             expert_buffer=expert_buffer,
             expert_buffer_batch_size=128,
             lambda_=behavior_cloning_coefficient,
-            bc_loss_fn=gaussian_kl if bc_loss_fn == 'kl' else l2,
+            loss_fn=gaussian_kl if bc_loss_fn == 'kl' else l2,
             **common_kwargs,
         )
 
