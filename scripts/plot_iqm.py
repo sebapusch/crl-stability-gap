@@ -332,6 +332,11 @@ def parse_args():
         default=TIMESTEPS_PER_ENV,
         help=f"Timesteps per environment (default: {TIMESTEPS_PER_ENV})",
     )
+    parser.add_argument(
+        "--env_name",
+        type=str,
+        help=f"Base name of the environment",
+    )
     return parser.parse_args()
 
 
@@ -345,6 +350,7 @@ def main():
     TEST_ENVS = args.envs
     SEEDS = args.seeds
     TIMESTEPS_PER_ENV = args.timesteps
+    env_name = args.env_name
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -408,7 +414,7 @@ def main():
 
         ax.set_xlabel("Total Timesteps")
         ax.set_ylabel("IQM Episodic Return")
-        ax.set_title(f"Evaluation on CartPole-{test_env}", pad=25)
+        ax.set_title(f"Evaluation on {env_name}-{test_env}", pad=25)
         ax.legend()
         ax.grid(alpha=0.3)
 

@@ -104,6 +104,9 @@ def get_args() -> Namespace:
     parser.add_argument('--epsilon_end', default=0.05, type=float)
     parser.add_argument('--epsilon_decay_frac', default=0.1, type=float)
 
+    # ── SAC-specific (behavior cloning) ───────────────────────────────
+    parser.add_argument('--bc_loss_fn', default='kl', type=str, choices=['kl', 'l2'])
+
     return parser.parse_args()
 
 

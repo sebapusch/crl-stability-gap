@@ -1,10 +1,12 @@
+from collections.abc import Callable
+
 import torch
 
 from stable_baselines3 import SAC
 from stable_baselines3.common.buffers import ExpertBuffer
 
 
-def _gaussian_kl(mu_q: torch.Tensor, log_std_q: torch.Tensor, mu_p: torch.Tensor, log_std_p: torch.Tensor):
+def gaussian_kl(mu_q: torch.Tensor, log_std_q: torch.Tensor, mu_p: torch.Tensor, log_std_p: torch.Tensor) -> torch.Tensor:
     var_q = torch.exp(2 * log_std_q)
     var_p = torch.exp(2 * log_std_p)
 
@@ -12,7 +14,13 @@ def _gaussian_kl(mu_q: torch.Tensor, log_std_q: torch.Tensor, mu_p: torch.Tensor
             log_std_p - log_std_q
             + (var_q + (mu_q - mu_p) ** 2) / (2 * var_p)
             - 0.5
-    )
+    ).mean()
+
+def l2(mu_q: torch.Tensor, _: torch.Tensor, mu_p: torch.Tensor, __: torch.Tensor) -> torch.Tensor:
+    return (
+        (mu_q - mu_p) ** 2
+    ).mean()
+
 
 
 class SAC_BC(SAC):
@@ -21,6 +29,7 @@ class SAC_BC(SAC):
             expert_buffer: ExpertBuffer,
             expert_buffer_batch_size: int,
             lambda_: float,
+            loss_fn: Callable = gaussian_kl,
             **kwargs,
     ):
         super().__init__(**kwargs)
@@ -28,6 +37,7 @@ class SAC_BC(SAC):
         self.expert_buffer = expert_buffer
         self.lambda_ = lambda_
         self.expert_buffer_batch_size = expert_buffer_batch_size
+        self.loss_fn = loss_fn
 
     def on_task_change(self, task_ix: int) -> None:
         def get_dist(obs: torch.Tensor) -> torch.Tensor:
@@ -51,6 +61,4 @@ class SAC_BC(SAC):
         expert_mu = expert_samples.outputs[:, :action_dim]
         expert_log_std = expert_samples.outputs[:, action_dim:]
 
-        kl = _gaussian_kl(mu, log_std, expert_mu, expert_log_std)
-
-        return self.lambda_ * kl.mean()
+        return self.lambda_ * self.loss_fn(mu, log_std, expert_mu, expert_log_std)

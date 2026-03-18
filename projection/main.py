@@ -13,7 +13,7 @@ from projection.common import make_logger
 from stable_baselines3.common.buffers import MultiReplayBuffer, ExpertBuffer
 from stable_baselines3.dqn import DQN
 from stable_baselines3.sac import SAC
-from stable_baselines3.sac.sac_bc import SAC_BC
+from stable_baselines3.sac.sac_bc import SAC_BC, gaussian_kl, l2
 
 # ── Environment registry ────────────────────────────────────────────
 ENV_REGISTRY: dict[str, tuple[type[Env], int]] = {
@@ -95,6 +95,7 @@ def _build_sac(
         num_tasks: int,
         behavior_cloning_coefficient: float,
         expert_buffer: ExpertBuffer | None,
+        bc_loss_fn: str,
 ) -> SAC:
     common_kwargs = dict(
         policy='MlpPolicy',
@@ -116,6 +117,7 @@ def _build_sac(
             expert_buffer=expert_buffer,
             expert_buffer_batch_size=128,
             lambda_=behavior_cloning_coefficient,
+            bc_loss_fn=gaussian_kl if bc_loss_fn == 'kl' else l2,
             **common_kwargs,
         )
 
@@ -181,6 +183,7 @@ def main(
         behavior_cloning_coefficient: float = 100,
         expert_buffer_size: int = 1000,
         eval_all: bool = True,
+        bc_loss_fn: str = 'kl'
 ):
     use_dqn = env == 'cartpole'
     experience_replay = method == 'continual'
@@ -255,6 +258,7 @@ def main(
                 num_tasks=len(bench),
                 behavior_cloning_coefficient=behavior_cloning_coefficient,
                 expert_buffer=expert_buffer,
+                bc_loss_fn=bc_loss_fn,
             )
 
         model.set_logger(make_logger(run.name))
