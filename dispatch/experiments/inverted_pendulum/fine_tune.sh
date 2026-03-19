@@ -6,7 +6,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_ft --encode_task \
   --buffer_size 1_000_000 \
   --batch_size 256 \
-  --total_timesteps 30_000 \
+  --total_timesteps 40_000 \
   --eval_freq 2500
 
 sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
@@ -17,7 +17,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_ft --encode_task \
   --buffer_size 1_000_000 \
   --batch_size 256 \
-  --total_timesteps 30_000 \
+  --total_timesteps 40_000 \
   --eval_freq 2500
 
 sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
@@ -28,7 +28,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_ft --encode_task \
   --buffer_size 1_000_000 \
   --batch_size 256 \
-  --total_timesteps 30_000 \
+  --total_timesteps 40_000 \
   --eval_freq 2500
 
 sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
@@ -39,7 +39,7 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_ft --encode_task \
   --buffer_size 1_000_000 \
   --batch_size 256 \
-  --total_timesteps 30_000 \
+  --total_timesteps 40_000 \
   --eval_freq 2500
 
 sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
@@ -50,6 +50,6 @@ sbatch --time=01:30:00 dispatch/dispatch_projection.sh \
   --project sac_ft --encode_task \
   --buffer_size 1_000_000 \
   --batch_size 256 \
-  --total_timesteps 30_000 \
+  --total_timesteps 40_000 \
   --eval_freq 2500
 

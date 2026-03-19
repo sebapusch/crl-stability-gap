@@ -28,7 +28,7 @@ DEFAULT_METHODS = ["continual", "sequential", "fine_tune"]
 SEEDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 TRAIN_ENVS = ["V1", "V2", "V3"]
 TEST_ENVS = ["V1", "V2", "V3"]
-TIMESTEPS_PER_ENV = 30_000
+TIMESTEPS_PER_ENV = 40_000
 
 # Known labels; unknown methods get auto-generated labels
 METHOD_LABELS = {
@@ -380,7 +380,7 @@ def main():
                 print(f"  No data for {method}/{test_env}")
                 continue
 
-            label = get_label(method)
+            label = get_label(prefix)
             color = get_color(method, idx)
             ax.plot(ts, iqm, label=label, color=color, linewidth=1.5)
             ax.fill_between(ts, ci_lo, ci_hi, alpha=0.2, color=color)
