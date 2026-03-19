@@ -12,7 +12,6 @@ def get_args() -> Namespace:
     parser.add_argument(
         '--benchmark',
         default=BENCHMARK,
-        choices=BENCHMARK,
         nargs='*',
     )
     parser.add_argument(
