@@ -8,13 +8,16 @@ from projection.benchmarks.wrappers import ObsSpaceInf, ObsLinearTransform, OneH
 PERMUTATION_SEEDS = range(90, 200)
 
 
-def _random_orthogonal(seed: int, size: int) -> np.ndarray:
+def _random_orthogonal(seed: int, size: int, bias: bool = False) -> tuple[np.ndarray, np.ndarray | None]:
     rng = np.random.default_rng(seed)
     m = rng.normal(size=(size, size))
     q, _ = np.linalg.qr(m)
     if np.linalg.det(q) < 0:
         q[:, 0] *= -1
-    return q.astype(np.float32)
+    q =  q.astype(np.float32)
+    b = None if not bias else rng.random(size=size)
+
+    return q, b
 
 
 class ProjectedEnvBenchmark:
@@ -45,10 +48,12 @@ class ProjectedEnvBenchmark:
         env = ObsSpaceInf(env)
 
         if version > 1:
-            env = ObsLinearTransform(
-                env,
-                _random_orthogonal(PERMUTATION_SEEDS[version - 1], env.observation_space.shape[0])
+            q, b = _random_orthogonal(
+                PERMUTATION_SEEDS[version - 1],
+                env.observation_space.shape[0],
+                version > 5
             )
+            env = ObsLinearTransform(env, q, b)
 
         if self.encode_task:
             env = OneHotWrapper(env, self.benchmark.index(version), len(self))
