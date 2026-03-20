@@ -341,7 +341,7 @@ def parse_args():
 
 
 def main():
-    global TRAIN_ENVS, TEST_ENVS, SEEDS
+    global TRAIN_ENVS, TEST_ENVS, SEEDS, TIMESTEPS_PER_ENV
     args = parse_args()
     methods = args.methods
     prefix = args.prefix
