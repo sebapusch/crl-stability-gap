@@ -4,7 +4,7 @@ from argparse import Namespace
 
 METHODS = ['sequential', 'fine_tune', 'continual', 'behavior_cloning']
 BENCHMARK = ['V1', 'V2', 'V3']
-ENVS = ['cartpole', 'inverted_pendulum']
+ENVS = ['cartpole', 'inverted_pendulum', 'inverted_pendulum_hard']
 
 def get_args() -> Namespace:
     parser = argparse.ArgumentParser()
