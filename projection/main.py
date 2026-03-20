@@ -8,6 +8,7 @@ from gymnasium import Env
 
 from args import get_args, parse_eval_freq
 from callbacks import make_callbacks
+from projection.benchmarks.inverted_pendulum_hard import InvertedPendulumHard
 from projection.benchmarks.projected_env_benchmark import ProjectedEnvBenchmark
 from projection.common import make_logger
 from stable_baselines3.common.buffers import MultiReplayBuffer, ExpertBuffer
@@ -17,8 +18,9 @@ from stable_baselines3.sac.sac_bc import SAC_BC, gaussian_kl, l2
 
 # ── Environment registry ────────────────────────────────────────────
 ENV_REGISTRY: dict[str, tuple[type[Env], int]] = {
-    'cartpole':           (CartPoleEnv,         500),
-    'inverted_pendulum':  (InvertedPendulumEnv, 1000),
+    'cartpole':                 (CartPoleEnv,         500),
+    'inverted_pendulum':        (InvertedPendulumEnv, 1000),
+    'inverted_pendulum_hard':   (InvertedPendulumHard, 1000),
 }
 
 TRANSFER_METHODS = {'fine_tune', 'continual', 'behavior_cloning'}
