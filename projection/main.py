@@ -15,6 +15,7 @@ from stable_baselines3.common.buffers import MultiReplayBuffer, ExpertBuffer
 from stable_baselines3.dqn import DQN
 from stable_baselines3.sac import SAC
 from stable_baselines3.sac.sac_bc import SAC_BC, gaussian_kl, l2
+from stable_baselines3.sacd.sacd import SACD
 
 # ── Environment registry ────────────────────────────────────────────
 ENV_REGISTRY: dict[str, tuple[type[Env], int]] = {
@@ -82,6 +83,32 @@ def _build_dqn(
         behavior_cloning=behavior_cloning,
         behavior_cloning_coefficient=behavior_cloning_coefficient,
     )
+
+def _build_sacd(
+        train_env: Env,
+        *,
+        lr: float,
+        gamma: float,
+        buffer_size: int,
+        batch_size: int,
+        learning_starts: int,
+        seed: int,
+        method: str,
+) -> SACD:
+    common_kwargs = dict(
+        policy='MlpPolicy',
+        env=train_env,
+        verbose=1,
+        learning_rate=lr,
+        learning_starts=learning_starts,
+        gamma=gamma,
+        buffer_size=buffer_size,
+        batch_size=batch_size,
+        policy_kwargs={'net_arch': [256, 256]},
+        seed=seed,
+    )
+
+    return SACD(**common_kwargs)
 
 
 def _build_sac(
@@ -185,9 +212,11 @@ def main(
         behavior_cloning_coefficient: float = 100,
         expert_buffer_size: int = 1000,
         eval_all: bool = True,
-        bc_loss_fn: str = 'kl'
+        bc_loss_fn: str = 'kl',
+        algorithm: str = 'dqn',
 ):
-    use_dqn = env == 'cartpole'
+    algorithm = algorithm if env == 'cartpole' else 'sac'
+
     experience_replay = method == 'continual'
 
     bench = get_benchmark(env, benchmark or ['V1', 'V2', 'V3'], seed, encode_task)
@@ -207,7 +236,7 @@ def main(
     # ── DQN-specific expert buffer (behavior cloning only) ──────────
     expert_buffer = None
     if method == 'behavior_cloning':
-        if use_dqn:
+        if algorithm in ['dqn']:
             expert_output_size = envs_train[0].action_space.n
         else:
             expert_output_size = 2 * envs_train[0].action_space.shape[0]
@@ -230,38 +259,51 @@ def main(
         )
 
         # ── Build algorithm ─────────────────────────────────────────
-        if use_dqn:
-            model = _build_dqn(
-                train_env,
-                lr=lr,
-                gamma=gamma,
-                buffer_size=buffer_size,
-                batch_size=batch_size,
-                learning_starts=learning_starts,
-                target_update=target_update,
-                epsilon_start=epsilon_start,
-                epsilon_end=epsilon_end,
-                epsilon_decay_frac=epsilon_decay_frac,
-                seed=seed,
-                expert_buffer=expert_buffer,
-                behavior_cloning=method == 'behavior_cloning' and ix > 0,
-                behavior_cloning_coefficient=behavior_cloning_coefficient,
-            )
-        else:
-            model = _build_sac(
-                train_env,
-                lr=lr,
-                gamma=gamma,
-                buffer_size=buffer_size,
-                batch_size=batch_size,
-                learning_starts=learning_starts,
-                seed=seed,
-                method=method,
-                num_tasks=len(bench),
-                behavior_cloning_coefficient=behavior_cloning_coefficient,
-                expert_buffer=expert_buffer,
-                bc_loss_fn=bc_loss_fn,
-            )
+        match algorithm:
+            case 'dqn':
+                model = _build_dqn(
+                    train_env,
+                    lr=lr,
+                    gamma=gamma,
+                    buffer_size=buffer_size,
+                    batch_size=batch_size,
+                    learning_starts=learning_starts,
+                    target_update=target_update,
+                    epsilon_start=epsilon_start,
+                    epsilon_end=epsilon_end,
+                    epsilon_decay_frac=epsilon_decay_frac,
+                    seed=seed,
+                    expert_buffer=expert_buffer,
+                    behavior_cloning=method == 'behavior_cloning' and ix > 0,
+                    behavior_cloning_coefficient=behavior_cloning_coefficient,
+                )
+            case 'sac':
+                model = _build_sac(
+                    train_env,
+                    lr=lr,
+                    gamma=gamma,
+                    buffer_size=buffer_size,
+                    batch_size=batch_size,
+                    learning_starts=learning_starts,
+                    seed=seed,
+                    method=method,
+                    num_tasks=len(bench),
+                    behavior_cloning_coefficient=behavior_cloning_coefficient,
+                    expert_buffer=expert_buffer,
+                    bc_loss_fn=bc_loss_fn,
+                )
+            case 'dsac':
+                model = _build_sacd(
+                    train_env,
+                    lr=lr,
+                    gamma=gamma,
+                    buffer_size=buffer_size,
+                    batch_size=batch_size,
+                    learning_starts=learning_starts,
+                    seed=seed,
+                    method=method,
+                )
+            case _: raise ValueError(f'{algorithm} is BS')
 
         model.set_logger(make_logger(run.name))
 
@@ -287,7 +329,7 @@ def main(
             'reset_num_timesteps': False,
         }
 
-        if not use_dqn:
+        if not algorithm in ['dqn']:
             learn_kwargs['task_ix'] = ix
 
         model.learn(**learn_kwargs)
@@ -299,14 +341,11 @@ def main(
         is_last_task = ix >= len(bench) - 1
 
         if method == 'behavior_cloning' and not is_last_task:
-            network = model.q_net_target if use_dqn else _get_expert_targets(model)
+            network = model.q_net_target if algorithm == 'dqn' else _get_expert_targets(model)
             expert_buffer.populate(
                 network=network,
                 buffer=model.replay_buffer,
             )
-
-        # if not use_dqn and isinstance(model, SAC_BC) and not is_last_task:
-        #     model.on_task_change(ix)
 
         if experience_replay and not is_last_task:
             buffer.increase_index()

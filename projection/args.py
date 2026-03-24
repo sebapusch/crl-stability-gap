@@ -106,6 +106,9 @@ def get_args() -> Namespace:
     # ── SAC-specific (behavior cloning) ───────────────────────────────
     parser.add_argument('--bc_loss_fn', default='kl', type=str, choices=['kl', 'l2'])
 
+    # ── CartPole-specific (algorithm) ───────────────────────────────
+    parser.add_argument('--algorithm', default='dqn', type=str, choices=['dqn', 'dsac'])
+
     return parser.parse_args()
 
 
