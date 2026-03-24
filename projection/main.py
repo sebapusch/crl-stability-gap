@@ -347,14 +347,16 @@ def main(
         is_last_task = ix >= len(bench) - 1
 
         if method == 'behavior_cloning' and not is_last_task:
-            network = {
-                'sac': _get_sac_expert_targets,
-                'sacd': _get_sacd_expert_targets,
-                'dqn': model.q_net_target,
-            }
+            match algorithm:
+                case 'sac':
+                    network = _get_sac_expert_targets(model)
+                case 'sacd':
+                    network = _get_sacd_expert_targets(model)
+                case _:
+                    network = model.q_net_target
 
             expert_buffer.populate(
-                network=network[algorithm],
+                network=network,
                 buffer=model.replay_buffer,
             )
 
