@@ -298,7 +298,7 @@ def main(
                     expert_buffer=expert_buffer,
                     bc_loss_fn=bc_loss_fn,
                 )
-            case 'dsac':
+            case 'sacd':
                 model = _build_sacd(
                     train_env,
                     lr=lr,
