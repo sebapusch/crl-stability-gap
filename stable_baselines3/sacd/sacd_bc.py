@@ -34,7 +34,7 @@ class SACD_BC(SACD):
 
         expert_samples = self.expert_buffer.sample(self.expert_buffer_batch_size)
 
-        out_p, _ = self.actor.get_action_dist_params(expert_samples.observations)
+        out_p, _ = self.actor.action_log_prob(expert_samples.observations)
         out_q = expert_samples.outputs
 
         return self.lambda_ * self.loss_fn(out_q, out_p)

@@ -323,7 +323,6 @@ def main(
                     method=method,
                     behavior_cloning_coefficient=behavior_cloning_coefficient,
                     expert_buffer=expert_buffer,
-                    bc_loss_fn=bc_loss_fn,
                 )
             case _: raise ValueError(f'{algorithm} is BS')
 
