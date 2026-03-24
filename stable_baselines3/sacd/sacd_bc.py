@@ -12,7 +12,7 @@ def discrete_kl(q: torch.Tensor, p: torch.Tensor) -> torch.Tensor:
     return kl.mean()
 
 
-class SAC_BC(SACD):
+class SACD_BC(SACD):
     def __init__(
             self,
             expert_buffer: ExpertBuffer,

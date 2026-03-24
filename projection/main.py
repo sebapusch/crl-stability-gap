@@ -16,6 +16,7 @@ from stable_baselines3.dqn import DQN
 from stable_baselines3.sac import SAC
 from stable_baselines3.sac.sac_bc import SAC_BC, gaussian_kl, l2
 from stable_baselines3.sacd.sacd import SACD
+from stable_baselines3.sacd.sacd_bc import SACD_BC
 
 # ── Environment registry ────────────────────────────────────────────
 ENV_REGISTRY: dict[str, tuple[type[Env], int]] = {
@@ -94,6 +95,8 @@ def _build_sacd(
         learning_starts: int,
         seed: int,
         method: str,
+        behavior_cloning_coefficient: float,
+        expert_buffer: ExpertBuffer | None,
 ) -> SACD:
     common_kwargs = dict(
         policy='MlpPolicy',
@@ -107,6 +110,16 @@ def _build_sacd(
         policy_kwargs={'net_arch': [256, 256]},
         seed=seed,
     )
+
+    if method == 'behavior_cloning':
+        assert expert_buffer is not None
+
+        return SACD_BC(
+            expert_buffer=expert_buffer,
+            expert_buffer_batch_size=128,
+            lambda_=behavior_cloning_coefficient,
+            **common_kwargs,
+        )
 
     return SACD(**common_kwargs)
 
@@ -308,6 +321,9 @@ def main(
                     learning_starts=learning_starts,
                     seed=seed,
                     method=method,
+                    behavior_cloning_coefficient=behavior_cloning_coefficient,
+                    expert_buffer=expert_buffer,
+                    bc_loss_fn=bc_loss_fn,
                 )
             case _: raise ValueError(f'{algorithm} is BS')
 
