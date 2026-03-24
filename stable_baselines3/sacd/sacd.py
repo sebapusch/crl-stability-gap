@@ -198,6 +198,12 @@ class SACD(OffPolicyAlgorithm):
         self.critic = self.policy.critic
         self.critic_target = self.policy.critic_target
 
+    def get_actor_auxiliary_loss(self, task_ix: int) -> th.Tensor:
+        return th.zeros([])
+
+    def get_critic_auxiliary_loss(self, task_ix: int) -> th.Tensor:
+        return th.zeros([])
+
     def train(self, gradient_steps: int, batch_size: int = 64, task_ix: int = 0) -> None:
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
@@ -211,6 +217,8 @@ class SACD(OffPolicyAlgorithm):
 
         ent_coef_losses, ent_coefs = [], []
         actor_losses, critic_losses = [], []
+        critic_aux_loss = th.zeros([])
+        actor_aux_loss = th.zeros([])
 
         for gradient_step in range(gradient_steps):
             # Sample replay buffer
@@ -235,6 +243,10 @@ class SACD(OffPolicyAlgorithm):
             )
             assert isinstance(critic_loss, th.Tensor)  # for type checker
             critic_losses.append(critic_loss.item())
+
+            critic_aux_loss = self.get_critic_auxiliary_loss(task_ix)
+            critic_loss += critic_aux_loss
+
             self.take_optimisation_step(self.critic.optimizer, self.critic, critic_loss, self.gradient_clip_norm)
 
             # Compute the actor loss
@@ -247,6 +259,10 @@ class SACD(OffPolicyAlgorithm):
             inside_term = self.ent_coef_tensor * log_action_prob - min_qf_pi
             actor_loss = (action_prob * inside_term).sum(dim=1).mean()
             actor_losses.append(actor_loss.item())
+
+            actor_aux_loss = self.get_actor_auxiliary_loss(task_ix)
+            actor_loss += actor_aux_loss
+
             self.take_optimisation_step(self.actor.optimizer, self.actor, actor_loss, self.gradient_clip_norm)
 
             # Compute entropy loss
@@ -270,6 +286,8 @@ class SACD(OffPolicyAlgorithm):
         self.logger.record("train/ent_coef", np.mean(ent_coefs))
         self.logger.record("train/actor_loss", np.mean(actor_losses))
         self.logger.record("train/critic_loss", np.mean(critic_losses))
+        self.logger.record('train/critic_reg_loss', float(critic_aux_loss))
+        self.logger.record('train/actor_reg_loss', float(actor_aux_loss))
         if len(ent_coef_losses) > 0:
             self.logger.record("train/ent_coef_loss", np.mean(ent_coef_losses))
 
