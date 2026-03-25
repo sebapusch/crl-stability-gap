@@ -7,7 +7,8 @@ from stable_baselines3.sacd.sacd import SACD
 
 
 def discrete_kl(q: torch.Tensor, p: torch.Tensor) -> torch.Tensor:
-    kl = (p * (torch.log(p) - torch.log(q))).sum(dim=1)
+    eps = 1e-8
+    kl = (p * (torch.log(p + eps) - torch.log(q + eps))).sum(dim=1)
 
     return kl.mean()
 
