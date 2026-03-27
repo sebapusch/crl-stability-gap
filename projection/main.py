@@ -97,6 +97,7 @@ def _build_sacd(
         method: str,
         behavior_cloning_coefficient: float,
         expert_buffer: ExpertBuffer | None,
+        ent_coef: float | None,
 ) -> SACD:
     common_kwargs = dict(
         policy='MlpPolicy',
@@ -109,6 +110,7 @@ def _build_sacd(
         batch_size=batch_size,
         policy_kwargs={'net_arch': [256, 256]},
         seed=seed,
+        ent_coef='auto' if ent_coef is None else ent_coef,
     )
 
     if method == 'behavior_cloning':
@@ -138,6 +140,7 @@ def _build_sac(
         behavior_cloning_coefficient: float,
         expert_buffer: ExpertBuffer | None,
         bc_loss_fn: str,
+        ent_coef: float | None
 ) -> SAC:
     common_kwargs = dict(
         policy='MlpPolicy',
@@ -150,6 +153,7 @@ def _build_sac(
         batch_size=batch_size,
         policy_kwargs={'net_arch': [256, 256]},
         seed=seed,
+        ent_coef='auto' if ent_coef is None else ent_coef,
     )
 
     if method == 'behavior_cloning':
@@ -233,6 +237,7 @@ def main(
         eval_all: bool = True,
         bc_loss_fn: str = 'kl',
         algorithm: str = 'dqn',
+        ent_coef: float | None = None,
 ):
     algorithm = algorithm if env == 'cartpole' else 'sac'
 
@@ -310,6 +315,7 @@ def main(
                     behavior_cloning_coefficient=behavior_cloning_coefficient,
                     expert_buffer=expert_buffer,
                     bc_loss_fn=bc_loss_fn,
+                    ent_coef=ent_coef,
                 )
             case 'sacd':
                 model = _build_sacd(
@@ -323,6 +329,7 @@ def main(
                     method=method,
                     behavior_cloning_coefficient=behavior_cloning_coefficient,
                     expert_buffer=expert_buffer,
+                    ent_coef=ent_coef,
                 )
             case _: raise ValueError(f'{algorithm} is BS')
 
