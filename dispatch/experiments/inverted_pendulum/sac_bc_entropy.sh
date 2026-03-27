@@ -10,7 +10,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0
 
@@ -24,7 +24,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0
 
@@ -38,7 +38,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0
 
@@ -52,7 +52,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0
 
@@ -66,7 +66,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0
 
@@ -82,7 +82,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.01
 
@@ -96,7 +96,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.01
 
@@ -110,7 +110,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.01
 
@@ -124,7 +124,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.01
 
@@ -138,7 +138,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.01
 
@@ -154,7 +154,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.1
 
@@ -168,7 +168,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.1
 
@@ -182,7 +182,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.1
 
@@ -196,7 +196,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.1
 
@@ -210,7 +210,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.1
 
@@ -226,7 +226,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.5
 
@@ -240,7 +240,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.5
 
@@ -254,7 +254,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.5
 
@@ -268,7 +268,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.5
 
@@ -282,7 +282,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 0.5
 
@@ -298,7 +298,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 1
 
@@ -312,7 +312,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 1
 
@@ -326,7 +326,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 1
 
@@ -340,7 +340,7 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 1
 
@@ -354,6 +354,6 @@ sbatch --time=03:00:00 dispatch/dispatch_projection.sh \
   --expert_buffer_size 10_000 \
   --behavior_cloning_coefficient 0.1 \
   --batch_size 256 \
-  --total_timesteps 40_000 \
+  --total_timesteps 50_000 \
   --eval_freq 5000 50 500 \
   --ent_coef 1
