@@ -12,7 +12,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0
+  --ent_coef 0 \
+  --benchmark V6 V2 V1
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -26,7 +27,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0
+  --ent_coef 0 \
+  --benchmark V6 V2 V1
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -40,7 +42,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0
+  --ent_coef 0 \
+  --benchmark V6 V2 V1
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -54,7 +57,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0
+  --ent_coef 0 \
+  --benchmark V6 V2 V1
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -68,7 +72,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0
+  --ent_coef 0 \
+  --benchmark V6 V2 V1
 
 # entropy 0.01
 
@@ -84,7 +89,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.01
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.01
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -98,7 +104,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.01
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.01
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -112,7 +119,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.01
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.01
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -126,7 +134,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.01
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.01
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -140,7 +149,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.01
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.01
 
 # entropy 0.1
 
@@ -156,7 +166,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.1
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.1
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -170,7 +181,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.1
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.1
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -184,7 +196,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.1
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.1
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -198,7 +211,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.1
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.1
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -212,7 +226,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.1
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.1
 
 # entropy 0.5
 
@@ -228,7 +243,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.5
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.5
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -242,7 +258,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.5
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.5
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -256,7 +273,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.5
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.5
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -270,7 +288,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.5
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.5
 
 sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --env inverted_pendulum_hard \
@@ -284,7 +303,8 @@ sbatch --time=04:00:00 dispatch/dispatch_projection.sh \
   --batch_size 256 \
   --total_timesteps 100_000 \
   --eval_freq 5000 50 500 \
-  --ent_coef 0.5
+  --ent_coef 0 \
+  --benchmark V6 V2 V1.5
 
 # entropy 1
 
