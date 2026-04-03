@@ -63,6 +63,7 @@ def _build_dqn(
         expert_buffer: ExpertBuffer | None,
         behavior_cloning: bool,
         behavior_cloning_coefficient: float,
+        tau: float,
 ) -> DQN:
     return DQN(
         'MlpPolicy',
@@ -83,6 +84,7 @@ def _build_dqn(
         expert_buffer_batch_size=128,
         behavior_cloning=behavior_cloning,
         behavior_cloning_coefficient=behavior_cloning_coefficient,
+        tau=tau,
     )
 
 def _build_sacd(
@@ -238,6 +240,7 @@ def main(
         bc_loss_fn: str = 'kl',
         algorithm: str = 'dqn',
         ent_coef: float | None = None,
+        dqn_tau: float = 1.0,
 ):
     algorithm = algorithm if env == 'cartpole' else 'sac'
 
@@ -300,6 +303,7 @@ def main(
                     expert_buffer=expert_buffer,
                     behavior_cloning=method == 'behavior_cloning' and ix > 0,
                     behavior_cloning_coefficient=behavior_cloning_coefficient,
+                    tau=dqn_tau,
                 )
             case 'sac':
                 model = _build_sac(
