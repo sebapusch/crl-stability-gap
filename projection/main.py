@@ -312,6 +312,7 @@ def main(
                     behavior_cloning=method == 'behavior_cloning' and ix > 0,
                     behavior_cloning_coefficient=behavior_cloning_coefficient,
                     tau=dqn_tau,
+                    network_size=network_size,
                 )
             case 'sac':
                 model = _build_sac(
@@ -328,6 +329,7 @@ def main(
                     expert_buffer=expert_buffer,
                     bc_loss_fn=bc_loss_fn,
                     ent_coef=ent_coef,
+                    network_size=network_size,
                 )
             case 'sacd':
                 model = _build_sacd(
@@ -342,6 +344,7 @@ def main(
                     behavior_cloning_coefficient=behavior_cloning_coefficient,
                     expert_buffer=expert_buffer,
                     ent_coef=ent_coef,
+                    network_size=network_size,
                 )
             case _: raise ValueError(f'{algorithm} is BS')
 
