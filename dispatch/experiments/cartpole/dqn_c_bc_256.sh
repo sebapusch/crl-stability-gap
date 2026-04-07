@@ -1,0 +1,10 @@
+sbatch --time=03:00:00 dispatch/dispatch_projection.sh --seed 0 --method behavior_cloning --name_prefix dqn_c_bc_256-s0 --project dqn_c_bc_256 --encode_task --behavior_cloning_coefficient 1 --network_size 256
+sbatch --time=03:00:00 dispatch/dispatch_projection.sh --seed 1 --method behavior_cloning --name_prefix dqn_c_bc_256-s1 --project dqn_c_bc_256 --encode_task --behavior_cloning_coefficient 1 --network_size 256
+sbatch --time=03:00:00 dispatch/dispatch_projection.sh --seed 2 --method behavior_cloning --name_prefix dqn_c_bc_256-s2 --project dqn_c_bc_256 --encode_task --behavior_cloning_coefficient 1 --network_size 256
+sbatch --time=03:00:00 dispatch/dispatch_projection.sh --seed 3 --method behavior_cloning --name_prefix dqn_c_bc_256-s3 --project dqn_c_bc_256 --encode_task --behavior_cloning_coefficient 1 --network_size 256
+sbatch --time=03:00:00 dispatch/dispatch_projection.sh --seed 4 --method behavior_cloning --name_prefix dqn_c_bc_256-s4 --project dqn_c_bc_256 --encode_task --behavior_cloning_coefficient 1 --network_size 256
+sbatch --time=03:00:00 dispatch/dispatch_projection.sh --seed 5 --method behavior_cloning --name_prefix dqn_c_bc_256-s5 --project dqn_c_bc_256 --encode_task --behavior_cloning_coefficient 1 --network_size 256
+sbatch --time=03:00:00 dispatch/dispatch_projection.sh --seed 6 --method behavior_cloning --name_prefix dqn_c_bc_256-s6 --project dqn_c_bc_256 --encode_task --behavior_cloning_coefficient 1 --network_size 256
+sbatch --time=03:00:00 dispatch/dispatch_projection.sh --seed 7 --method behavior_cloning --name_prefix dqn_c_bc_256-s7 --project dqn_c_bc_256 --encode_task --behavior_cloning_coefficient 1 --network_size 256
+sbatch --time=03:00:00 dispatch/dispatch_projection.sh --seed 8 --method behavior_cloning --name_prefix dqn_c_bc_256-s8 --project dqn_c_bc_256 --encode_task --behavior_cloning_coefficient 1 --network_size 256
+sbatch --time=03:00:00 dispatch/dispatch_projection.sh --seed 9 --method behavior_cloning --name_prefix dqn_c_bc_256-s9 --project dqn_c_bc_256 --encode_task --behavior_cloning_coefficient 1 --network_size 256

@@ -64,6 +64,7 @@ def _build_dqn(
         behavior_cloning: bool,
         behavior_cloning_coefficient: float,
         tau: float,
+        network_size: int | None,
 ) -> DQN:
     return DQN(
         'MlpPolicy',
@@ -78,7 +79,7 @@ def _build_dqn(
         exploration_initial_eps=epsilon_start,
         exploration_final_eps=epsilon_end,
         exploration_fraction=epsilon_decay_frac,
-        policy_kwargs={'net_arch': [128, 128]},
+        policy_kwargs={'net_arch': [network_size, network_size]},
         seed=seed,
         expert_buffer=expert_buffer,
         expert_buffer_batch_size=128,
@@ -100,7 +101,10 @@ def _build_sacd(
         behavior_cloning_coefficient: float,
         expert_buffer: ExpertBuffer | None,
         ent_coef: float | None,
+        network_size: int | None,
 ) -> SACD:
+    network_size = network_size or 256
+
     common_kwargs = dict(
         policy='MlpPolicy',
         env=train_env,
@@ -110,7 +114,7 @@ def _build_sacd(
         gamma=gamma,
         buffer_size=buffer_size,
         batch_size=batch_size,
-        policy_kwargs={'net_arch': [256, 256]},
+        policy_kwargs={'net_arch': [network_size, network_size]},
         seed=seed,
         ent_coef='auto' if ent_coef is None else ent_coef,
     )
@@ -142,8 +146,11 @@ def _build_sac(
         behavior_cloning_coefficient: float,
         expert_buffer: ExpertBuffer | None,
         bc_loss_fn: str,
-        ent_coef: float | None
+        ent_coef: float | None,
+        network_size: int | None,
 ) -> SAC:
+    network_size = network_size or 256
+
     common_kwargs = dict(
         policy='MlpPolicy',
         env=train_env,
@@ -153,7 +160,7 @@ def _build_sac(
         gamma=gamma,
         buffer_size=buffer_size,
         batch_size=batch_size,
-        policy_kwargs={'net_arch': [256, 256]},
+        policy_kwargs={'net_arch': [network_size, network_size]},
         seed=seed,
         ent_coef='auto' if ent_coef is None else ent_coef,
     )
@@ -241,6 +248,7 @@ def main(
         algorithm: str = 'dqn',
         ent_coef: float | None = None,
         dqn_tau: float = 1.0,
+        network_size: int | None = None,
 ):
     algorithm = algorithm if env == 'cartpole' else 'sac'
 

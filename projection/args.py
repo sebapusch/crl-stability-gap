@@ -97,6 +97,7 @@ def get_args() -> Namespace:
     parser.add_argument('--learning_starts', default=1000, type=int)
     parser.add_argument('--total_timesteps', default=200_000, type=int)
     parser.add_argument('--expert_buffer_size', default=1000, type=int)
+    parser.add_argument('--network_size', default=None, type=int)
 
     # ── DQN-specific (epsilon-greedy) ───────────────────────────────
     parser.add_argument('--epsilon_start', default=1.0, type=float)
