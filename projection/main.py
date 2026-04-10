@@ -287,13 +287,16 @@ def main(
     train_env_init = envs_train[0]
     match algorithm:
         case 'dqn':
+            config = dqn_build_kwargs
             model = _build_dqn(train_env_init, **dqn_build_kwargs)
         case 'sac':
+            config = sac_build_kwargs
             model = _build_sac(train_env_init, **sac_build_kwargs)
         case 'sacd':
+            config = common_build_kwargs
             model = _build_sacd(train_env_init, **common_build_kwargs)
         case _:
-            raise ValueError(f'{algorithm} is BS')
+            raise ValueError(f'Unknown algorithm "{algorithm}"')
 
     for ix, train_env in enumerate(envs_train):
         version = f'V{bench.benchmark[ix]}'
@@ -301,6 +304,7 @@ def main(
         run = wandb.init(
             name=f'{name_prefix}-{version}',
             project=project,
+            config=config,
             tags=[version, str(seed), method],
         )
 
