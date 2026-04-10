@@ -1,3 +1,4 @@
+import os
 import sys
 from os import mkdir, path
 
@@ -5,7 +6,7 @@ from stable_baselines3.common.logger import Logger, HumanOutputFormat, WandbWrit
 
 
 def make_logger(project: str, run_name: str) -> Logger:
-    dir_path = path.join(__file__, '..', '..', 'output', project)
+    dir_path = path.abspath(path.join(__file__, '..', '..', 'output', project))
 
     if not path.exists(dir_path):
         mkdir(dir_path)
