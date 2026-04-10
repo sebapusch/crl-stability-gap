@@ -264,7 +264,6 @@ def main(
         behavior_cloning_coefficient=behavior_cloning_coefficient,
         expert_buffer_size=expert_buffer_size,
         expert_buffer_batch_size=expert_buffer_batch_size,
-        ent_coef=ent_coef,
         network_size=network_size,
         n_tasks=len(bench),
         balanced_sampling=balanced_sampling,
@@ -282,6 +281,12 @@ def main(
     sac_build_kwargs = dict(
         **common_build_kwargs,
         bc_loss_fn=bc_loss_fn,
+        ent_coef=ent_coef,
+    )
+
+    sacd_build_kwargs = dict(
+        **common_build_kwargs,
+        ent_coef=ent_coef,
     )
 
     # ── Build model ─────────────────────────────────────
@@ -294,8 +299,8 @@ def main(
             config = sac_build_kwargs
             model = _build_sac(train_env_init, **sac_build_kwargs)
         case 'sacd':
-            config = common_build_kwargs
-            model = _build_sacd(train_env_init, **common_build_kwargs)
+            config = sacd_build_kwargs
+            model = _build_sacd(train_env_init, **sacd_build_kwargs)
         case _:
             raise ValueError(f'Unknown algorithm "{algorithm}"')
 
