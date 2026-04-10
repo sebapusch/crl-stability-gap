@@ -200,13 +200,13 @@ class SAC(OffPolicyAlgorithm):
         self.critic = self.policy.critic
         self.critic_target = self.policy.critic_target
 
-    def get_actor_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
+    def get_actor_auxiliary_loss(self) -> torch.Tensor:
         return torch.zeros([])
 
-    def get_critic_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
+    def get_critic_auxiliary_loss(self) -> torch.Tensor:
         return torch.zeros([])
 
-    def train(self, gradient_steps: int, batch_size: int = 64, task_ix: int = 0) -> None:
+    def train(self, gradient_steps: int, batch_size: int = 64) -> None:
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
         # Update optimizers learning rate
@@ -277,7 +277,7 @@ class SAC(OffPolicyAlgorithm):
             critic_losses.append(critic_loss.item())
 
             # Add isolated regularization for the critic's backward pass
-            critic_aux_loss = self.get_critic_auxiliary_loss(task_ix)
+            critic_aux_loss = self.get_critic_auxiliary_loss()
             critic_loss += critic_aux_loss
 
             self.critic.optimizer.zero_grad()
@@ -294,7 +294,7 @@ class SAC(OffPolicyAlgorithm):
             actor_losses.append(actor_loss.item())
 
             # Add isolated regularization for the actor's backward pass
-            actor_aux_loss = self.get_actor_auxiliary_loss(task_ix)
+            actor_aux_loss = self.get_actor_auxiliary_loss()
             actor_loss += actor_aux_loss
 
             self.actor.optimizer.zero_grad()
@@ -326,7 +326,6 @@ class SAC(OffPolicyAlgorithm):
         tb_log_name: str = "SAC",
         reset_num_timesteps: bool = True,
         progress_bar: bool = False,
-        task_ix: int = 0,
     ) -> SelfSAC:
         return super().learn(
             total_timesteps=total_timesteps,
@@ -335,7 +334,6 @@ class SAC(OffPolicyAlgorithm):
             tb_log_name=tb_log_name,
             reset_num_timesteps=reset_num_timesteps,
             progress_bar=progress_bar,
-            task_ix=task_ix,
         )
 
     def reset_optim(self) -> None:

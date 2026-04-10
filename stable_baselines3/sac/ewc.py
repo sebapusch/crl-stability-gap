@@ -16,14 +16,17 @@ class SAC_EWC(SAC):
         self.reg_weights = [
             torch.zeros_like(p, requires_grad=False) for p in self.old_params
         ]
+        self._task_ix: int = 0
 
-    def get_actor_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
-        return self._regression_loss(task_ix)
+    def get_actor_auxiliary_loss(self) -> torch.Tensor:
+        return self._regression_loss()
 
-    def get_critic_auxiliary_loss(self, task_ix: int) -> torch.Tensor:
-        return self._regression_loss(task_ix)
+    def get_critic_auxiliary_loss(self) -> torch.Tensor:
+        return self._regression_loss()
 
     def on_task_change(self, task_ix: int) -> None:
+        self._task_ix = task_ix
+
         if task_ix == 0:
             return
 
@@ -31,8 +34,8 @@ class SAC_EWC(SAC):
             old_weight.data.copy_(new_weight)
         self._update_reg_weights()
 
-    def _regression_loss(self, task_ix: int) -> torch.Tensor:
-        if task_ix < 1:
+    def _regression_loss(self) -> torch.Tensor:
+        if self._task_ix < 1:
             return torch.zeros([])
 
         return self.lambda_ * self._regularize()

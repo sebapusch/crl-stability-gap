@@ -1,26 +1,17 @@
-from collections.abc import Callable
-
-import torch
+import torch as th
 
 from stable_baselines3.common.buffers import ExpertBuffer
 from stable_baselines3.common.logger import Logger
 from stable_baselines3.common.type_aliases import GymEnv
-from stable_baselines3.sacd.sacd_fine_tune import SACD_FineTune
+from stable_baselines3.dqn.dqn_fine_tune import DQN_FineTune
 
 
-def discrete_kl(q: torch.Tensor, p: torch.Tensor) -> torch.Tensor:
-    eps = 1e-8
-    kl = (p * (torch.log(p + eps) - torch.log(q + eps))).sum(dim=1)
+class DQN_BC(DQN_FineTune):
+    """DQN with behavior cloning auxiliary loss.
 
-    return kl.mean()
-
-
-class SACD_BC(SACD_FineTune):
-    """SACD with behavior cloning auxiliary loss.
-
-    Extends SACD_FineTune: on task change the expert buffer is populated
-    with action probability targets from the current policy BEFORE the
-    replay buffer is cleared and optimizers are reset.
+    Extends DQN_FineTune: on task change the expert buffer is populated
+    with Q-value targets from the target network BEFORE the replay
+    buffer is cleared and optimizers are reset.
     """
 
     def __init__(
@@ -29,7 +20,6 @@ class SACD_BC(SACD_FineTune):
             n_tasks: int,
             expert_buffer_batch_size: int,
             lambda_: float,
-            loss_fn: Callable = discrete_kl,
             **kwargs,
     ):
         super().__init__(**kwargs)
@@ -43,7 +33,6 @@ class SACD_BC(SACD_FineTune):
         )
         self.lambda_ = lambda_
         self.expert_buffer_batch_size = expert_buffer_batch_size
-        self.loss_fn = loss_fn
         self._task_ix: int = 0
 
     def on_task_change(self, task_ix: int, env: GymEnv, logger: Logger) -> None:
@@ -51,25 +40,21 @@ class SACD_BC(SACD_FineTune):
 
         if task_ix > 0:
             # Populate expert buffer BEFORE clearing the replay buffer
-            def get_dist(obs: torch.Tensor) -> torch.Tensor:
-                out, _ = self.actor.action_log_prob(obs)
-                return out
-
             self.expert_buffer.populate(
-                get_dist,
+                self.q_net_target,
                 self.replay_buffer,
             )
 
-        # Delegate optimizer reset + buffer clear to FineTune
+        # Delegate optimizer reset + epsilon reset + buffer clear to FineTune
         super().on_task_change(task_ix, env, logger)
 
-    def get_actor_auxiliary_loss(self) -> torch.Tensor:
+    def get_auxiliary_loss(self) -> th.Tensor:
         if self._task_ix == 0:
-            return torch.zeros([])
+            return th.zeros([])
 
         expert_samples = self.expert_buffer.sample(self.expert_buffer_batch_size)
+        curr_q_values = self.q_net(expert_samples.observations)
 
-        out_p, _ = self.actor.action_log_prob(expert_samples.observations)
-        out_q = expert_samples.outputs
-
-        return self.lambda_ * self.loss_fn(out_q, out_p)
+        return self.lambda_ * th.mean(
+            (curr_q_values - expert_samples.outputs) ** 2
+        )

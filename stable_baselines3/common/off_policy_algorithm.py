@@ -317,7 +317,6 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         tb_log_name: str = "run",
         reset_num_timesteps: bool = True,
         progress_bar: bool = False,
-        task_ix: int = 0,
     ) -> SelfOffPolicyAlgorithm:
         total_timesteps, callback = self._setup_learn(
             total_timesteps,
@@ -352,21 +351,18 @@ class OffPolicyAlgorithm(BaseAlgorithm):
                 gradient_steps = self.gradient_steps if self.gradient_steps >= 0 else rollout.episode_timesteps
                 # Special case when the user passes `gradient_steps=0`
                 if gradient_steps > 0:
-                    self.train(batch_size=self.batch_size, gradient_steps=gradient_steps, task_ix=task_ix)
+                    self.train(batch_size=self.batch_size, gradient_steps=gradient_steps)
 
         callback.on_training_end()
 
         return self
 
-    def train(self, gradient_steps: int, batch_size: int, task_ix: int) -> None:
+    def train(self, gradient_steps: int, batch_size: int) -> None:
         """
         Sample the replay buffer and do the updates
         (gradient descent and update target networks)
         """
         raise NotImplementedError()
-
-    def on_task_change(self, task_ix: int) -> None:
-        ...
 
     def _sample_action(
         self,

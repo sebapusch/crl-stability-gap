@@ -49,9 +49,9 @@ class ProjectedEnvBenchmark:
 
         if version > 1:
             q, b = _random_orthogonal(
-                PERMUTATION_SEEDS[version - 1],
+                PERMUTATION_SEEDS[version + 15],
                 env.observation_space.shape[0],
-                version > 5
+                True,
             )
             env = ObsLinearTransform(env, q, b)
 

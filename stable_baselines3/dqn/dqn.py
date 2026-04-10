@@ -6,7 +6,7 @@ import torch as th
 from gymnasium import spaces
 from torch.nn import functional as F
 
-from stable_baselines3.common.buffers import ReplayBuffer, ExpertBuffer
+from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
@@ -102,10 +102,6 @@ class DQN(OffPolicyAlgorithm):
         seed: int | None = None,
         device: th.device | str = "auto",
         _init_setup_model: bool = True,
-        expert_buffer: ExpertBuffer | None = None,
-        behavior_cloning: bool = False,
-        expert_buffer_batch_size: int = 128,
-        behavior_cloning_coefficient: float = 100.0
     ) -> None:
         super().__init__(
             policy,
@@ -146,11 +142,6 @@ class DQN(OffPolicyAlgorithm):
 
         if _init_setup_model:
             self._setup_model()
-
-        self.expert_buffer = expert_buffer
-        self.behavior_cloning = behavior_cloning
-        self.expert_buffer_batch_size = expert_buffer_batch_size
-        self.behavior_cloning_coefficient = behavior_cloning_coefficient
 
     def _setup_model(self) -> None:
         super()._setup_model()
@@ -193,14 +184,17 @@ class DQN(OffPolicyAlgorithm):
         self.exploration_rate = self.exploration_schedule(self._current_progress_remaining)
         self.logger.record("rollout/exploration_rate", self.exploration_rate)
 
-    def train(self, gradient_steps: int, batch_size: int = 100, task_ix: int = 0) -> None:
+    def get_auxiliary_loss(self) -> th.Tensor:
+        return th.zeros([])
+
+    def train(self, gradient_steps: int, batch_size: int = 100) -> None:
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
         # Update learning rate according to schedule
         self._update_learning_rate(self.policy.optimizer)
 
         losses = []
-        losses_expert = []
+        aux_losses = []
         for _ in range(gradient_steps):
             # Sample replay buffer
             replay_data = self.replay_buffer.sample(batch_size, env=self._vec_normalize_env)  # type: ignore[union-attr]
@@ -226,20 +220,9 @@ class DQN(OffPolicyAlgorithm):
             # Compute Huber loss (less sensitive to outliers)
             loss = F.smooth_l1_loss(current_q_values, target_q_values)
 
-
-            if self.behavior_cloning:
-                assert self.expert_buffer is not None
-
-                expert_samples = self.expert_buffer.sample(self.expert_buffer_batch_size)
-                curr_q_values_on_expert_samples = self.q_net(expert_samples.observations)
-
-                loss_behavior = th.mean(
-                    (curr_q_values_on_expert_samples - expert_samples.outputs) ** 2
-                )
-                losses_expert.append(loss_behavior.item())
-
-                loss += self.behavior_cloning_coefficient * loss_behavior
-
+            aux_loss = self.get_auxiliary_loss()
+            loss += aux_loss
+            aux_losses.append(aux_loss.item())
 
             losses.append(loss.item())
 
@@ -255,8 +238,8 @@ class DQN(OffPolicyAlgorithm):
 
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
         self.logger.record("train/loss", np.mean(losses))
-        if losses_expert:
-            self.logger.record("train/expert_loss", np.mean(losses_expert), exclude="tensorboard")
+        if aux_losses:
+            self.logger.record("train/aux_loss", np.mean(aux_losses))
 
     def predict(
         self,
