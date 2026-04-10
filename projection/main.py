@@ -304,7 +304,7 @@ def main(
             tags=[version, str(seed), method],
         )
 
-        model.on_task_change(ix, train_env, make_logger(run.name))
+        model.on_task_change(ix, train_env, make_logger(project, run.name))
 
         # ── Train ───────────────────────────────────────────────────
         callbacks = make_callbacks(
