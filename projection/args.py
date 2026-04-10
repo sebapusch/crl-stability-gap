@@ -111,7 +111,7 @@ def get_args() -> Namespace:
     parser.add_argument('--ent_coef', default=None, type=float)
 
     # ── CartPole-specific (algorithm) ───────────────────────────────
-    parser.add_argument('--algorithm', default='dqn', type=str, choices=['dqn', 'sacd'])
+    parser.add_argument('--algorithm', default='dqn', type=str, choices=['dqn', 'sacd', 'sac'])
 
     return parser.parse_args()
 
