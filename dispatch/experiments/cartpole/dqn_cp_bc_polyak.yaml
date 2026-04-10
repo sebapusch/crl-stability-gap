@@ -1,5 +1,5 @@
-name_prefix: "dqn_cp_bc"
-project: "dqn_cp_bc"
+name_prefix: "dqn_cp_bc_polyak"
+project: "dqn_cp_bc_polyak"
 algorithm: "dqn"
 env: "cartpole"
 method: "behavior_cloning"

@@ -1,5 +1,5 @@
-name_prefix: "dqn_cp_bc"
-project: "dqn_cp_bc"
+name_prefix: "dqn_cp_ft"
+project: "dqn_cp_ft"
 algorithm: "dqn"
 env: "cartpole"
 method: "fine_tune"
