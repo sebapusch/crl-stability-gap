@@ -63,6 +63,7 @@ def _build_dqn(
         method: str,
         behavior_cloning_coefficient: float,
         expert_buffer_size: int,
+        expert_buffer_batch_size: int,
         tau: float,
         network_size: int,
         n_tasks: int,
@@ -91,7 +92,7 @@ def _build_dqn(
             return DQN_BC(
                 expert_buffer_size=expert_buffer_size,
                 n_tasks=n_tasks,
-                expert_buffer_batch_size=128,
+                expert_buffer_batch_size=expert_buffer_batch_size,
                 lambda_=behavior_cloning_coefficient,
                 **common_kwargs,
             )
