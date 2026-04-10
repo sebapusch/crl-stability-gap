@@ -248,8 +248,6 @@ def main(
         dqn_tau: float = 1.0,
         network_size: int | None = None,
 ):
-    algorithm = algorithm if env == 'cartpole' else 'sac'
-
     bench = get_benchmark(env, benchmark or ['V1', 'V2', 'V3'], seed, encode_task)
     envs_train, envs_test = bench.make()
 

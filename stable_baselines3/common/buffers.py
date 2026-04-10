@@ -1057,7 +1057,7 @@ class ExpertBuffer:
     ):
         self.n_tasks = n_tasks
         self.buffer_size_per_task = buffer_size
-        self.buffer_size = buffer_size #* n_tasks
+        self.buffer_size = buffer_size * n_tasks
         self.device = get_device(device)
         self.observation_space = observation_space
         self.output_size = output_size
