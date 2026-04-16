@@ -21,7 +21,10 @@ def format_value(val):
             pass
     return str(val)
 
-def process_yaml(yaml_path):
+def process_yaml(yaml_path, dry):
+    if not os.path.exists(yaml_path):
+        yaml_path = os.path.abspath(os.path.join(__file__, '..', 'experiments', yaml_path))
+
     with open(yaml_path, 'r') as f:
         config = yaml.safe_load(f)
         
@@ -87,19 +90,23 @@ def process_yaml(yaml_path):
         commands.append(command)
         
     for command in commands:
-        print(f"Dispatching:\n{command}\n")
-        os.system(command)
+        print(f"Dispatching{'(dry)' if dry else ''}:\n{command}\n")
+        not dry and os.system(command)
 
 def main():
     import sys
+
     if len(sys.argv) > 1:
         yamls = sys.argv[1:]
     else:
         yamls = glob.glob('experiments/**/*.yaml', recursive=True) + glob.glob('dispatch/experiments/**/*.yaml', recursive=True)
         yamls = list(set(yamls))
+
+    dry = '--dry' in yamls
         
     for y in yamls:
-        process_yaml(y)
+        if y != '--dry':
+            process_yaml(y, dry)
 
 if __name__ == '__main__':
     main()

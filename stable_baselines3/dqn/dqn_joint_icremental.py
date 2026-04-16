@@ -5,6 +5,6 @@ from stable_baselines3.continual.off_policy_joint_incremental import OffPolicyJo
 
 class DQN_JointIncremental(OffPolicyJointIncremental, DQN):
     def __init__(self, buffer_size: int, n_tasks: int, env: GymEnv, **kwargs) -> None:
-        OffPolicyJointIncremental.__init__(self, buffer_size, n_tasks, env)
         kwargs['env'] = env
         DQN.__init__(self, **kwargs)
+        OffPolicyJointIncremental.__init__(self, buffer_size, n_tasks, env)

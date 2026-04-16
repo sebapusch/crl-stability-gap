@@ -79,8 +79,8 @@ class OffPolicyJointIncremental(ContinualLearning):
             env: GymEnv,
             logger: Logger,
     ) -> None:
-        self.envs.append(env)
         self.set_env(env)
+        self.envs.append(self.env)
         self.set_logger(logger)
 
         if task_ix == 0:

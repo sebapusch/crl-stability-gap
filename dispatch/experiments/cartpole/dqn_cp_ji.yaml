@@ -1,10 +1,9 @@
-name_prefix: "dqn_cp_bc"
-project: "dqn_cp_bc"
+name_prefix: "dqn_cp_ji"
+project: "dqn_cp_ji"
 algorithm: "dqn"
 env: "cartpole"
-method: "behavior_cloning"
+method: "joint_incremental"
 benchmark: ["V1", "V2", "V3"]
-behavior_cloning_coefficient: 1.0
 batch_size: 128
 encode_task: true
 eval_all: true
@@ -17,7 +16,6 @@ buffer_size: 50_000
 target_update: 1000
 learning_starts: 1000
 total_timesteps: 200_000
-expert_buffer_size: 2500
 network_size: 256
 epsilon_start: 1.0
 epsilon_end: 0.05
