@@ -2,10 +2,11 @@ import torch as th
 
 from stable_baselines3.common.logger import Logger
 from stable_baselines3.common.type_aliases import GymEnv
+from stable_baselines3.continual import ContinualLearning
 from stable_baselines3.sac.sac import SAC
 
 
-class SAC_FineTune(SAC):
+class SAC_FineTune(SAC, ContinualLearning):
     """SAC with weight transfer between tasks.
 
     On task change, resets optimizer state and entropy coefficient

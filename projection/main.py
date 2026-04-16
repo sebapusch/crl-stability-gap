@@ -10,13 +10,12 @@ from projection.benchmarks.projected_env_benchmark import ProjectedEnvBenchmark
 from projection.common import make_logger
 from stable_baselines3.continual import ContinualLearning
 from stable_baselines3.dqn.dqn_bc import DQN_BC
-from stable_baselines3.dqn.dqn_continual import DQN_Continual
 from stable_baselines3.dqn.dqn_fine_tune import DQN_FineTune
+from stable_baselines3.dqn.dqn_joint_icremental import DQN_JointIncremental
 from stable_baselines3.sac.sac_bc import SAC_BC
-from stable_baselines3.sac.sac_continual import SAC_Continual
 from stable_baselines3.sac.sac_fine_tune import SAC_FineTune
+from stable_baselines3.sac.sac_joint_incremental import SAC_JointIncremental
 from stable_baselines3.sacd.sacd_bc import SACD_BC
-from stable_baselines3.sacd.sacd_continual import SACD_Continual
 from stable_baselines3.sacd.sacd_fine_tune import SACD_FineTune
 
 # ── Environment registry ────────────────────────────────────────────
@@ -98,11 +97,10 @@ def _build_dqn(
             )
         case 'fine_tune':
             return DQN_FineTune(**common_kwargs)
-        case 'continual':
-            return DQN_Continual(
+        case 'joint_incremental':
+            return DQN_JointIncremental(
                 n_tasks=n_tasks,
-                balanced_sampling=balanced_sampling,
-                **common_kwargs,
+                **common_kwargs
             )
         case _:
             raise ValueError(f'Unknown method "{method}"')
@@ -151,12 +149,6 @@ def _build_sacd(
             )
         case 'fine_tune':
             return SACD_FineTune(**common_kwargs)
-        case 'continual':
-            return SACD_Continual(
-                n_tasks=n_tasks,
-                balanced_sampling=balanced_sampling,
-                **common_kwargs,
-            )
         case _:
             raise ValueError(f'Unknown method "{method}"')
 
@@ -206,10 +198,9 @@ def _build_sac(
             )
         case 'fine_tune':
             return SAC_FineTune(**common_kwargs)
-        case 'continual':
-            return SAC_Continual(
+        case 'joint_incremental':
+            return SAC_JointIncremental(
                 n_tasks=n_tasks,
-                balanced_sampling=balanced_sampling,
                 **common_kwargs,
             )
         case _:

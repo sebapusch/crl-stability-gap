@@ -1,9 +1,10 @@
 from stable_baselines3.common.logger import Logger
 from stable_baselines3.common.type_aliases import GymEnv
+from stable_baselines3.continual import ContinualLearning
 from stable_baselines3.dqn.dqn import DQN
 
 
-class DQN_FineTune(DQN):
+class DQN_FineTune(DQN, ContinualLearning):
     """DQN with weight transfer between tasks.
 
     On task change, resets optimizer state, exploration counters,

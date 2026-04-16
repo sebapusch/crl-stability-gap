@@ -2,7 +2,7 @@ import argparse
 from argparse import Namespace
 
 
-METHODS = ['sequential', 'fine_tune', 'continual', 'behavior_cloning']
+METHODS = ['sequential', 'fine_tune', 'joint_incremental', 'behavior_cloning']
 BENCHMARK = ['V1', 'V2', 'V3']
 ENVS = ['cartpole', 'inverted_pendulum', 'inverted_pendulum_hard']
 

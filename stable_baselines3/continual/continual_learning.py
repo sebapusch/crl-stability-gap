@@ -29,6 +29,9 @@ class ContinualLearning(Protocol):
         self,
         total_timesteps: int,
         callback: CallbackList,
-        reset_num_timesteps: bool,
+        log_interval: int = 4,
+        tb_log_name: str = "run",
+        reset_num_timesteps: bool = True,
+        progress_bar: bool = False,
     ) -> None:
         ...
