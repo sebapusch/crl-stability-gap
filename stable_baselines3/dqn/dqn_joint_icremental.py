@@ -8,3 +8,6 @@ class DQN_JointIncremental(OffPolicyJointIncremental, DQN):
         kwargs['env'] = env
         DQN.__init__(self, **kwargs)
         OffPolicyJointIncremental.__init__(self, buffer_size, n_tasks, env)
+
+    def reset_optimizer(self) -> None:
+        self.policy.optimizer.state.clear()

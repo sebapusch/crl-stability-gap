@@ -87,7 +87,7 @@ class OffPolicyJointIncremental(ContinualLearning):
             return
 
         # Reset optimizer momentum / adaptive state
-        self.policy.optimizer.state.clear()
+        self.reset_optimizer()
 
         # Reset exploration counter (target-net update counter)
         self._n_calls = 0

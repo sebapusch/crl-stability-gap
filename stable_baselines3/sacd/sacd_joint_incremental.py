@@ -14,3 +14,12 @@ class SACD_JointIncremental(OffPolicyJointIncremental, SACD):
         kwargs['env'] = env
         SACD.__init__(self, **kwargs)
         OffPolicyJointIncremental.__init__(self, buffer_size, n_tasks, env)
+
+    def reset_optimizer(self) -> None:
+        self.actor.optimizer.state.clear()
+        self.critic.optimizer.state.clear()
+
+        # Reset entropy coefficient to its initial value
+        if self.ent_coef_optimizer is not None:
+            self.log_ent_coef.data.fill_(0.0)
+            self.ent_coef_optimizer.state.clear()
