@@ -16,7 +16,7 @@ from stable_baselines3.sac.sac_bc import SAC_BC
 from stable_baselines3.sac.sac_fine_tune import SAC_FineTune
 from stable_baselines3.sac.sac_joint_incremental import SAC_JointIncremental
 from stable_baselines3.sacd.sacd_bc import SACD_BC
-from stable_baselines3.sacd.sacd_continual import SACD_JointIncremental
+from stable_baselines3.sacd.sacd_joint_incremental import SACD_JointIncremental
 from stable_baselines3.sacd.sacd_fine_tune import SACD_FineTune
 
 # ── Environment registry ────────────────────────────────────────────
