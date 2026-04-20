@@ -327,7 +327,7 @@ def main(
             name=f'{name_prefix}-{version}',
             project=project,
             config=config,
-            tags=[version, str(seed), method],
+            tags=[version, f's-{str(seed)}', method, optimizer, f'lr-{str(lr)}'],
         )
 
         model.on_task_change(ix, train_env, make_logger(project, run.name))
