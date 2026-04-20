@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=train
 #SBATCH --time=1:00:00
-#SBATCH --mem=32G
+#SBATCH --mem=8G
 #SBATCH --output=logs/train_%A_%a.out
 #SBATCH --error=logs/train_%A_%a.err
 
