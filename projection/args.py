@@ -62,6 +62,7 @@ def get_args() -> Namespace:
     parser.add_argument(
         '--balanced_sampling',
         action='store_true',
+        default=False,
         help='Whether to maintain original batch size per task on when mode is "continual"',
     )
     parser.add_argument(

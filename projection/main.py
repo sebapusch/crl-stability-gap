@@ -110,6 +110,7 @@ def _build_dqn(
         case 'joint_incremental':
             return DQN_JointIncremental(
                 n_tasks=n_tasks,
+                balanced_sampling=balanced_sampling,
                 **common_kwargs
             )
         case _:
@@ -162,6 +163,7 @@ def _build_sacd(
         case 'joint_incremental':
             return SACD_JointIncremental(
                 n_tasks=n_tasks,
+                balanced_sampling=balanced_sampling,
                 **common_kwargs,
             )
         case _:
@@ -216,6 +218,7 @@ def _build_sac(
         case 'joint_incremental':
             return SAC_JointIncremental(
                 n_tasks=n_tasks,
+                balanced_sampling=balanced_sampling,
                 **common_kwargs,
             )
         case _:

@@ -8,12 +8,13 @@ from stable_baselines3.continual import ContinualLearning
 class OffPolicyJointIncremental(ContinualLearning):
     replay_buffer: MultiReplayBuffer
 
-    def __init__(self, buffer_size: int, n_tasks: int, env: GymEnv) -> None:
+    def __init__(self, buffer_size: int, n_tasks: int, env: GymEnv, balanced_sampling: bool = False) -> None:
         self.replay_buffer = MultiReplayBuffer(
             n_envs=n_tasks,
             buffer_size=buffer_size,
             observation_space=env.observation_space,
             action_space=env.action_space,
+            balanced_sampling=balanced_sampling,
         )
         self.envs: list[GymEnv] = []
 
@@ -64,7 +65,7 @@ class OffPolicyJointIncremental(ContinualLearning):
                 gradient_steps = self.gradient_steps if self.gradient_steps >= 0 else rollout.episode_timesteps
                 # Special case when the user passes `gradient_steps=0`
                 if gradient_steps > 0:
-                    self.train(batch_size=self.batch_size, gradient_steps=gradient_steps)
+                    self.train(batch_size=self.batch_size, gradient_steps=gradient_steps * len(self.envs))
 
         callback.on_training_end()
 

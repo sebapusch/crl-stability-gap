@@ -10,10 +10,10 @@ class SACD_JointIncremental(OffPolicyJointIncremental, SACD):
     On task change, resets optimizer state and advances the active
     buffer partition.
     """
-    def __init__(self, buffer_size: int, n_tasks: int, env: GymEnv, **kwargs) -> None:
+    def __init__(self, buffer_size: int, n_tasks: int, env: GymEnv, balanced_sampling: bool = False, **kwargs) -> None:
         kwargs['env'] = env
         SACD.__init__(self, **kwargs)
-        OffPolicyJointIncremental.__init__(self, buffer_size, n_tasks, env)
+        OffPolicyJointIncremental.__init__(self, buffer_size, n_tasks, env, balanced_sampling=balanced_sampling)
 
     def reset_optimizer(self) -> None:
         self.actor.optimizer.state.clear()
