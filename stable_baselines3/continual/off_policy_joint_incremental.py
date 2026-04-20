@@ -58,8 +58,6 @@ class OffPolicyJointIncremental(ContinualLearning):
                 self.num_timesteps = num_timesteps
             self.num_timesteps += self.train_freq.frequency
 
-
-
             if self.num_timesteps > 0 and self.num_timesteps > self.learning_starts:
                 # If no `gradient_steps` is specified,
                 # do as many gradients steps as steps performed during the rollout

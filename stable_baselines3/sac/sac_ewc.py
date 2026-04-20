@@ -3,11 +3,12 @@ import gc
 import torch
 from torch.func import functional_call, vmap, grad
 
-from stable_baselines3 import SAC
-from stable_baselines3.common.type_aliases import ReplayBufferSamples
+from stable_baselines3.common.logger import Logger
+from stable_baselines3.common.type_aliases import ReplayBufferSamples, GymEnv
+from stable_baselines3.sac.sac_fine_tune import SAC_FineTune
 
 
-class SAC_EWC(SAC):
+class SAC_EWC(SAC_FineTune):
     def __init__(self, lambda_: float, regularize_critic: bool = False, **kwargs) -> None:
         super().__init__(**kwargs)
         self.lambda_ = lambda_
@@ -24,7 +25,12 @@ class SAC_EWC(SAC):
     def get_critic_auxiliary_loss(self) -> torch.Tensor:
         return self._regression_loss()
 
-    def on_task_change(self, task_ix: int) -> None:
+    def on_task_change(
+            self,
+            task_ix: int,
+            env: GymEnv,
+            logger: Logger,
+    ) -> None:
         self._task_ix = task_ix
 
         if task_ix == 0:
@@ -33,6 +39,8 @@ class SAC_EWC(SAC):
         for old_weight, new_weight in zip(self.old_params, self.shared_params):
             old_weight.data.copy_(new_weight)
         self._update_reg_weights()
+
+        super().on_task_change(task_ix, env, logger)
 
     def _regression_loss(self) -> torch.Tensor:
         if self._task_ix < 1:

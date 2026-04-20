@@ -2,6 +2,7 @@ import wandb
 from gymnasium.envs.classic_control import CartPoleEnv
 from gymnasium.envs.mujoco.inverted_pendulum_v5 import InvertedPendulumEnv
 from gymnasium import Env
+from torch.optim import Adam, SGD, RMSprop, AdamW, Optimizer
 
 from args import get_args, parse_eval_freq
 from callbacks import make_callbacks
@@ -26,6 +27,14 @@ ENV_REGISTRY: dict[str, tuple[type[Env], int]] = {
     'inverted_pendulum_hard':   (InvertedPendulumHard, 1000),
 }
 
+# ── Optimizer registry ───────────────────────────────────────────────
+OPTIMIZERS: dict[str, tuple[type[Optimizer], dict]] = {
+    'adam':             (Adam, {}),
+    'sgd':              (SGD, {}),
+    'sgd_momentum':     (SGD, {'momentum': 0.9}),
+    'rmsprop':          (RMSprop, {}),
+    'adamw':            (AdamW, {})
+}
 
 def get_benchmark(
         env: str,
@@ -245,6 +254,8 @@ def main(
         ent_coef: float | None = None,
         dqn_tau: float = 1.0,
         network_size: int | None = None,
+        ewc_lambda: float = 1.0,
+        optimizer: str = 'adam',
 ):
     bench = get_benchmark(env, benchmark or ['V1', 'V2', 'V3'], seed, encode_task)
     envs_train, envs_test = bench.make()
@@ -264,6 +275,10 @@ def main(
         network_size=network_size,
         n_tasks=len(bench),
         balanced_sampling=balanced_sampling,
+        policy_kwargs=dict(
+            optimizer=OPTIMIZERS[optimizer][0],
+            optimizer_kwargs=OPTIMIZERS[optimizer][1],
+        )
     )
 
     dqn_build_kwargs = dict(
@@ -279,6 +294,7 @@ def main(
         **common_build_kwargs,
         bc_loss_fn=bc_loss_fn,
         ent_coef=ent_coef,
+        ewc_lambda=ewc_lambda,
     )
 
     sacd_build_kwargs = dict(

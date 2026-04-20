@@ -5,6 +5,7 @@ from argparse import Namespace
 METHODS = ['sequential', 'fine_tune', 'joint_incremental', 'behavior_cloning']
 BENCHMARK = ['V1', 'V2', 'V3']
 ENVS = ['cartpole', 'inverted_pendulum', 'inverted_pendulum_hard']
+OPTIMIZERS = ['adam', 'sgd', 'rmsprop', 'sgd_momentum']
 
 def get_args() -> Namespace:
     parser = argparse.ArgumentParser()
@@ -112,6 +113,11 @@ def get_args() -> Namespace:
 
     # ── CartPole-specific (algorithm) ───────────────────────────────
     parser.add_argument('--algorithm', default='dqn', type=str, choices=['dqn', 'sacd', 'sac'])
+
+    parser.add_argument('optimizer', default='adam', type=str, choices=OPTIMIZERS)
+
+    # ── EWC-specific (algorithm) ───────────────────────────────
+    parser.add_argument('--ewc_lambda', default=1.0, type=float)
 
     return parser.parse_args()
 
