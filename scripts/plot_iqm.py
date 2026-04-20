@@ -166,7 +166,7 @@ def load_eval_data(method: str, seed: int, test_env: str) -> pd.DataFrame:
     timestep_col = f"time/{test_env}/total_timesteps"
 
     for env_idx, train_env in enumerate(TRAIN_ENVS):
-        filename = f"{method}-s{seed}-{train_env}.csv"
+        filename = f"{method}-{train_env}.csv".replace('<s>', str(seed))
         filepath = DATA_DIR / filename
         if not filepath.exists():
             print(f"Warning: {filepath} not found, skipping.")
@@ -337,6 +337,11 @@ def parse_args():
         type=str,
         help=f"Base name of the environment",
     )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        help="Subdirectory inside output/plots to save plots (created if not exists)",
+    )
     return parser.parse_args()
 
 
@@ -351,8 +356,14 @@ def main():
     SEEDS = args.seeds
     TIMESTEPS_PER_ENV = args.timesteps
     env_name = args.env_name
+    output_subdir = args.output_dir
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    if output_subdir:
+        plot_output_dir = OUTPUT_DIR / output_subdir
+    else:
+        plot_output_dir = OUTPUT_DIR
+
+    plot_output_dir.mkdir(parents=True, exist_ok=True)
 
     cache_key = make_cache_key(methods, prefix)
     if use_cache:
@@ -425,7 +436,7 @@ def main():
         if prefix:
             parts.append(prefix)
         parts.append(test_env)
-        out_path = OUTPUT_DIR / f"{'_'.join(parts)}.png"
+        out_path = plot_output_dir / f"{'_'.join(parts)}.png"
 
         fig.savefig(out_path, dpi=150)
         plt.close(fig)
