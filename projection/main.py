@@ -77,7 +77,10 @@ def _build_dqn(
         network_size: int,
         n_tasks: int,
         balanced_sampling: bool,
+        policy_kwargs: dict,
 ) -> ContinualLearning:
+    policy_kwargs['net_arch'] = [network_size, network_size]
+
     common_kwargs = dict(
         policy='MlpPolicy',
         env=train_env,
@@ -91,7 +94,7 @@ def _build_dqn(
         exploration_initial_eps=epsilon_start,
         exploration_final_eps=epsilon_end,
         exploration_fraction=epsilon_decay_frac,
-        policy_kwargs={'net_arch': [network_size, network_size]},
+        policy_kwargs=policy_kwargs,
         seed=seed,
         tau=tau,
     )
@@ -134,7 +137,10 @@ def _build_sacd(
         network_size: int,
         n_tasks: int,
         balanced_sampling: bool,
+        policy_kwargs: dict,
 ) -> ContinualLearning:
+    policy_kwargs['net_arch'] = [network_size, network_size]
+
     common_kwargs = dict(
         policy='MlpPolicy',
         env=train_env,
@@ -144,7 +150,7 @@ def _build_sacd(
         gamma=gamma,
         buffer_size=buffer_size,
         batch_size=batch_size,
-        policy_kwargs={'net_arch': [network_size, network_size]},
+        policy_kwargs=policy_kwargs,
         seed=seed,
         ent_coef='auto' if ent_coef is None else ent_coef,
     )
@@ -188,7 +194,10 @@ def _build_sac(
         network_size: int,
         n_tasks: int,
         balanced_sampling: bool,
+        policy_kwargs: dict,
 ) -> ContinualLearning:
+    policy_kwargs['net_arch'] = [network_size, network_size]
+
     common_kwargs = dict(
         policy='MlpPolicy',
         env=train_env,
@@ -198,7 +207,7 @@ def _build_sac(
         gamma=gamma,
         buffer_size=buffer_size,
         batch_size=batch_size,
-        policy_kwargs={'net_arch': [network_size, network_size]},
+        policy_kwargs=policy_kwargs,
         seed=seed,
         ent_coef='auto' if ent_coef is None else ent_coef,
     )
@@ -279,7 +288,7 @@ def main(
         n_tasks=len(bench),
         balanced_sampling=balanced_sampling,
         policy_kwargs=dict(
-            optimizer=OPTIMIZERS[optimizer][0],
+            optimizer_class=OPTIMIZERS[optimizer][0],
             optimizer_kwargs=OPTIMIZERS[optimizer][1],
         )
     )

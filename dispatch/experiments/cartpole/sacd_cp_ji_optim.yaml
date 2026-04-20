@@ -11,7 +11,6 @@ eval_all: true
 eval_freq: [5000, 50, 500]
 video_freq: 0
 n_eval_episodes: 15
-lr: 0.0003
 gamma: 0.99
 buffer_size: 500_000
 target_update: 1000
@@ -25,4 +24,4 @@ time: "04:00:00"
 ablations:
   seed: [0, 1, 2, 3, 4]
   optimizer: ['adam', 'sgd', 'sgd_momentum', 'rmsprop', 'adamw']
-  learning_rate: [0.1, 0.01, 0.0025, 0.001, 0.00025, 0.00001]
+  lr: [0.1, 0.01, 0.0025, 0.001, 0.00025, 0.00001]
