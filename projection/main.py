@@ -13,6 +13,7 @@ from stable_baselines3.continual import ContinualLearning
 from stable_baselines3.dqn.dqn_bc import DQN_BC
 from stable_baselines3.dqn.dqn_fine_tune import DQN_FineTune
 from stable_baselines3.dqn.dqn_joint_icremental import DQN_JointIncremental
+from stable_baselines3.dqn.dqn_joint_incremental_pc_grad import DQN_JointIncremental_PCGrad
 from stable_baselines3.sac.sac_bc import SAC_BC
 from stable_baselines3.sac.sac_fine_tune import SAC_FineTune
 from stable_baselines3.sac.sac_joint_incremental import SAC_JointIncremental
@@ -115,6 +116,12 @@ def _build_dqn(
                 n_tasks=n_tasks,
                 balanced_sampling=balanced_sampling,
                 **common_kwargs
+            )
+        case 'joint_incremental_pc_grad':
+            return DQN_JointIncremental_PCGrad(
+                n_tasks=n_tasks,
+                balanced_sampling=False,
+                **common_kwargs,
             )
         case _:
             raise ValueError(f'Unknown method "{method}"')

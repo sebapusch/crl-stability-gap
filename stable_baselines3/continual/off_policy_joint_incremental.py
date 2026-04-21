@@ -17,6 +17,7 @@ class OffPolicyJointIncremental(ContinualLearning):
             balanced_sampling=balanced_sampling,
         )
         self.envs: list[GymEnv] = []
+        self.task_ix: int = 0
 
 
     def learn(
@@ -78,6 +79,7 @@ class OffPolicyJointIncremental(ContinualLearning):
             env: GymEnv,
             logger: Logger,
     ) -> None:
+        self.task_ix = task_ix
         self.set_env(env)
         self.envs.append(self.env)
         self.set_logger(logger)
