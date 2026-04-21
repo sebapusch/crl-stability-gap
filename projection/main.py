@@ -79,7 +79,7 @@ def _build_dqn(
         balanced_sampling: bool,
         policy_kwargs: dict,
 ) -> ContinualLearning:
-    policy_kwargs['net_arch'] = [network_size, network_size]
+    policy_kwargs['net_arch'] = [network_size, network_size, network_size]
 
     common_kwargs = dict(
         policy='MlpPolicy',
