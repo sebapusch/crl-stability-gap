@@ -79,8 +79,11 @@ def _build_dqn(
         n_tasks: int,
         balanced_sampling: bool,
         policy_kwargs: dict,
+        multihead: bool,
 ) -> ContinualLearning:
     policy_kwargs['net_arch'] = [network_size, network_size, network_size]
+    if multihead:
+        policy_kwargs['n_heads'] = n_tasks
 
     common_kwargs = dict(
         policy='MlpPolicy',
@@ -145,6 +148,7 @@ def _build_sacd(
         n_tasks: int,
         balanced_sampling: bool,
         policy_kwargs: dict,
+        multihead: bool,
 ) -> ContinualLearning:
     policy_kwargs['net_arch'] = [network_size, network_size]
 
@@ -202,6 +206,7 @@ def _build_sac(
         n_tasks: int,
         balanced_sampling: bool,
         policy_kwargs: dict,
+        multihead: bool,
 ) -> ContinualLearning:
     policy_kwargs['net_arch'] = [network_size, network_size]
 
@@ -275,6 +280,7 @@ def main(
         network_size: int | None = None,
         ewc_lambda: float = 1.0,
         optimizer: str = 'adam',
+        multihead: bool = False,
 ):
     bench = get_benchmark(env, benchmark or ['V1', 'V2', 'V3'], seed, encode_task)
     envs_train, envs_test = bench.make()
@@ -294,6 +300,7 @@ def main(
         network_size=network_size,
         n_tasks=len(bench),
         balanced_sampling=balanced_sampling,
+        multihead=multihead,
         policy_kwargs=dict(
             optimizer_class=OPTIMIZERS[optimizer][0],
             optimizer_kwargs=OPTIMIZERS[optimizer][1],

@@ -102,6 +102,7 @@ class DQN(OffPolicyAlgorithm):
         seed: int | None = None,
         device: th.device | str = "auto",
         _init_setup_model: bool = True,
+        n_heads: int = 1,
     ) -> None:
         super().__init__(
             policy,

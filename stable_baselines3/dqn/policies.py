@@ -4,7 +4,7 @@ import torch as th
 from gymnasium import spaces
 from torch import nn
 
-from stable_baselines3.common.policies import BasePolicy
+from stable_baselines3.common.policies import BasePolicy, choose_head
 from stable_baselines3.common.torch_layers import (
     BaseFeaturesExtractor,
     CombinedExtractor,
@@ -38,6 +38,7 @@ class QNetwork(BasePolicy):
         net_arch: list[int] | None = None,
         activation_fn: type[nn.Module] = nn.ReLU,
         normalize_images: bool = True,
+        n_heads: int = 1,
     ) -> None:
         super().__init__(
             observation_space,
@@ -47,23 +48,32 @@ class QNetwork(BasePolicy):
         )
 
         if net_arch is None:
-            net_arch = [64, 64]
+            net_arch: list[int] = [64, 64]
 
         self.net_arch = net_arch
         self.activation_fn = activation_fn
         self.features_dim = features_dim
-        action_dim = int(self.action_space.n)  # number of actions
-        q_net = create_mlp(self.features_dim, action_dim, self.net_arch, self.activation_fn)
+        self.n_heads = n_heads
+        action_dim = int(self.action_space.n)  # number of action
+
+        q_net = create_mlp(
+            self.features_dim,
+            action_dim * n_heads,
+            self.net_arch,
+            self.activation_fn,
+        )
+
         self.q_net = nn.Sequential(*q_net)
 
-    def forward(self, obs: PyTorchObs) -> th.Tensor:
+    def forward(self, obs: th.Tensor) -> th.Tensor:
         """
         Predict the q-values.
 
         :param obs: Observation
         :return: The estimated Q-Value for each action.
         """
-        return self.q_net(self.extract_features(obs, self.features_extractor))
+        out = self.q_net(self.extract_features(obs, self.features_extractor))
+        return choose_head(out, obs, self.n_heads)
 
     def _predict(self, observation: PyTorchObs, deterministic: bool = True) -> th.Tensor:
         q_values = self(observation)
@@ -120,6 +130,7 @@ class DQNPolicy(BasePolicy):
         normalize_images: bool = True,
         optimizer_class: type[th.optim.Optimizer] = th.optim.Adam,
         optimizer_kwargs: dict[str, Any] | None = None,
+        n_heads: int = 1,
     ) -> None:
         super().__init__(
             observation_space,
@@ -148,9 +159,9 @@ class DQNPolicy(BasePolicy):
             "normalize_images": normalize_images,
         }
 
-        self._build(lr_schedule)
+        self._build(lr_schedule, n_heads)
 
-    def _build(self, lr_schedule: Schedule) -> None:
+    def _build(self, lr_schedule: Schedule, n_heads: int) -> None:
         """
         Create the network and the optimizer.
 
@@ -160,8 +171,8 @@ class DQNPolicy(BasePolicy):
             lr_schedule(1) is the initial learning rate
         """
 
-        self.q_net = self.make_q_net()
-        self.q_net_target = self.make_q_net()
+        self.q_net = self.make_q_net(n_heads)
+        self.q_net_target = self.make_q_net(n_heads)
         self.q_net_target.load_state_dict(self.q_net.state_dict())
         self.q_net_target.set_training_mode(False)
 
@@ -172,10 +183,10 @@ class DQNPolicy(BasePolicy):
             **self.optimizer_kwargs,
         )
 
-    def make_q_net(self) -> QNetwork:
+    def make_q_net(self, n_heads: int) -> QNetwork:
         # Make sure we always have separate networks for features extractors etc
         net_args = self._update_features_extractor(self.net_args, features_extractor=None)
-        return QNetwork(**net_args).to(self.device)
+        return QNetwork(**net_args, n_heads=n_heads).to(self.device)
 
     def forward(self, obs: PyTorchObs, deterministic: bool = True) -> th.Tensor:
         return self._predict(obs, deterministic=deterministic)
