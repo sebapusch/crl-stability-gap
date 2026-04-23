@@ -1,3 +1,5 @@
+import numpy as np
+
 from stable_baselines3.common.buffers import MultiReplayBuffer
 from stable_baselines3.common.logger import Logger
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm, SelfOffPolicyAlgorithm
@@ -18,7 +20,25 @@ class OffPolicyJointIncremental(ContinualLearning):
         )
         self.envs: list[GymEnv] = []
         self.task_ix: int = 0
+        # Per-environment observation state for round-robin rollout collection
+        self._per_env_last_obs: list[np.ndarray | None] = []
+        self._per_env_last_episode_starts: list[np.ndarray | None] = []
 
+
+    def _save_env_obs_state(self, env_idx: int) -> None:
+        """Save the current _last_obs state for the given environment index."""
+        self._per_env_last_obs[env_idx] = self._last_obs
+        self._per_env_last_episode_starts[env_idx] = self._last_episode_starts
+
+    def _restore_env_obs_state(self, env_idx: int, env: GymEnv) -> None:
+        """Restore the saved _last_obs state for the given environment index,
+        or initialize from env.reset() if no saved state exists."""
+        if self._per_env_last_obs[env_idx] is None:
+            self._last_obs = env.reset()
+            self._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        else:
+            self._last_obs = self._per_env_last_obs[env_idx]
+            self._last_episode_starts = self._per_env_last_episode_starts[env_idx]
 
     def learn(
             self,
@@ -45,6 +65,8 @@ class OffPolicyJointIncremental(ContinualLearning):
         while self.num_timesteps < total_timesteps:
             num_timesteps = self.num_timesteps
             for i, env in enumerate(self.envs):
+                self._restore_env_obs_state(i, env)
+
                 rollout = self.collect_rollouts(
                     env,
                     train_freq=self.train_freq,
@@ -54,6 +76,9 @@ class OffPolicyJointIncremental(ContinualLearning):
                     replay_buffer=self.replay_buffer.buffers[i],
                     log_interval=log_interval,
                 )
+
+                self._save_env_obs_state(i)
+
                 if not rollout.continue_training:
                     break
 
@@ -82,6 +107,8 @@ class OffPolicyJointIncremental(ContinualLearning):
         self.task_ix = task_ix
         self.set_env(env)
         self.envs.append(self.env)
+        self._per_env_last_obs.append(None)
+        self._per_env_last_episode_starts.append(None)
         self.set_logger(logger)
 
         if task_ix == 0:

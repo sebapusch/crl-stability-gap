@@ -393,7 +393,7 @@ def main():
 
             label = get_label(prefix)
             color = get_color(method, idx)
-            ax.plot(ts, iqm, label=label, color=color, linewidth=1.5)
+            ax.plot(ts, iqm, label=label, color=color, linewidth=0.7)
             ax.fill_between(ts, ci_lo, ci_hi, alpha=0.2, color=color)
 
         # Add vertical lines at environment boundaries
@@ -438,7 +438,7 @@ def main():
         parts.append(test_env)
         out_path = plot_output_dir / f"{'_'.join(parts)}.png"
 
-        fig.savefig(out_path, dpi=150)
+        fig.savefig(out_path, dpi=300)
         plt.close(fig)
         print(f"Saved {out_path}")
 
