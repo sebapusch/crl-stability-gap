@@ -81,7 +81,7 @@ def _build_dqn(
         policy_kwargs: dict,
         multihead: bool,
 ) -> ContinualLearning:
-    policy_kwargs['net_arch'] = [network_size, network_size, network_size]
+    policy_kwargs['net_arch'] = [network_size, network_size]
     if multihead:
         policy_kwargs['n_heads'] = n_tasks
 
