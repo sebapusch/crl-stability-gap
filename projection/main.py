@@ -9,6 +9,7 @@ from callbacks import make_callbacks
 from projection.benchmarks.inverted_pendulum_hard import InvertedPendulumHard
 from projection.benchmarks.projected_env_benchmark import ProjectedEnvBenchmark
 from projection.common import make_logger
+from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.continual import ContinualLearning
 from stable_baselines3.dqn.dqn_bc import DQN_BC
 from stable_baselines3.dqn.dqn_fine_tune import DQN_FineTune
@@ -246,6 +247,100 @@ def _build_sac(
             raise ValueError(f'Unknown method "{method}"')
 
 
+def train_continual(
+        benchmark: ProjectedEnvBenchmark,
+        envs_train: list[GymEnv],
+        envs_test: list[GymEnv],
+        model: ContinualLearning,
+        tags: list[str],
+        name_prefix: str,
+        project: str,
+        eval_freq: int | list[tuple[int, int]],
+        video_freq: int,
+        n_eval_episodes: int,
+        config: dict,
+        eval_all: bool,
+        total_timesteps: int,
+) -> None:
+    for ix, train_env in enumerate(envs_train):
+
+        version = f'V{benchmark.benchmark[ix]}'
+        run_tags = tags + [version]
+
+        run = wandb.init(
+            name=f'{name_prefix}-{version}',
+            project=project,
+            config=config,
+            tags=run_tags,
+        )
+
+        model.on_task_change(ix, train_env, make_logger(project, run.name))
+
+        # ── Train ───────────────────────────────────────────────────
+        callbacks = make_callbacks(
+            benchmark=benchmark,
+            envs_test=envs_test,
+            eval_freq=eval_freq,
+            video_freq=video_freq,
+            n_eval_episodes=n_eval_episodes,
+            eval_all=eval_all,
+        )
+
+        model.learn(
+            total_timesteps=total_timesteps,
+            callback=callbacks(ix),
+            reset_num_timesteps=True,
+        )
+
+        run.finish()
+
+def train_multitask(
+        benchmark: ProjectedEnvBenchmark,
+        envs_train: list[GymEnv],
+        envs_test: list[GymEnv],
+        model: ContinualLearning,
+        tags: list[str],
+        name_prefix: str,
+        project: str,
+        eval_freq: int | list[tuple[int, int]],
+        video_freq: int,
+        n_eval_episodes: int,
+        config: dict,
+        total_timesteps: int,
+) -> None:
+    tags += ['multitask']
+
+    for ix, train_env in enumerate(envs_train[:-1]):
+        model.on_task_change(ix, train_env, make_logger(project, None))
+
+    run = wandb.init(
+        name=f'{name_prefix}',
+        project=project,
+        config=config,
+        tags=tags,
+    )
+
+    model.on_task_change(len(envs_train) - 1, envs_train[-1], make_logger(project, run.name))
+
+    # ── Train ───────────────────────────────────────────────────
+    callbacks = make_callbacks(
+        benchmark=benchmark,
+        envs_test=envs_test,
+        eval_freq=eval_freq,
+        video_freq=video_freq,
+        n_eval_episodes=n_eval_episodes,
+        eval_all=False,
+    )
+
+    model.learn(
+        total_timesteps=total_timesteps,
+        callback=callbacks(len(envs_train) - 1),
+        reset_num_timesteps=True,
+    )
+
+    run.finish()
+
+
 # ── Main training loop ──────────────────────────────────────────────
 def main(
         benchmark: list[str] | None = None,
@@ -281,6 +376,7 @@ def main(
         ewc_lambda: float = 1.0,
         optimizer: str = 'adam',
         multihead: bool = False,
+        multitask: bool = False,
 ):
     bench = get_benchmark(env, benchmark or ['V1', 'V2', 'V3'], seed, encode_task)
     envs_train, envs_test = bench.make()
@@ -342,6 +438,38 @@ def main(
             model = _build_sacd(train_env_init, **sacd_build_kwargs)
         case _:
             raise ValueError(f'Unknown algorithm "{algorithm}"')
+
+    if multitask:
+        train_multitask(
+            benchmark=bench,
+            envs_train=envs_train,
+            envs_test=envs_test,
+            model=model,
+            tags=[f's-{str(seed)}', method, optimizer, f'lr-{str(lr)}'],
+            name_prefix=name_prefix,
+            project=project,
+            eval_freq=eval_freq,
+            video_freq=video_freq,
+            n_eval_episodes=n_eval_episodes,
+            config=config,
+            total_timesteps=total_timesteps,
+        )
+    else:
+        train_continual(
+            benchmark=bench,
+            envs_train=envs_train,
+            envs_test=envs_test,
+            model=model,
+            tags=[f's-{str(seed)}', method, optimizer, f'lr-{str(lr)}'],
+            name_prefix=name_prefix,
+            project=project,
+            eval_freq=eval_freq,
+            video_freq=video_freq,
+            n_eval_episodes=n_eval_episodes,
+            config=config,
+            eval_all=eval_all,
+            total_timesteps=total_timesteps,
+        )
 
     for ix, train_env in enumerate(envs_train):
         version = f'V{bench.benchmark[ix]}'

@@ -4,7 +4,10 @@ from os import makedirs, path
 from stable_baselines3.common.logger import Logger, HumanOutputFormat, WandbWriter, CSVOutputFormat
 
 
-def make_logger(project: str, run_name: str) -> Logger:
+def make_logger(project: str, run_name: str | None) -> Logger:
+    if run_name is None:
+        return Logger(project, []) # dummy logger
+
     dir_path = path.abspath(path.join(__file__, '..', '..', 'output', project))
     makedirs(dir_path, exist_ok=True)
 
