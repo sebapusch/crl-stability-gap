@@ -172,6 +172,10 @@ def load_eval_data(method: str, seed: int, test_env: str) -> pd.DataFrame:
             print(f"Warning: {filepath} not found, skipping.")
             continue
 
+        if filepath.stat().st_size == 0:
+            print(f"Warning: {filepath} is empty, skipping.")
+            continue
+
         df = pd.read_csv(filepath)
 
         if reward_col not in df.columns or timestep_col not in df.columns:
