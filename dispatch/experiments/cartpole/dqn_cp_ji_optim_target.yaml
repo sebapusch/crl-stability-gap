@@ -19,9 +19,10 @@ total_timesteps: 200_000
 expert_buffer_size: 1000
 network_size: 256
 ent_coef: null
-seed: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 lr: 0.0001
 
 time: "04:00:00"
 ablations:
   optimizer: ['adam', 'rmsprop', 'adamw']
+  seed: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
