@@ -471,36 +471,6 @@ def main(
             total_timesteps=total_timesteps,
         )
 
-    for ix, train_env in enumerate(envs_train):
-        version = f'V{bench.benchmark[ix]}'
-
-        run = wandb.init(
-            name=f'{name_prefix}-{version}',
-            project=project,
-            config=config,
-            tags=[version, f's-{str(seed)}', method, optimizer, f'lr-{str(lr)}'],
-        )
-
-        model.on_task_change(ix, train_env, make_logger(project, run.name))
-
-        # ── Train ───────────────────────────────────────────────────
-        callbacks = make_callbacks(
-            benchmark=bench,
-            envs_test=envs_test,
-            eval_freq=eval_freq,
-            video_freq=video_freq,
-            n_eval_episodes=n_eval_episodes,
-            eval_all=eval_all,
-        )
-
-        model.learn(
-            total_timesteps=total_timesteps,
-            callback=callbacks(ix),
-            reset_num_timesteps=True,
-        )
-
-        run.finish()
-
 
 if __name__ == '__main__':
     args = vars(get_args())
