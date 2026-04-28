@@ -416,7 +416,7 @@ def main(
         **common_build_kwargs,
         bc_loss_fn=bc_loss_fn,
         ent_coef=ent_coef,
-        ewc_lambda=ewc_lambda,
+        # ewc_lambda=ewc_lambda,
     )
 
     sacd_build_kwargs = dict(
