@@ -1,9 +1,9 @@
 #!/bin/bash
 
-ALGORITHMS=("dqn" "sacd")
-OPTIMIZERS=("adam" "sgd" "sgd_momentum" "rmsprop" "adamw")
-LEARNING_RATES=("000025" "1e-05")
-SEEDS="0 1 2 3 4"
+ALGORITHMS=("sacd")
+OPTIMIZERS=("adam" "rmsprop" "adamw")
+LEARNING_RATES=("00001" "000025" "0001" "00025")
+SEEDS="0 1 2 3 4 5 6 7 8 9"
 
 REMOTE_HOST="s5488079@login1.hb.hpc.rug.nl"
 REMOTE_BASE="/scratch/s5488079/crl-stability-gap/output"
