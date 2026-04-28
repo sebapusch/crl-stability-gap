@@ -1,0 +1,29 @@
+name_prefix: "sac_iph_ji"
+project: "sac_iph_ji"
+algorithm: "sac"
+env: "inverted_pendulum_hard"
+method: "joint_incremental"
+benchmark: ["V1", "V2", "V3"]
+batch_size: 128
+encode_task: true
+eval_all: false
+eval_freq: [5000, 50, 500]
+video_freq: 0
+n_eval_episodes: 15
+gamma: 0.99
+buffer_size: 1_000_000
+target_update: 1000
+learning_starts: 1000
+total_timesteps: 100_000
+expert_buffer_size: 10_000
+network_size: 256
+ent_coef: null
+
+time: "04:00:00"
+ablations:
+  seed: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  optimizer: ["adam", "adamw", "rmsprop", "sgd"]
+  lr: [0.01, 0.0025, 0.001, 0.00025, 0.0001, 0.000025]
+
+
+
