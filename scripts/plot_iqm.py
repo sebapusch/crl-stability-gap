@@ -379,10 +379,15 @@ def load_config(path: str) -> dict:
     return cfg
 
 
-def _decorate_ax(ax, train_envs, timesteps_per_env, title=None):
+def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None):
     """Add environment boundary lines, labels, and grid to an axis."""
     # Determine visible data range
     x_lo, x_hi = ax.get_xlim()
+
+    # Index of the test env in the training order (for filtering labels)
+    test_env_idx = None
+    if test_env and test_env in train_envs:
+        test_env_idx = train_envs.index(test_env)
 
     # Vertical lines at environment boundaries (only if within data range)
     for i in range(1, len(train_envs)):
@@ -397,13 +402,17 @@ def _decorate_ax(ax, train_envs, timesteps_per_env, title=None):
                 zorder=5,
             )
 
-    # Env labels just above the plot area (only for regions overlapping data)
+    # Env labels just above the plot area
+    # Skip labels for training phases before the eval env (test_env_idx > i)
     trans = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)
     for i, env in enumerate(train_envs):
         env_start = i * timesteps_per_env
         env_end = (i + 1) * timesteps_per_env
         # Skip if this env region doesn't overlap with the data range
         if env_end <= x_lo or env_start >= x_hi:
+            continue
+        # Skip if eval env comes after this training env
+        if test_env_idx is not None and test_env_idx > i:
             continue
         center = (i + 0.5) * timesteps_per_env
         ax.text(
@@ -421,7 +430,7 @@ def _decorate_ax(ax, train_envs, timesteps_per_env, title=None):
     ax.set_ylabel("IQM Episodic Return")
     if title:
         ax.set_title(title, pad=25)
-    ax.legend()
+    ax.legend(loc="lower right")
     ax.grid(alpha=0.3)
 
 
@@ -527,7 +536,7 @@ def plot_grid(config: dict, use_cache: bool):
             ax.plot(ts, iqm, label=label, color=color, linewidth=0.7)
             ax.fill_between(ts, ci_lo, ci_hi, alpha=0.2, color=color)
 
-        _decorate_ax(ax, envs, timesteps, title=title)
+        _decorate_ax(ax, envs, timesteps, title=title, test_env=test_env)
 
     # Hide unused subplot cells
     for idx in range(n_plots, nrows * ncols):
@@ -679,6 +688,7 @@ def main():
 
         # Add vertical lines and env labels (only for regions with data)
         x_lo, x_hi = ax.get_xlim()
+        test_env_idx = TRAIN_ENVS.index(test_env) if test_env in TRAIN_ENVS else None
 
         for i in range(1, len(TRAIN_ENVS)):
             boundary = i * TIMESTEPS_PER_ENV
@@ -698,6 +708,9 @@ def main():
             env_end = (i + 1) * TIMESTEPS_PER_ENV
             if env_end <= x_lo or env_start >= x_hi:
                 continue
+            # Skip if eval env comes after this training env
+            if test_env_idx is not None and test_env_idx > i:
+                continue
             center = (i + 0.5) * TIMESTEPS_PER_ENV
             ax.text(
                 center,
@@ -713,7 +726,7 @@ def main():
         ax.set_xlabel("Total Timesteps")
         ax.set_ylabel("IQM Episodic Return")
         ax.set_title(f"Evaluation on {env_name}-{test_env}", pad=25)
-        ax.legend()
+        ax.legend(loc="lower right")
         ax.grid(alpha=0.3)
 
         plt.tight_layout()
