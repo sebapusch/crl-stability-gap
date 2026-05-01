@@ -1009,9 +1009,16 @@ class MultiReplayBuffer:
     ) -> None:
         self.buffers[self.active_index].add(obs, next_obs, action, reward, done, infos)
 
-    def sample(self, batch_size: int, env: VecNormalize | None = None) -> ReplayBufferSamples:
-        if self.active_index == 0:
+    def sample(self,
+               batch_size: int,
+               env: VecNormalize | None = None,
+               idx: int | list[int] | None = None
+    ) -> ReplayBufferSamples:
+        if idx == 0 or (idx is None and self.active_index == 0):
             return self.buffers[0].sample(batch_size, env)
+
+        if isinstance(idx, int):
+            return self.buffers[idx].sample(batch_size, env)
 
         observations = []
         actions = []
@@ -1019,12 +1026,18 @@ class MultiReplayBuffer:
         dones = []
         rewards = []
 
-        n_active = self.active_index + 1
+        if idx is None:
+            n_active = self.active_index + 1
+            rng = range(self.active_index + 1)
+        else:
+            rng = idx
+            n_active = len(idx)
+            assert n_active > 0
 
         batch_size_per_env = batch_size if self.balanced_sampling else batch_size // n_active
         remainder = 0 if self.balanced_sampling else batch_size % n_active
 
-        for i in range(self.active_index + 1):
+        for i in rng:
             size = batch_size_per_env if i < self.active_index else batch_size_per_env + remainder
 
             samples = self.buffers[i].sample(size, env)

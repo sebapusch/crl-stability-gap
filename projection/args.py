@@ -2,7 +2,9 @@ import argparse
 from argparse import Namespace
 
 
-METHODS = ['sequential', 'fine_tune', 'joint_incremental', 'behavior_cloning', 'joint_incremental_pc_grad']
+METHODS = ['sequential', 'fine_tune', 'joint_incremental',
+           'behavior_cloning', 'joint_incremental_pc_grad',
+           'joint_incremental_a_gem']
 BENCHMARK = ['V1', 'V2', 'V3']
 ENVS = ['cartpole', 'inverted_pendulum', 'inverted_pendulum_hard']
 OPTIMIZERS = ['adam', 'sgd', 'rmsprop', 'sgd_momentum', 'adamw']
