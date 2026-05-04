@@ -2,32 +2,37 @@ import numpy as np
 from gymnasium import Env
 from gymnasium.wrappers import TimeLimit
 
-from projection.benchmarks.wrappers import ObsSpaceInf, ObsLinearTransform, OneHotWrapper
-
+from projection.benchmarks.wrappers import (
+    ObsLinearTransform,
+    ObsSpaceInf,
+    OneHotWrapper,
+)
 
 PERMUTATION_SEEDS = range(90, 200)
 
 
-def _random_orthogonal(seed: int, size: int, bias: bool = False) -> tuple[np.ndarray, np.ndarray | None]:
+def _random_orthogonal(
+    seed: int, size: int, bias: bool = False
+) -> tuple[np.ndarray, np.ndarray | None]:
     rng = np.random.default_rng(seed)
     m = rng.normal(size=(size, size))
     q, _ = np.linalg.qr(m)
     if np.linalg.det(q) < 0:
         q[:, 0] *= -1
-    q =  q.astype(np.float32)
-    b = None if not bias else rng.random(size=size)
+    q = q.astype(np.float32)
+    b = None if not bias else rng.random(size=size).astype(np.float32)
 
     return q, b
 
 
 class ProjectedEnvBenchmark:
     def __init__(
-            self,
-            env_class: type[Env],
-            benchmark: list[int],
-            encode_task: bool,
-            seed: int = 42,
-            time_limit: int | None = None
+        self,
+        env_class: type[Env],
+        benchmark: list[int],
+        encode_task: bool,
+        seed: int = 42,
+        time_limit: int | None = None,
     ) -> None:
         assert len(benchmark) > 0
         assert len(benchmark) == len(set(benchmark))
@@ -42,15 +47,15 @@ class ProjectedEnvBenchmark:
 
     def make_single(self, version: int, test: bool = False, **env_kwargs) -> Env:
         if version not in self.benchmark:
-            raise ValueError(f'Invalid version \'{version}\'')
+            raise ValueError(f"Invalid version '{version}'")
 
-        env = self.env_class(**env_kwargs)      # type: ignore
+        env = self.env_class(**env_kwargs)  # type: ignore
         env = ObsSpaceInf(env)
 
         if version > 1:
             q, b = _random_orthogonal(
                 PERMUTATION_SEEDS[version - 1],
-                env.observation_space.shape[0],
+                env.observation_space.shape[0],  # type: ignore
                 version > 5,
             )
             env = ObsLinearTransform(env, q, b)
@@ -69,16 +74,10 @@ class ProjectedEnvBenchmark:
         return env
 
     def make_train(self, **env_kwargs) -> list[Env]:
-        return [
-            self.make_single(ix, False, **env_kwargs)
-            for ix in self.benchmark
-        ]
+        return [self.make_single(ix, False, **env_kwargs) for ix in self.benchmark]
 
     def make_test(self, **env_kwargs) -> list[Env]:
-        return [
-            self.make_single(ix, True, **env_kwargs)
-            for ix in self.benchmark
-        ]
+        return [self.make_single(ix, True, **env_kwargs) for ix in self.benchmark]
 
     def make(self, **env_kwargs) -> tuple[list[Env], list[Env]]:
         return (
@@ -88,4 +87,3 @@ class ProjectedEnvBenchmark:
 
     def __len__(self) -> int:
         return len(self.benchmark)
-

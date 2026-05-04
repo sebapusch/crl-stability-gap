@@ -4,13 +4,15 @@ from torch.nn import functional as F
 
 from stable_baselines3.common.logger import Logger
 from stable_baselines3.common.type_aliases import GymEnv
-
 from stable_baselines3.dqn.dqn_joint_icremental import DQN_JointIncremental
+
 
 class DQN_JointIncremental_AGEM(DQN_JointIncremental):
     def target(self, idx: int | list[int], batch_size: int) -> th.Tensor:
         replay_data = self.replay_buffer.sample(batch_size, idx=idx)
-        discounts = replay_data.discounts if replay_data.discounts is not None else self.gamma
+        discounts = (
+            replay_data.discounts if replay_data.discounts is not None else self.gamma
+        )
 
         with th.no_grad():
             # Compute the next Q-values using the target network
@@ -20,18 +22,22 @@ class DQN_JointIncremental_AGEM(DQN_JointIncremental):
             # Avoid potential broadcast issue
             next_q_values = next_q_values.reshape(-1, 1)
             # 1-step TD target
-            target_q_values = replay_data.rewards + (1 - replay_data.dones) * discounts * next_q_values
+            target_q_values = (
+                replay_data.rewards
+                + (1 - replay_data.dones) * discounts * next_q_values
+            )
 
         current_q_values = self.q_net(replay_data.observations)
 
         # Retrieve the q-values for the actions from the replay buffer
-        current_q_values = th.gather(current_q_values, dim=1, index=replay_data.actions.long())
+        current_q_values = th.gather(
+            current_q_values, dim=1, index=replay_data.actions.long()
+        )
 
         # Compute Huber loss (less sensitive to outliers)
         loss = F.smooth_l1_loss(current_q_values, target_q_values)
 
         return loss
-
 
     def train(self, gradient_steps: int, batch_size: int = 100) -> None:
         if self.task_ix == 0:
@@ -56,6 +62,7 @@ class DQN_JointIncremental_AGEM(DQN_JointIncremental):
             loss.backward()
 
             for param in self.policy.q_net.parameters():
+                assert param.grad is not None
                 grad_new.append(param.grad.clone())
 
             loss = self.target(list(range(self.task_ix)), batch_size)
@@ -64,10 +71,15 @@ class DQN_JointIncremental_AGEM(DQN_JointIncremental):
             loss.backward()
 
             for param in self.policy.q_net.parameters():
+                assert param.grad is not None
                 grad_old.append(param.grad.clone())
 
-            for g_new, g_old, param in zip(grad_new, grad_old, self.policy.q_net.parameters()):
-                grad_joint = (1 / n_active_tasks) * g_new + (1 - 1 / n_active_tasks) * g_old
+            for g_new, g_old, param in zip(
+                grad_new, grad_old, self.policy.q_net.parameters()
+            ):
+                grad_joint = (1 / n_active_tasks) * g_new + (
+                    1 - 1 / n_active_tasks
+                ) * g_old
 
                 cos_sim = (grad_joint * g_old).sum()
 
@@ -87,12 +99,9 @@ class DQN_JointIncremental_AGEM(DQN_JointIncremental):
         self.logger.record("train/loss", np.mean(losses))
 
     def on_task_change(
-            self,
-            task_ix: int,
-            env: GymEnv,
-            logger: Logger,
+        self,
+        task_ix: int,
+        env: GymEnv,
+        logger: Logger,
     ) -> None:
         super().on_task_change(task_ix, env, logger)
-
-
-        

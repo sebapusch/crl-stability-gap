@@ -1,135 +1,141 @@
 import argparse
 from argparse import Namespace
 
+METHODS = [
+    "sequential",
+    "fine_tune",
+    "joint_incremental",
+    "behavior_cloning",
+    "joint_incremental_pc_grad",
+    "joint_incremental_a_gem",
+]
+BENCHMARK = ["V1", "V2", "V3"]
+ENVS = ["cartpole", "inverted_pendulum", "inverted_pendulum_hard"]
+OPTIMIZERS = ["adam", "sgd", "rmsprop", "sgd_momentum", "adamw"]
 
-METHODS = ['sequential', 'fine_tune', 'joint_incremental',
-           'behavior_cloning', 'joint_incremental_pc_grad',
-           'joint_incremental_a_gem']
-BENCHMARK = ['V1', 'V2', 'V3']
-ENVS = ['cartpole', 'inverted_pendulum', 'inverted_pendulum_hard']
-OPTIMIZERS = ['adam', 'sgd', 'rmsprop', 'sgd_momentum', 'adamw']
 
 def get_args() -> Namespace:
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        '--benchmark',
+        "--benchmark",
         default=BENCHMARK,
-        nargs='*',
+        nargs="*",
     )
     parser.add_argument(
-        '--env',
+        "--env",
         choices=ENVS,
         default=ENVS[0],
         type=str,
-        help='Environment to use: cartpole (DQN) or inverted_pendulum (SAC)',
+        help="Environment to use: cartpole (DQN) or inverted_pendulum (SAC)",
     )
     parser.add_argument(
-        '--seed',
+        "--seed",
         default=42,
         type=int,
     )
     parser.add_argument(
-        '--behavior_cloning_coefficient',
+        "--behavior_cloning_coefficient",
         default=100,
         type=float,
     )
     parser.add_argument(
-        '--batch_size',
+        "--batch_size",
         default=128,
         type=int,
     )
     parser.add_argument(
-        '--name_prefix',
-        default='',
+        "--name_prefix",
+        default="",
         type=str,
     )
     parser.add_argument(
-        '--project',
-        default='cartpole',
+        "--project",
+        default="cartpole",
         type=str,
     )
     parser.add_argument(
-        '--method',
+        "--method",
         choices=METHODS,
         default=METHODS[0],
         type=str,
     )
 
     parser.add_argument(
-        '--encode_task',
-        action='store_true',
-        help='Append a one-hot encoding of the current task index to the observation',
+        "--encode_task",
+        action="store_true",
+        help="Append a one-hot encoding of the current task index to the observation",
     )
     parser.add_argument(
-        '--balanced_sampling',
-        action='store_true',
+        "--balanced_sampling",
+        action="store_true",
         default=False,
         help='Whether to maintain original batch size per task on when mode is "continual"',
     )
     parser.add_argument(
-        '--eval_all',
-        action='store_false',
+        "--eval_all",
+        action="store_false",
         default=True,
-        help='Whether to only evaluate all environments in the benchmark on every evaluation step',
+        help="Whether to only evaluate all environments in the benchmark on every evaluation step",
     )
 
     # ── Training hyperparameters ────────────────────────────────────
     parser.add_argument(
-        '--eval_freq',
+        "--eval_freq",
         default=[500],
         type=int,
-        nargs='+',
+        nargs="+",
         help=(
-            'Evaluation frequency schedule. Accepts one or more integers:\n'
-            '  1 value:  --eval_freq <freq>\n'
-            '      Evaluate every <freq> steps (constant frequency).\n'
-            '  ≥3 values (even): --eval_freq <max_step_1> <freq_1> <max_step_2> <freq_2> ...\n'
-            '      Use <freq_i> until step <max_step_i>, then switch to the next pair.\n'
-            '  ≥3 values (odd):  --eval_freq <max_step_1> <freq_1> ... <final_freq>\n'
-            '      Same as even, but the trailing <final_freq> applies from the\n'
-            '      last max_step up to total_timesteps.\n'
-            '  2 values: INVALID (ambiguous; use 1 or ≥3).\n'
+            "Evaluation frequency schedule. Accepts one or more integers:\n"
+            "  1 value:  --eval_freq <freq>\n"
+            "      Evaluate every <freq> steps (constant frequency).\n"
+            "  ≥3 values (even): --eval_freq <max_step_1> <freq_1> <max_step_2> <freq_2> ...\n"
+            "      Use <freq_i> until step <max_step_i>, then switch to the next pair.\n"
+            "  ≥3 values (odd):  --eval_freq <max_step_1> <freq_1> ... <final_freq>\n"
+            "      Same as even, but the trailing <final_freq> applies from the\n"
+            "      last max_step up to total_timesteps.\n"
+            "  2 values: INVALID (ambiguous; use 1 or ≥3).\n"
         ),
     )
-    parser.add_argument('--video_freq', default=0, type=int)
-    parser.add_argument('--n_eval_episodes', default=15, type=int)
-    parser.add_argument('--lr', default=3e-4, type=float)
-    parser.add_argument('--gamma', default=0.99, type=float)
-    parser.add_argument('--buffer_size', default=50_000, type=int)
-    parser.add_argument('--target_update', default=1000, type=int)
-    parser.add_argument('--learning_starts', default=1000, type=int)
-    parser.add_argument('--total_timesteps', default=200_000, type=int)
-    parser.add_argument('--expert_buffer_size', default=1000, type=int)
-    parser.add_argument('--network_size', default=None, type=int)
-    parser.add_argument('--multihead', default=False, action='store_true')
-    parser.add_argument('--multitask', default=False, action='store_true')
+    parser.add_argument("--video_freq", default=0, type=int)
+    parser.add_argument("--n_eval_episodes", default=15, type=int)
+    parser.add_argument("--lr", default=3e-4, type=float)
+    parser.add_argument("--gamma", default=0.99, type=float)
+    parser.add_argument("--buffer_size", default=50_000, type=int)
+    parser.add_argument("--target_update", default=1000, type=int)
+    parser.add_argument("--learning_starts", default=1000, type=int)
+    parser.add_argument("--total_timesteps", default=200_000, type=int)
+    parser.add_argument("--expert_buffer_size", default=1000, type=int)
+    parser.add_argument("--network_size", default=None, type=int)
+    parser.add_argument("--multihead", default=False, action="store_true")
+    parser.add_argument("--multitask", default=False, action="store_true")
 
     # ── DQN-specific (epsilon-greedy) ───────────────────────────────
-    parser.add_argument('--epsilon_start', default=1.0, type=float)
-    parser.add_argument('--epsilon_end', default=0.05, type=float)
-    parser.add_argument('--epsilon_decay_frac', default=0.1, type=float)
-    parser.add_argument('--dqn_tau', default=1.0, type=float)
-
+    parser.add_argument("--epsilon_start", default=1.0, type=float)
+    parser.add_argument("--epsilon_end", default=0.05, type=float)
+    parser.add_argument("--epsilon_decay_frac", default=0.1, type=float)
+    parser.add_argument("--dqn_tau", default=1.0, type=float)
 
     # ── SAC-specific (behavior cloning) ───────────────────────────────
-    parser.add_argument('--bc_loss_fn', default='kl', type=str, choices=['kl', 'l2'])
-    parser.add_argument('--ent_coef', default=None, type=float)
+    parser.add_argument("--bc_loss_fn", default="kl", type=str, choices=["kl", "l2"])
+    parser.add_argument("--ent_coef", default=None, type=float)
 
     # ── CartPole-specific (algorithm) ───────────────────────────────
-    parser.add_argument('--algorithm', default='dqn', type=str, choices=['dqn', 'sacd', 'sac'])
+    parser.add_argument(
+        "--algorithm", default="dqn", type=str, choices=["dqn", "sacd", "sac"]
+    )
 
-    parser.add_argument('--optimizer', default='adam', type=str, choices=OPTIMIZERS)
+    parser.add_argument("--optimizer", default="adam", type=str, choices=OPTIMIZERS)
 
     # ── EWC-specific (algorithm) ───────────────────────────────
-    parser.add_argument('--ewc_lambda', default=1.0, type=float)
+    parser.add_argument("--ewc_lambda", default=1.0, type=float)
 
     return parser.parse_args()
 
 
 def parse_eval_freq(
-        raw: list[int],
-        total_timesteps: int,
+    raw: list[int],
+    total_timesteps: int,
 ) -> int | list[tuple[int, int]]:
     """Convert a flat list of CLI integers into the eval-frequency format
     expected by :class:`EnvEvalCallback`.
@@ -150,9 +156,9 @@ def parse_eval_freq(
 
     if n == 2:
         raise ValueError(
-            f'--eval_freq with exactly 2 values is ambiguous. '
-            f'Use 1 value for a constant frequency or ≥3 values for a schedule. '
-            f'Got: {raw}'
+            f"--eval_freq with exactly 2 values is ambiguous. "
+            f"Use 1 value for a constant frequency or ≥3 values for a schedule. "
+            f"Got: {raw}"
         )
 
     pairs: list[tuple[int, int]] = []
