@@ -1,7 +1,7 @@
-name_prefix: "sac_iph_bc_ent"
-project: "sac_iph_bc_ent"
+name_prefix: "sac_ip_bc_ent"
+project: "sac_ip_bc_ent"
 algorithm: "sac"
-env: "inverted_pendulum_hard"
+env: "inverted_pendulum"
 method: "behavior_cloning"
 benchmark: ["V1", "V2", "V3"]
 behavior_cloning_coefficient: 0.1

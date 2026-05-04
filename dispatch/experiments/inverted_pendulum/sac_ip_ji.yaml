@@ -1,7 +1,7 @@
-name_prefix: "sac_iph_ji"
-project: "sac_iph_ji"
+name_prefix: "sac_ip_ji"
+project: "sac_ip_ji"
 algorithm: "sac"
-env: "inverted_pendulum_hard"
+env: "inverted_pendulum"
 method: "joint_incremental"
 benchmark: ["V1", "V2", "V3"]
 batch_size: 128

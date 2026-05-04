@@ -1,5 +1,5 @@
-name_prefix: "sac_iph_ft"
-project: "sac_iph_ft"
+name_prefix: "sac_ip_ft"
+project: "sac_ip_ft"
 algorithm: "sac"
 env: "inverted_pendulum"
 method: "fine_tune"
