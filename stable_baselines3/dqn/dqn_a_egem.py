@@ -2,8 +2,6 @@ import numpy as np
 import torch as th
 from torch.nn import functional as F
 
-from stable_baselines3.common.logger import Logger
-from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.dqn.dqn_bc import DQN_BC
 
 

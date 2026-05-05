@@ -1,0 +1,73 @@
+defaults:
+  env_name: CartPole
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  timesteps: 200_000
+  envs: [V1, V2, V3]
+  output_dir: dqn_cp_bc
+  output_file: bc_coeff_lr_comparison
+  dpi: 500 # optional: default is 300
+
+plots:
+  - title: "Eval on CartPole-V1 (BC coeff=0.1)"
+    test_env: V1
+    lines:
+      - method: "dqn_cp_bc/dqn_cp_bc-b_01-s_<s>-l_000025"
+        label: "Adam lr=0.00025"
+        color: "#FF9800"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_01-s_<s>-l_00005"
+        label: "Adam lr=0.0005"
+        color: "#2196F3"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_01-s_<s>-l_000075"
+        label: "Adam lr=0.00075"
+        color: "#FF0000"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_01-s_<s>-l_0001"
+        label: "Adam lr=0.001"
+        color: "#4CAF50"
+
+  - title: "Eval on CartPole-V1 (BC coeff=0.4)"
+    test_env: V1
+    lines:
+      - method: "dqn_cp_bc/dqn_cp_bc-b_04-s_<s>-l_000025"
+        label: "Adam lr=0.00025"
+        color: "#FF9800"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_04-s_<s>-l_00005"
+        label: "Adam lr=0.0005"
+        color: "#2196F3"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_04-s_<s>-l_000075"
+        label: "Adam lr=0.00075"
+        color: "#FF0000"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_04-s_<s>-l_0001"
+        label: "Adam lr=0.001"
+        color: "#4CAF50"
+
+  - title: "Eval on CartPole-V1 (BC coeff=0.7)"
+    test_env: V1
+    lines:
+      - method: "dqn_cp_bc/dqn_cp_bc-b_07-s_<s>-l_000025"
+        label: "Adam lr=0.00025"
+        color: "#FF9800"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_07-s_<s>-l_00005"
+        label: "Adam lr=0.0005"
+        color: "#2196F3"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_07-s_<s>-l_000075"
+        label: "Adam lr=0.00075"
+        color: "#FF0000"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_07-s_<s>-l_0001"
+        label: "Adam lr=0.001"
+        color: "#4CAF50"
+
+  - title: "Eval on CartPole-V1 (BC coeff=1)"
+    test_env: V1
+    lines:
+      - method: "dqn_cp_bc/dqn_cp_bc-b_1-s_<s>-l_000025"
+        label: "Adam lr=0.00025"
+        color: "#FF9800"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_1-s_<s>-l_00005"
+        label: "Adam lr=0.0005"
+        color: "#2196F3"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_1-s_<s>-l_000075"
+        label: "Adam lr=0.00075"
+        color: "#FF0000"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_1-s_<s>-l_0001"
+        label: "Adam lr=0.001"
+        color: "#4CAF50"
