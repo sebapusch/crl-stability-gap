@@ -15,12 +15,12 @@ class DQN_BC(DQN_FineTune):
     """
 
     def __init__(
-            self,
-            expert_buffer_size: int,
-            n_tasks: int,
-            expert_buffer_batch_size: int,
-            lambda_: float,
-            **kwargs,
+        self,
+        expert_buffer_size: int,
+        n_tasks: int,
+        expert_buffer_batch_size: int,
+        lambda_: float,
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
@@ -33,10 +33,10 @@ class DQN_BC(DQN_FineTune):
         )
         self.lambda_ = lambda_
         self.expert_buffer_batch_size = expert_buffer_batch_size
-        self._task_ix: int = 0
+        self.task_ix: int = 0
 
     def on_task_change(self, task_ix: int, env: GymEnv, logger: Logger) -> None:
-        self._task_ix = task_ix
+        self.task_ix = task_ix
 
         if task_ix > 0:
             # Populate expert buffer BEFORE clearing the replay buffer
@@ -49,12 +49,10 @@ class DQN_BC(DQN_FineTune):
         super().on_task_change(task_ix, env, logger)
 
     def get_auxiliary_loss(self) -> th.Tensor:
-        if self._task_ix == 0:
+        if self.task_ix == 0:
             return th.zeros([])
 
         expert_samples = self.expert_buffer.sample(self.expert_buffer_batch_size)
         curr_q_values = self.q_net(expert_samples.observations)
 
-        return self.lambda_ * th.mean(
-            (curr_q_values - expert_samples.outputs) ** 2
-        )
+        return self.lambda_ * th.mean((curr_q_values - expert_samples.outputs) ** 2)

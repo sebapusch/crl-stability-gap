@@ -11,6 +11,7 @@ from projection.benchmarks.projected_env_benchmark import ProjectedEnvBenchmark
 from projection.common import make_logger
 from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.continual import ContinualLearning
+from stable_baselines3.dqn.dqn_a_egem import DQN_AEGEM
 from stable_baselines3.dqn.dqn_bc import DQN_BC
 from stable_baselines3.dqn.dqn_fine_tune import DQN_FineTune
 from stable_baselines3.dqn.dqn_joint_icremental import DQN_JointIncremental
@@ -134,6 +135,14 @@ def _build_dqn(
             return DQN_JointIncremental_AGEM(
                 n_tasks=n_tasks,
                 balanced_sampling=False,
+                **common_kwargs,
+            )
+        case "a_egem":
+            return DQN_AEGEM(
+                n_tasks=n_tasks,
+                lambda_=1,
+                expert_buffer_batch_size=expert_buffer_batch_size,
+                expert_buffer_size=expert_buffer_size,
                 **common_kwargs,
             )
         case _:
