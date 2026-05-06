@@ -1,0 +1,39 @@
+defaults:
+  env_name: CartPole
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  timesteps: 200_000
+  envs: [V1, V2, V3]
+  output_dir: dqn_cp_bc
+  output_file: best_lr_b_01
+  dpi: 500 # optional: default is 300
+
+plots:
+  - title: "Eval on CartPole-V1 (BC coeff=0.1)"
+    test_env: V1
+    lines:
+      - method: "dqn_cp_bc/dqn_cp_bc-b_01-s_<s>-l_00001"
+        label: "Adam lr=0.0001"
+        color: "#4CAF50"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_01-s_<s>-l_000025"
+        label: "Adam lr=0.00025"
+        color: "#FF9800"
+
+  - title: "Eval on CartPole-V1 (BC coeff=0.1)"
+    test_env: V2
+    lines:
+      - method: "dqn_cp_bc/dqn_cp_bc-b_01-s_<s>-l_00001"
+        label: "Adam lr=0.0001"
+        color: "#4CAF50"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_01-s_<s>-l_000025"
+        label: "Adam lr=0.00025"
+        color: "#FF9800"
+
+  - title: "Eval on CartPole-V3 (BC coeff=0.1)"
+    test_env: V3
+    lines:
+      - method: "dqn_cp_bc/dqn_cp_bc-b_01-s_<s>-l_00001"
+        label: "Adam lr=0.0001"
+        color: "#4CAF50"
+      - method: "dqn_cp_bc/dqn_cp_bc-b_01-s_<s>-l_000025"
+        label: "Adam lr=0.00025"
+        color: "#FF9800"

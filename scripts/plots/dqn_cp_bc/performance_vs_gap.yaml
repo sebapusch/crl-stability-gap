@@ -11,6 +11,13 @@ plots:
   - title: "Eval on CartPole-V1 (BC coeff=0.4)"
     test_env: V1
     lines:
+      - method: "dqn_cp_bc/dqn_cp_bc-b_04-s_<s>-l_00001"
+        label: "Adam lr=0.0001"
+        color: "#4CAF50"
+
+  - title: "Eval on CartPole-V1 (BC coeff=0.4)"
+    test_env: V1
+    lines:
       - method: "dqn_cp_bc/dqn_cp_bc-b_04-s_<s>-l_000025"
         label: "Adam lr=0.00025"
         color: "#FF9800"
