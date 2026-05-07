@@ -110,6 +110,7 @@ def get_args() -> Namespace:
     parser.add_argument("--network_size", default=None, type=int)
     parser.add_argument("--multihead", default=False, action="store_true")
     parser.add_argument("--multitask", default=False, action="store_true")
+    parser.add_argument("--store_weights", default=False, action="store_true")
 
     # ── DQN-specific (epsilon-greedy) ───────────────────────────────
     parser.add_argument("--epsilon_start", default=1.0, type=float)

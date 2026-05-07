@@ -8,7 +8,7 @@ from torch.optim import SGD, Adam, AdamW, Optimizer, RMSprop
 import wandb
 from projection.benchmarks.inverted_pendulum_hard import InvertedPendulumHard
 from projection.benchmarks.projected_env_benchmark import ProjectedEnvBenchmark
-from projection.common import make_logger
+from projection.common import make_logger, model_weight_path
 from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.continual import ContinualLearning
 from stable_baselines3.dqn.dqn_a_egem import DQN_AEGEM
@@ -279,6 +279,7 @@ def train_continual(
     config: dict,
     eval_all: bool,
     total_timesteps: int,
+    store_weights: bool,
 ) -> None:
     for ix, train_env in enumerate(envs_train):
         version = f"V{benchmark.benchmark[ix]}"
@@ -290,6 +291,8 @@ def train_continual(
             config=config,
             tags=run_tags,
         )
+
+        assert run.name is not None
 
         model.on_task_change(ix, train_env, make_logger(project, run.name))
 
@@ -308,6 +311,9 @@ def train_continual(
             callback=callbacks(ix),
             reset_num_timesteps=True,
         )
+
+        if store_weights:
+            model.save(model_weight_path(project, run.name))
 
         run.finish()
 
@@ -397,6 +403,7 @@ def main(
     optimizer: str = "adam",
     multihead: bool = False,
     multitask: bool = False,
+    store_weights: bool = False,
 ):
     bench = get_benchmark(env, benchmark or ["V1", "V2", "V3"], seed, encode_task)
     envs_train, envs_test = bench.make()
@@ -489,6 +496,7 @@ def main(
             config=config,
             eval_all=eval_all,
             total_timesteps=total_timesteps,
+            store_weights=store_weights,
         )
 
 

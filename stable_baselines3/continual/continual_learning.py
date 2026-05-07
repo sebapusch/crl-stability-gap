@@ -1,3 +1,5 @@
+import io
+import pathlib
 from typing import Protocol
 
 from stable_baselines3.common.callbacks import CallbackList
@@ -34,4 +36,10 @@ class ContinualLearning(Protocol):
         reset_num_timesteps: bool = True,
         progress_bar: bool = False,
     ) -> None:
+        ...
+
+    def save(
+        self,
+        path: str | pathlib.Path | io.BufferedIOBase,
+    ) -> None
         ...
