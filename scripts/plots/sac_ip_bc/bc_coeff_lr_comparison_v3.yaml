@@ -1,73 +1,73 @@
 defaults:
-  env_name: CartPole
+  env_name: InvertedPendulum
   seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
   timesteps: 100_000
   envs: [V1, V2, V3]
-  output_dir: sacd_cp_bc
+  output_dir: sac_ip_bc
   output_file: bc_coeff_lr_comparison_v3
   dpi: 500 # optional: default is 300
 
 plots:
-  - title: "Eval on CartPole-V3 (BC coeff=0.1)"
+  - title: "Eval on InvertedPendulum-V3 (BC coeff=0.1)"
     test_env: V3
     lines:
-      - method: "sacd_cp_bc/sacd_cp_bc-l_000025-b_01-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_000025-b_01-s_<s>"
         label: "Adam lr=0.00025"
         color: "#FF9800"
-      - method: "sacd_cp_bc/sacd_cp_bc-l_00005-b_01-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_00005-b_01-s_<s>"
         label: "Adam lr=0.0005"
         color: "#2196F3"
-      - method: "sacd_cp_bc/sacd_cp_bc-l_000075-b_01-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_000075-b_01-s_<s>"
         label: "Adam lr=0.00075"
         color: "#FF0000"
-      - method: "sacd_cp_bc/sacd_cp_bc-l_0001-b_01-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_0001-b_01-s_<s>"
         label: "Adam lr=0.001"
         color: "#4CAF50"
 
-  - title: "Eval on CartPole-V3 (BC coeff=0.4)"
+  - title: "Eval on InvertedPendulum-V3 (BC coeff=0.4)"
     test_env: V3
     lines:
-      - method: "sacd_cp_bc/sacd_cp_bc-l_000025-b_04-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_000025-b_04-s_<s>"
         label: "Adam lr=0.00025"
         color: "#FF9800"
-      - method: "sacd_cp_bc/sacd_cp_bc-l_00005-b_04-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_00005-b_04-s_<s>"
         label: "Adam lr=0.0005"
         color: "#2196F3"
-      - method: "sacd_cp_bc/sacd_cp_bc-l_000075-b_04-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_000075-b_04-s_<s>"
         label: "Adam lr=0.00075"
         color: "#FF0000"
-      - method: "sacd_cp_bc/sacd_cp_bc-l_0001-b_04-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_0001-b_04-s_<s>"
         label: "Adam lr=0.001"
         color: "#4CAF50"
 
-  - title: "Eval on CartPole-V3 (BC coeff=0.7)"
+  - title: "Eval on InvertedPendulum-V3 (BC coeff=0.7)"
     test_env: V3
     lines:
-      - method: "sacd_cp_bc/sacd_cp_bc-l_000025-b_07-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_000025-b_07-s_<s>"
         label: "Adam lr=0.00025"
         color: "#FF9800"
-      - method: "sacd_cp_bc/sacd_cp_bc-l_00005-b_07-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_00005-b_07-s_<s>"
         label: "Adam lr=0.0005"
         color: "#2196F3"
-      - method: "sacd_cp_bc/sacd_cp_bc-l_000075-b_07-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_000075-b_07-s_<s>"
         label: "Adam lr=0.00075"
         color: "#FF0000"
-      - method: "sacd_cp_bc/sacd_cp_bc-l_0001-b_07-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_0001-b_07-s_<s>"
         label: "Adam lr=0.001"
         color: "#4CAF50"
 
-  - title: "Eval on CartPole-V3 (BC coeff=1)"
+  - title: "Eval on InvertedPendulum-V3 (BC coeff=1)"
     test_env: V3
     lines:
-      - method: "sacd_cp_bc/sacd_cp_bc-l_000025-b_1-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_000025-b_1-s_<s>"
         label: "Adam lr=0.00025"
         color: "#FF9800"
-      - method: "sacd_cp_bc/sacd_cp_bc-l_00005-b_1-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_00005-b_1-s_<s>"
         label: "Adam lr=0.0005"
         color: "#2196F3"
-      - method: "sacd_cp_bc/sacd_cp_bc-l_000075-b_1-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_000075-b_1-s_<s>"
         label: "Adam lr=0.00075"
         color: "#FF0000"
-      - method: "sacd_cp_bc/sacd_cp_bc-l_0001-b_1-s_<s>"
+      - method: "sac_ip_bc/sac_ip_bc-l_0001-b_1-s_<s>"
         label: "Adam lr=0.001"
         color: "#4CAF50"

@@ -1,0 +1,30 @@
+defaults:
+  env_name: InvertedPendulum
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  timesteps: 100_000
+  envs: [V1, V2, V3]
+  output_dir: sac_ip_ft
+  output_file: sac_ip_ft
+  dpi: 500 # optional: default is 300
+
+plots:
+  - title: "Eval on InvertedPendulum-V1"
+    test_env: V1
+    lines:
+      - method: "sac_ip_ft/sac_ip_ft-s_<s>-b_kl"
+        label: "dqn"
+        color: "#FF9800"
+
+  - title: "Eval on InvertedPendulum-V2"
+    test_env: V2
+    lines:
+      - method: "sac_ip_ft/sac_ip_ft-s_<s>-b_kl"
+        label: "dqn"
+        color: "#4CAF50"
+
+  - title: "Eval on InvertedPendulum-V3"
+    test_env: V3
+    lines:
+      - method: "sac_ip_ft/sac_ip_ft-s_<s>-b_kl"
+        label: "dqn"
+        color: "#2196F3"
