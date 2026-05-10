@@ -15,10 +15,10 @@ class ContinualLearning(Protocol):
     """
 
     def on_task_change(
-            self,
-            task_ix: int,
-            env: GymEnv,
-            logger: Logger,
+        self,
+        task_ix: int,
+        env: GymEnv,
+        logger: Logger,
     ) -> None:
         """Called between tasks to update internal CRL state.
 
@@ -35,11 +35,9 @@ class ContinualLearning(Protocol):
         tb_log_name: str = "run",
         reset_num_timesteps: bool = True,
         progress_bar: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def save(
         self,
         path: str | pathlib.Path | io.BufferedIOBase,
-    ) -> None
-        ...
+    ) -> None: ...
