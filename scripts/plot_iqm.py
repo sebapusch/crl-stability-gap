@@ -346,9 +346,13 @@ def load_config(path: str) -> dict:
             output_file: str
             grid: [rows, cols]   # optional explicit grid size
             dpi: int             # optional, default 300
+            t_start: int         # optional, zoom start (global timestep)
+            t_end: int           # optional, zoom end (global timestep)
         plots:
             - title: str
               test_env: str
+              t_start: int       # optional per-plot override
+              t_end: int         # optional per-plot override
               lines:
                 - method: str
                   label: str       # optional
@@ -536,6 +540,12 @@ def plot_grid(config: dict, use_cache: bool):
             ax.plot(ts, iqm, label=label, color=color, linewidth=0.7)
             ax.fill_between(ts, ci_lo, ci_hi, alpha=0.2, color=color)
 
+        # Apply zoom (per-plot overrides defaults)
+        t_start = plot_cfg.get("t_start", defaults.get("t_start"))
+        t_end = plot_cfg.get("t_end", defaults.get("t_end"))
+        if t_start is not None or t_end is not None:
+            ax.set_xlim(left=t_start, right=t_end)
+
         _decorate_ax(ax, envs, timesteps, title=title, test_env=test_env)
 
     # Hide unused subplot cells
@@ -613,6 +623,18 @@ def parse_args():
         type=str,
         help="Subdirectory inside output/plots to save plots (created if not exists)",
     )
+    parser.add_argument(
+        "--t_start",
+        type=int,
+        default=None,
+        help="Start of global timestep range to zoom into (inclusive).",
+    )
+    parser.add_argument(
+        "--t_end",
+        type=int,
+        default=None,
+        help="End of global timestep range to zoom into (inclusive).",
+    )
     return parser.parse_args()
 
 
@@ -647,6 +669,8 @@ def main():
     TIMESTEPS_PER_ENV = args.timesteps
     env_name = args.env_name
     output_subdir = args.output_dir
+    t_start = args.t_start
+    t_end = args.t_end
 
     if output_subdir:
         plot_output_dir = OUTPUT_DIR / output_subdir
@@ -685,6 +709,10 @@ def main():
             color = get_color(method, idx)
             ax.plot(ts, iqm, label=label, color=color, linewidth=0.7)
             ax.fill_between(ts, ci_lo, ci_hi, alpha=0.2, color=color)
+
+        # Apply zoom if specified
+        if t_start is not None or t_end is not None:
+            ax.set_xlim(left=t_start, right=t_end)
 
         # Add vertical lines and env labels (only for regions with data)
         x_lo, x_hi = ax.get_xlim()

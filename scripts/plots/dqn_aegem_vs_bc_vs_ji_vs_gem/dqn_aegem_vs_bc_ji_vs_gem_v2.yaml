@@ -1,0 +1,37 @@
+defaults:
+  env_name: CartPole
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  timesteps: 200_000
+  envs: [V1, V2, V3]
+  output_dir: dqn_aegem_vs_bc_ji_vs_gem
+  output_file: dqn_aegem_vs_bc_ji_vs_gem_v2
+  dpi: 500 # optional: default is 300
+
+plots:
+  - title: "Eval on CartPole-V2 (Behavior Cloning)"
+    test_env: V2
+    lines:
+      - method: "dqn_cp_bc/dqn_cp_bc-b_07-s_<s>-l_00001"
+        label: "Adam lr=0.0001, BC coeff=0.7"
+        color: "#FF9800"
+
+  - title: "Eval on CartPole-V2 (Joint Incremental)"
+    test_env: V2
+    lines:
+      - method: "dqn_cp_ji/dqn_cp_ji-s_<s>-l_00001"
+        label: "Adam lr=0.0001"
+        color: "#2196F3"
+
+  - title: "Eval on CartPole-V2 (BC + A-GEM)"
+    test_env: V2
+    lines:
+      - method: "dqn_cp_aegem/dqn_cp_aegem-b_1-s_<s>-l_00001"
+        label: "Adam lr=0.0001"
+        color: "#4CAF50"
+
+  - title: "Eval on CartPole-V2 (JI + A-GEM)"
+    test_env: V2
+    lines:
+      - method: "dqn_cp_agem/dqn_cp_agem-s_<s>-l_00001"
+        label: "Adam lr=0.0001"
+        color: "#FF0000"

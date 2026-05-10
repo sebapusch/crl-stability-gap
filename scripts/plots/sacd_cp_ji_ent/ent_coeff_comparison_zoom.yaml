@@ -1,0 +1,36 @@
+defaults:
+  env_name: CartPole
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  timesteps: 100_000
+  envs: [V1, V2, V3]
+  output_dir: sacd_cp_ji_ent
+  output_file: ent_coeff_comparison_zoom
+  dpi: 500 # optional: default is 300
+
+plots:
+  - title: "Eval on CartPole-V1"
+    test_env: V1
+    t_start: 95_000
+    t_end: 120_000
+    lines:
+      - method: "sacd_cp_ji_ent/sacd_cp_ji_ent-e_0-s_<s>"
+        label: "Entropy coeff=0"
+        color: "#FF9800"
+
+  - title: "Eval on CartPole-V1"
+    test_env: V1
+    t_start: 95_000
+    t_end: 120_000
+    lines:
+      - method: "sacd_cp_ji_ent/sacd_cp_ji_ent-e_001-s_<s>"
+        label: "Entropy coeff=0.01"
+        color: "#2196F3"
+
+  - title: "Eval on CartPole-V1"
+    test_env: V1
+    t_start: 95_000
+    t_end: 120_000
+    lines:
+      - method: "sacd_cp_ji_ent/sacd_cp_ji_ent-e_1-s_<s>"
+        label: "Entropy coeff=1"
+        color: "#00FF00"
