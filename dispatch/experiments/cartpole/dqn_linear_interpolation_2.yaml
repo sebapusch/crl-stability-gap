@@ -22,7 +22,7 @@ epsilon_end: 0.05
 epsilon_decay_frac: 0.1
 dqn_tau: 1.0
 lr: 0.0001
-model_path: "dqn_linear_interpolation/dqn_linear_interpolation_s-<s>"
+model_path: "dqn_linear_interpolation/dqn_linear_interpolation-s_<s>"
 mode: "linear_interpolation"
 
 time: "04:00:00"
