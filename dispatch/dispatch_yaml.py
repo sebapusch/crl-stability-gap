@@ -86,7 +86,7 @@ def process_yaml(yaml_path, dry):
                     v_str = v[0]
                 else:
                     v_str = " ".join(str(x) for x in v)
-                cmd_lines.append(f'  --{k} "{v_str}"')
+                cmd_lines.append(f"  --{k} {v_str}")
             else:
                 if v == "":
                     cmd_lines.append(f"  --{k}")
