@@ -109,7 +109,7 @@ def get_args() -> Namespace:
     parser.add_argument("--expert_buffer_size", default=1000, type=int)
     parser.add_argument("--network_size", default=None, type=int)
     parser.add_argument("--multihead", default=False, action="store_true")
-    parser.add_argument("--multitask", default=False, action="store_true")
+    parser.add_argument("--mode", default='continual', type=str)
     parser.add_argument("--store_weights", default=False, action="store_true")
 
     # ── DQN-specific (epsilon-greedy) ───────────────────────────────
@@ -131,6 +131,9 @@ def get_args() -> Namespace:
 
     # ── EWC-specific (algorithm) ───────────────────────────────
     parser.add_argument("--ewc_lambda", default=1.0, type=float)
+
+    # ── Linear-interpolation-specific (mode) ───────────────────────────────
+    parser.add_argument('--model_path', default='', type=str)
 
     return parser.parse_args()
 

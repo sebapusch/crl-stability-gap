@@ -1,3 +1,6 @@
+from copy import deepcopy
+from genericpath import exists
+import os
 from args import get_args, parse_eval_freq
 from callbacks import make_callbacks
 from gymnasium import Env
@@ -8,8 +11,11 @@ from torch.optim import SGD, Adam, AdamW, Optimizer, RMSprop
 import wandb
 from projection.benchmarks.inverted_pendulum_hard import InvertedPendulumHard
 from projection.benchmarks.projected_env_benchmark import ProjectedEnvBenchmark
-from projection.common import make_logger, model_weight_path
-from stable_baselines3.common.type_aliases import GymEnv
+from projection.callbacks import EnvEvalCallback
+from projection.common import make_logger, model_weight_path, MODEL_PATH
+from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
+from stable_baselines3.common.save_util import load_from_zip_file
+from stable_baselines3.common.type_aliases import GymEnv, TensorDict
 from stable_baselines3.continual import ContinualLearning
 from stable_baselines3.dqn.dqn_a_egem import DQN_AEGEM
 from stable_baselines3.dqn.dqn_bc import DQN_BC
@@ -120,22 +126,24 @@ def _build_dqn(
                 **common_kwargs,
             )
         case "fine_tune":
-            return DQN_FineTune(**common_kwargs)
+            return DQN_FineTune(**common_kwargs)  # pyright: ignore[reportArgumentType]
         case "joint_incremental":
-            return DQN_JointIncremental(
-                n_tasks=n_tasks, balanced_sampling=balanced_sampling, **common_kwargs
+            return DQN_JointIncremental(  # pyright: ignore[reportAbstractUsage]
+                n_tasks=n_tasks,
+                balanced_sampling=balanced_sampling,
+                **common_kwargs,  # pyright: ignore[reportArgumentType]
             )
         case "joint_incremental_pc_grad":
-            return DQN_JointIncremental_PCGrad(
+            return DQN_JointIncremental_PCGrad(  # pyright: ignore[reportAbstractUsage]
                 n_tasks=n_tasks,
                 balanced_sampling=False,
-                **common_kwargs,
+                **common_kwargs,  # pyright: ignore[reportArgumentType]
             )
         case "joint_incremental_a_gem":
-            return DQN_JointIncremental_AGEM(
+            return DQN_JointIncremental_AGEM(  # pyright: ignore[reportAbstractUsage]
                 n_tasks=n_tasks,
                 balanced_sampling=False,
-                **common_kwargs,
+                **common_kwargs,  # pyright: ignore[reportArgumentType]
             )
         case "a_egem":
             return DQN_AEGEM(
@@ -192,15 +200,15 @@ def _build_sacd(
                 n_tasks=n_tasks,
                 expert_buffer_batch_size=expert_buffer_batch_size,
                 lambda_=behavior_cloning_coefficient,
-                **common_kwargs,
+                **common_kwargs,  # pyright: ignore[reportArgumentType]
             )
         case "fine_tune":
-            return SACD_FineTune(**common_kwargs)
+            return SACD_FineTune(**common_kwargs)  # pyright: ignore[reportArgumentType]
         case "joint_incremental":
-            return SACD_JointIncremental(
+            return SACD_JointIncremental(  # pyright: ignore[reportAbstractUsage]
                 n_tasks=n_tasks,
                 balanced_sampling=balanced_sampling,
-                **common_kwargs,
+                **common_kwargs,  # pyright: ignore[reportArgumentType]
             )
         case _:
             raise ValueError(f'Unknown method "{method}"')
@@ -254,12 +262,12 @@ def _build_sac(
                 **common_kwargs,
             )
         case "fine_tune":
-            return SAC_FineTune(**common_kwargs)
+            return SAC_FineTune(**common_kwargs)  # pyright: ignore[reportArgumentType]
         case "joint_incremental":
-            return SAC_JointIncremental(
+            return SAC_JointIncremental(  # pyright: ignore[reportAbstractUsage]
                 n_tasks=n_tasks,
                 balanced_sampling=balanced_sampling,
-                **common_kwargs,
+                **common_kwargs,  # pyright: ignore[reportArgumentType]
             )
         case _:
             raise ValueError(f'Unknown method "{method}"')
@@ -367,6 +375,81 @@ def train_multitask(
     run.finish()
 
 
+def linear_interpolation(
+    benchmark: ProjectedEnvBenchmark,
+    envs_test: list[GymEnv],
+    model: ContinualLearning,
+    model_path: str,
+    tags: list[str],
+    name_prefix: str,
+    project: str,
+    n_eval_episodes: int,
+    config: dict,
+    alpha: float,
+    seed: str,
+) -> None:
+    assert isinstance(model, OffPolicyAlgorithm)
+
+    eval_envs: list[EnvEvalCallback] = []
+
+    model_path = os.path.join(
+        MODEL_PATH, model_path
+    ).replace('<s>', seed)
+
+    for ix, train_env in enumerate(envs_test[:-1]):
+        model.num_timesteps = 0
+
+
+        version_a = f"V{benchmark.benchmark[ix]}"
+        version_b = f"V{benchmark.benchmark[ix + 1]}"
+
+        run = wandb.init(
+            name=f"{name_prefix}-{version_a}",
+            project=project,
+            config=config,
+            tags=tags,
+        )
+
+        model.set_logger(make_logger(project, run.name))
+
+        path_a, path_b = f'{model_path}-{version_a}.zip', f'{model_path}-{version_b}.zip'
+
+        assert os.path.exists(path_a) and os.path.exists(path_b), f"Invalid path {path_a} or {path_b}"
+
+        _, params_a, _ = load_from_zip_file(path_a)
+        _, params_b, _ = load_from_zip_file(path_b)
+
+        params = deepcopy(params_a)
+
+        eval_envs.append(
+            EnvEvalCallback(
+                str(benchmark.benchmark[ix]),
+                envs_test[ix],
+                eval_freq=1,
+                n_eval_episodes=n_eval_episodes,
+            )
+        )
+        eval_envs[-1].init_callback(model)
+
+#        print(params_a['policy']['q_net.q_net.0.weight'])
+#        exit()
+
+        for t in range(int(1 // alpha)):
+            cur_alpha = t * alpha
+
+            for p in params_a['policy']:
+                params['policy'][p] = cur_alpha * params_a['policy'][p] + (1 - cur_alpha) * params_b['policy'][p]
+
+            model.set_parameters(params)
+
+            for eval_env in eval_envs:
+                eval_env.on_step()
+
+            model.num_timesteps += 1
+
+        run.finish()
+
+
 # ── Main training loop ──────────────────────────────────────────────
 def main(
     benchmark: list[str] | None = None,
@@ -402,8 +485,9 @@ def main(
     ewc_lambda: float = 1.0,
     optimizer: str = "adam",
     multihead: bool = False,
-    multitask: bool = False,
+    mode: str = 'continual',
     store_weights: bool = False,
+    model_path: str = '',
 ):
     bench = get_benchmark(env, benchmark or ["V1", "V2", "V3"], seed, encode_task)
     envs_train, envs_test = bench.make()
@@ -466,38 +550,54 @@ def main(
         case _:
             raise ValueError(f'Unknown algorithm "{algorithm}"')
 
-    if multitask:
-        train_multitask(
-            benchmark=bench,
-            envs_train=envs_train,
-            envs_test=envs_test,
-            model=model,
-            tags=[f"s-{str(seed)}", method, optimizer, f"lr-{str(lr)}"],
-            name_prefix=name_prefix,
-            project=project,
-            eval_freq=eval_freq,
-            video_freq=video_freq,
-            n_eval_episodes=n_eval_episodes,
-            config=config,
-            total_timesteps=total_timesteps,
-        )
-    else:
-        train_continual(
-            benchmark=bench,
-            envs_train=envs_train,
-            envs_test=envs_test,
-            model=model,
-            tags=[f"s-{str(seed)}", method, optimizer, f"lr-{str(lr)}"],
-            name_prefix=name_prefix,
-            project=project,
-            eval_freq=eval_freq,
-            video_freq=video_freq,
-            n_eval_episodes=n_eval_episodes,
-            config=config,
-            eval_all=eval_all,
-            total_timesteps=total_timesteps,
-            store_weights=store_weights,
-        )
+    match mode:
+        case 'continual':
+            train_continual(
+                benchmark=bench,
+                envs_train=envs_train,
+                envs_test=envs_test,
+                model=model,
+                tags=[f"s-{str(seed)}", method, optimizer, f"lr-{str(lr)}"],
+                name_prefix=name_prefix,
+                project=project,
+                eval_freq=eval_freq,
+                video_freq=video_freq,
+                n_eval_episodes=n_eval_episodes,
+                config=config,
+                eval_all=eval_all,
+                total_timesteps=total_timesteps,
+                store_weights=store_weights,
+            )
+        case 'multitask':
+            train_multitask(
+                benchmark=bench,
+                envs_train=envs_train,
+                envs_test=envs_test,
+                model=model,
+                tags=[f"s-{str(seed)}", method, optimizer, f"lr-{str(lr)}"],
+                name_prefix=name_prefix,
+                project=project,
+                eval_freq=eval_freq,
+                video_freq=video_freq,
+                n_eval_episodes=n_eval_episodes,
+                config=config,
+                total_timesteps=total_timesteps,
+            )
+        case 'linear_interpolation':
+            linear_interpolation(
+                benchmark=bench,
+                envs_test=envs_test,
+                model=model,
+                tags=[f"s-{str(seed)}", method, optimizer, f"lr-{str(lr)}"],
+                name_prefix=name_prefix,
+                project=project,
+                n_eval_episodes=n_eval_episodes,
+                config=config,
+                alpha=lr,
+                model_path=model_path,
+                seed=str(seed),
+            )
+        case _: raise ValueError(f'Unknown mode "{mode}"')
 
 
 if __name__ == "__main__":
