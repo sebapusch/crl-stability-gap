@@ -13,6 +13,7 @@ METHODS = [
 BENCHMARK = ["V1", "V2", "V3"]
 ENVS = ["cartpole", "inverted_pendulum", "inverted_pendulum_hard"]
 OPTIMIZERS = ["adam", "sgd", "rmsprop", "sgd_momentum", "adamw"]
+ALGORITHMS = ["dqn", "sacd", "sac", "ddpg"]
 
 
 def get_args() -> Namespace:
@@ -109,7 +110,7 @@ def get_args() -> Namespace:
     parser.add_argument("--expert_buffer_size", default=1000, type=int)
     parser.add_argument("--network_size", default=None, type=int)
     parser.add_argument("--multihead", default=False, action="store_true")
-    parser.add_argument("--mode", default='continual', type=str)
+    parser.add_argument("--mode", default="continual", type=str)
     parser.add_argument("--store_weights", default=False, action="store_true")
 
     # ── DQN-specific (epsilon-greedy) ───────────────────────────────
@@ -124,7 +125,10 @@ def get_args() -> Namespace:
 
     # ── CartPole-specific (algorithm) ───────────────────────────────
     parser.add_argument(
-        "--algorithm", default="dqn", type=str, choices=["dqn", "sacd", "sac"]
+        "--algorithm",
+        default="dqn",
+        type=str,
+        choices=ALGORITHMS,
     )
 
     parser.add_argument("--optimizer", default="adam", type=str, choices=OPTIMIZERS)
@@ -133,7 +137,7 @@ def get_args() -> Namespace:
     parser.add_argument("--ewc_lambda", default=1.0, type=float)
 
     # ── Linear-interpolation-specific (mode) ───────────────────────────────
-    parser.add_argument('--model_path', default='', type=str)
+    parser.add_argument("--model_path", default="", type=str)
 
     return parser.parse_args()
 

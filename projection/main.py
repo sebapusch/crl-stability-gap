@@ -1,6 +1,6 @@
-from copy import deepcopy
-from genericpath import exists
 import os
+from copy import deepcopy
+
 from args import get_args, parse_eval_freq
 from callbacks import make_callbacks
 from gymnasium import Env
@@ -12,11 +12,12 @@ import wandb
 from projection.benchmarks.inverted_pendulum_hard import InvertedPendulumHard
 from projection.benchmarks.projected_env_benchmark import ProjectedEnvBenchmark
 from projection.callbacks import EnvEvalCallback
-from projection.common import make_logger, model_weight_path, MODEL_PATH
+from projection.common import MODEL_PATH, make_logger, model_weight_path
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.save_util import load_from_zip_file
 from stable_baselines3.common.type_aliases import GymEnv, TensorDict
 from stable_baselines3.continual import ContinualLearning
+from stable_baselines3.ddpg.ddpg_joint_incremental import DDPG_JointIncremental
 from stable_baselines3.dqn.dqn_a_egem import DQN_AEGEM
 from stable_baselines3.dqn.dqn_bc import DQN_BC
 from stable_baselines3.dqn.dqn_fine_tune import DQN_FineTune
@@ -273,6 +274,47 @@ def _build_sac(
             raise ValueError(f'Unknown method "{method}"')
 
 
+def _build_ddpg(
+    train_env: Env,
+    *,
+    lr: float,
+    gamma: float,
+    buffer_size: int,
+    batch_size: int,
+    learning_starts: int,
+    seed: int,
+    method: str,
+    behavior_cloning_coefficient: float,
+    expert_buffer_size: int,
+    expert_buffer_batch_size: int,
+    network_size: int,
+    n_tasks: int,
+    balanced_sampling: bool,
+    policy_kwargs: dict,
+    multihead: bool,
+) -> ContinualLearning:
+    policy_kwargs["net_arch"] = [network_size, network_size]
+
+    match method:
+        case "joint_incremental":
+            return DDPG_JointIncremental(  # pyright: ignore[reportAbstractUsage]
+                policy="MlpPolicy",
+                n_tasks=n_tasks,
+                env=train_env,
+                verbose=1,
+                learning_rate=lr,
+                learning_starts=learning_starts,
+                gamma=gamma,
+                buffer_size=buffer_size,
+                batch_size=batch_size,
+                policy_kwargs=policy_kwargs,
+                seed=seed,
+                balanced_sampling=balanced_sampling,
+            )
+        case _:
+            raise ValueError(f"Invalid method {method}")
+
+
 def train_continual(
     benchmark: ProjectedEnvBenchmark,
     envs_train: list[GymEnv],
@@ -392,13 +434,10 @@ def linear_interpolation(
 
     eval_envs: list[EnvEvalCallback] = []
 
-    model_path = os.path.join(
-        MODEL_PATH, model_path
-    ).replace('<s>', seed)
+    model_path = os.path.join(MODEL_PATH, model_path).replace("<s>", seed)
 
     for ix, train_env in enumerate(envs_test[:-1]):
         model.num_timesteps = 0
-
 
         version_a = f"V{benchmark.benchmark[ix]}"
         version_b = f"V{benchmark.benchmark[ix + 1]}"
@@ -412,9 +451,14 @@ def linear_interpolation(
 
         model.set_logger(make_logger(project, run.name))
 
-        path_a, path_b = f'{model_path}-{version_a}.zip', f'{model_path}-{version_b}.zip'
+        path_a, path_b = (
+            f"{model_path}-{version_a}.zip",
+            f"{model_path}-{version_b}.zip",
+        )
 
-        assert os.path.exists(path_a) and os.path.exists(path_b), f"Invalid path {path_a} or {path_b}"
+        assert os.path.exists(path_a) and os.path.exists(path_b), (
+            f"Invalid path {path_a} or {path_b}"
+        )
 
         _, params_a, _ = load_from_zip_file(path_a)
         _, params_b, _ = load_from_zip_file(path_b)
@@ -431,14 +475,14 @@ def linear_interpolation(
         )
         eval_envs[-1].init_callback(model)
 
-#        print(params_a['policy']['q_net.q_net.0.weight'])
-#        exit()
-
         for t in range(int(1 // alpha)):
             cur_alpha = t * alpha
 
-            for p in params_a['policy']:
-                params['policy'][p] = cur_alpha * params_a['policy'][p] + (1 - cur_alpha) * params_b['policy'][p]
+            for p in params_a["policy"]:
+                params["policy"][p] = (
+                    cur_alpha * params_a["policy"][p]
+                    + (1 - cur_alpha) * params_b["policy"][p]
+                )
 
             model.set_parameters(params)
 
@@ -485,9 +529,9 @@ def main(
     ewc_lambda: float = 1.0,
     optimizer: str = "adam",
     multihead: bool = False,
-    mode: str = 'continual',
+    mode: str = "continual",
     store_weights: bool = False,
-    model_path: str = '',
+    model_path: str = "",
 ):
     bench = get_benchmark(env, benchmark or ["V1", "V2", "V3"], seed, encode_task)
     envs_train, envs_test = bench.make()
@@ -535,6 +579,10 @@ def main(
         ent_coef=ent_coef,
     )
 
+    ddpg_build_kwargs = dict(
+        **common_build_kwargs,
+    )
+
     # ── Build model ─────────────────────────────────────
     train_env_init = envs_train[0]
     match algorithm:
@@ -547,11 +595,14 @@ def main(
         case "sacd":
             config = sacd_build_kwargs
             model = _build_sacd(train_env_init, **sacd_build_kwargs)
+        case "ddpg":
+            config = ddpg_build_kwargs
+            model = _build_ddpg(train_env_init, **ddpg_build_kwargs)
         case _:
             raise ValueError(f'Unknown algorithm "{algorithm}"')
 
     match mode:
-        case 'continual':
+        case "continual":
             train_continual(
                 benchmark=bench,
                 envs_train=envs_train,
@@ -568,7 +619,7 @@ def main(
                 total_timesteps=total_timesteps,
                 store_weights=store_weights,
             )
-        case 'multitask':
+        case "multitask":
             train_multitask(
                 benchmark=bench,
                 envs_train=envs_train,
@@ -583,7 +634,7 @@ def main(
                 config=config,
                 total_timesteps=total_timesteps,
             )
-        case 'linear_interpolation':
+        case "linear_interpolation":
             linear_interpolation(
                 benchmark=bench,
                 envs_test=envs_test,
@@ -597,7 +648,8 @@ def main(
                 model_path=model_path,
                 seed=str(seed),
             )
-        case _: raise ValueError(f'Unknown mode "{mode}"')
+        case _:
+            raise ValueError(f'Unknown mode "{mode}"')
 
 
 if __name__ == "__main__":
