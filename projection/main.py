@@ -95,6 +95,7 @@ def _build_dqn(
     balanced_sampling: bool,
     policy_kwargs: dict,
     multihead: bool,
+    exploration_strategy: str = "eps-greedy",
 ) -> ContinualLearning:
     policy_kwargs["net_arch"] = [network_size, network_size]
     if multihead:
@@ -116,6 +117,7 @@ def _build_dqn(
         policy_kwargs=policy_kwargs,
         seed=seed,
         tau=tau,
+        exploration_strategy=exploration_strategy,
     )
 
     match method:
@@ -376,7 +378,7 @@ def train_continual(
         )
 
         if store_weights:
-            model.save(model_w - eight_path(project, run.name))
+            model.save(model_weight_path(project, run.name))
 
         run.finish()
 
@@ -545,6 +547,7 @@ def main(
     mode: str = "continual",
     store_weights: bool = False,
     model_path: str = "",
+    exploration_strategy: str = "eps-greedy",
 ):
     bench = get_benchmark(env, benchmark or ["V1", "V2", "V3"], seed, encode_task)
     envs_train, envs_test = bench.make()
@@ -578,6 +581,7 @@ def main(
         epsilon_end=epsilon_end,
         epsilon_decay_frac=epsilon_decay_frac,
         tau=dqn_tau,
+        exploration_strategy=exploration_strategy,
     )
 
     sac_build_kwargs = dict(

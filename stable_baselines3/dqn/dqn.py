@@ -103,6 +103,7 @@ class DQN(OffPolicyAlgorithm):
         device: th.device | str = "auto",
         _init_setup_model: bool = True,
         n_heads: int = 1,
+        exploration_strategy: str = 'eps-greey',
     ) -> None:
         super().__init__(
             policy,
@@ -131,6 +132,9 @@ class DQN(OffPolicyAlgorithm):
             support_multi_env=True,
         )
 
+        assert exploration_strategy in ['eps-greedy', 'boltzmann']
+
+        self.exploration_strategy = exploration_strategy
         self.exploration_initial_eps = exploration_initial_eps
         self.exploration_final_eps = exploration_final_eps
         self.exploration_fraction = exploration_fraction
@@ -259,15 +263,25 @@ class DQN(OffPolicyAlgorithm):
         :return: the model's action and the next state
             (used in recurrent policies)
         """
-        if not deterministic and np.random.rand() < self.exploration_rate:
-            if self.policy.is_vectorized_observation(observation):
-                if isinstance(observation, dict):
-                    n_batch = observation[next(iter(observation.keys()))].shape[0]
-                else:
-                    n_batch = observation.shape[0]
-                action = np.array([self.action_space.sample() for _ in range(n_batch)])
-            else:
-                action = np.array(self.action_space.sample())
+        if not deterministic:
+            match self.exploration_strategy:
+                case 'eps-greedy':
+                    if np.random.rand() < self.exploration_rate:
+                        if self.policy.is_vectorized_observation(observation):
+                            if isinstance(observation, dict):
+                                n_batch = observation[next(iter(observation.keys()))].shape[0]
+                            else:
+                                n_batch = observation.shape[0]
+                            action = np.array([self.action_space.sample() for _ in range(n_batch)])
+                        else:
+                            action = np.array(self.action_space.sample())
+                case 'boltzmann':
+                    q_values = self.q_net(observation)
+                    q_exp =  th.exp(q_values / self.tau)
+                    probs = q_exp  / sum(q_exp)
+                    action = th.multinomial(probs, num_samples=1)
+                case _:
+                    raise ValueError(f'Uknown strategy "{self.exploration_strategy}"')
         else:
             action, state = self.policy.predict(observation, state, episode_start, deterministic)
         return action, state
