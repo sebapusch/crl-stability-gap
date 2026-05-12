@@ -15,8 +15,9 @@ from projection.callbacks import EnvEvalCallback
 from projection.common import MODEL_PATH, make_logger, model_weight_path
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.save_util import load_from_zip_file
-from stable_baselines3.common.type_aliases import GymEnv, TensorDict
+from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.continual import ContinualLearning
+from stable_baselines3.ddpg.ddpg_bc import DDPG_BC
 from stable_baselines3.ddpg.ddpg_joint_incremental import DDPG_JointIncremental
 from stable_baselines3.dqn.dqn_a_egem import DQN_AEGEM
 from stable_baselines3.dqn.dqn_bc import DQN_BC
@@ -295,21 +296,33 @@ def _build_ddpg(
 ) -> ContinualLearning:
     policy_kwargs["net_arch"] = [network_size, network_size]
 
+    common_kwargs = dict(
+        policy="MlpPolicy",
+        env=train_env,
+        verbose=1,
+        learning_rate=lr,
+        learning_starts=learning_starts,
+        gamma=gamma,
+        buffer_size=buffer_size,
+        batch_size=batch_size,
+        policy_kwargs=policy_kwargs,
+        seed=seed,
+    )
+
     match method:
         case "joint_incremental":
             return DDPG_JointIncremental(  # pyright: ignore[reportAbstractUsage]
-                policy="MlpPolicy",
-                n_tasks=n_tasks,
-                env=train_env,
-                verbose=1,
-                learning_rate=lr,
-                learning_starts=learning_starts,
-                gamma=gamma,
-                buffer_size=buffer_size,
-                batch_size=batch_size,
-                policy_kwargs=policy_kwargs,
-                seed=seed,
                 balanced_sampling=balanced_sampling,
+                n_tasks=n_tasks,
+                **common_kwargs,  # pyright: ignore[reportArgumentType]
+            )
+        case "behavior_cloning":
+            return DDPG_BC(
+                expert_buffer_size=expert_buffer_size,
+                expert_buffer_batch_size=expert_buffer_batch_size,
+                lambda_=behavior_cloning_coefficient,
+                n_tasks=n_tasks,
+                **common_kwargs,
             )
         case _:
             raise ValueError(f"Invalid method {method}")
@@ -363,7 +376,7 @@ def train_continual(
         )
 
         if store_weights:
-            model.save(model_weight_path(project, run.name))
+            model.save(model_w - eight_path(project, run.name))
 
         run.finish()
 

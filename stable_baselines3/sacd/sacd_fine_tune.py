@@ -1,5 +1,3 @@
-import torch as th
-
 from stable_baselines3.common.logger import Logger
 from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.continual import ContinualLearning
@@ -20,7 +18,7 @@ class SACD_FineTune(SACD, ContinualLearning):
 
         if task_ix == 0:
             return
-            
+
         # Reset optimizer momentum / adaptive state
         self.actor.optimizer.state.clear()
         self.critic.optimizer.state.clear()
