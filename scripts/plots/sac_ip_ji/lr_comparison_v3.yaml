@@ -3,7 +3,7 @@ defaults:
   seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
   timesteps: 100_000
   envs: [V1, V2, V3]
-  output_dir: sacd_cp_ji
+  output_dir: sac_ip_ji
   output_file: lr_comparison_v3
   dpi: 500 # optional: default is 300
 
@@ -11,27 +11,27 @@ plots:
   - title: "Eval on CartPole-V3"
     test_env: V3
     lines:
-      - method: "sacd_cp_ji/sacd_cp_ji-s_<s>-l_000025"
+      - method: "sac_ip_ji/sac_ip_ji-s_<s>-l_000025"
         label: "Adam lr=0.00025"
         color: "#FF9800"
 
   - title: "Eval on CartPole-V3"
     test_env: V3
     lines:
-      - method: "sacd_cp_ji/sacd_cp_ji-s_<s>-l_00005"
+      - method: "sac_ip_ji/sac_ip_ji-s_<s>-l_00005"
         label: "Adam lr=0.0005"
         color: "#2196F3"
 
   - title: "Eval on CartPole-V3"
     test_env: V3
     lines:
-      - method: "sacd_cp_ji/sacd_cp_ji-s_<s>-l_000075"
+      - method: "sac_ip_ji/sac_ip_ji-s_<s>-l_000075"
         label: "Adam lr=0.00075"
         color: "#FF0000"
 
   - title: "Eval on CartPole-V3"
     test_env: V3
     lines:
-      - method: "sacd_cp_ji/sacd_cp_ji-s_<s>-l_0001"
+      - method: "sac_ip_ji/sac_ip_ji-s_<s>-l_0001"
         label: "Adam lr=0.001"
         color: "#4CAF50"
