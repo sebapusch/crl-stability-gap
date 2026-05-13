@@ -276,10 +276,11 @@ class DQN(OffPolicyAlgorithm):
                         else:
                             action = np.array(self.action_space.sample())
                 case 'boltzmann':
-                    q_values = self.q_net(observation)
+                    obs_tensor, _ = self.policy.obs_to_tensor(observation)
+                    q_values = self.q_net(obs_tensor)
                     q_exp =  th.exp(q_values / self.tau)
                     probs = q_exp  / sum(q_exp)
-                    action = th.multinomial(probs, num_samples=1)
+                    action = th.multinomial(probs, num_samples=1).cpu().numpy().squeeze(1)
                 case _:
                     raise ValueError(f'Uknown strategy "{self.exploration_strategy}"')
         else:
