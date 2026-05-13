@@ -162,6 +162,7 @@ class TD3(OffPolicyAlgorithm):
         self._update_learning_rate([self.actor.optimizer, self.critic.optimizer])
 
         actor_losses, critic_losses = [], []
+
         for _ in range(gradient_steps):
             self._n_updates += 1
             # Sample replay buffer
@@ -185,6 +186,8 @@ class TD3(OffPolicyAlgorithm):
 
             # Compute critic loss
             critic_loss = sum(F.mse_loss(current_q, target_q_values) for current_q in current_q_values)
+            critic_loss += self.get_critic_auxiliary_loss()
+
             assert isinstance(critic_loss, th.Tensor)
             critic_losses.append(critic_loss.item())
 
@@ -197,6 +200,8 @@ class TD3(OffPolicyAlgorithm):
             if self._n_updates % self.policy_delay == 0:
                 # Compute actor loss
                 actor_loss = -self.critic.q1_forward(replay_data.observations, self.actor(replay_data.observations)).mean()
+                actor_loss += self.get_actor_auxiliary_loss()
+
                 actor_losses.append(actor_loss.item())
 
                 # Optimize the actor
@@ -239,3 +244,9 @@ class TD3(OffPolicyAlgorithm):
     def _get_torch_save_params(self) -> tuple[list[str], list[str]]:
         state_dicts = ["policy", "actor.optimizer", "critic.optimizer"]
         return state_dicts, []
+
+    def get_actor_auxiliary_loss(self) -> th.Tensor:
+        return th.zeros([])
+
+    def get_critic_auxiliary_loss(self) -> th.Tensor:
+        return th.zeros([])

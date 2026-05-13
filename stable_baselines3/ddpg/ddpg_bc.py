@@ -2,6 +2,7 @@ from stable_baselines3.common.buffers import ExpertBuffer
 from stable_baselines3.common.logger import Logger
 from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.ddpg.ddpg_fine_tune import DDPG_FineTune
+import torch as th
 
 
 class DDPG_BC(DDPG_FineTune):
@@ -38,3 +39,12 @@ class DDPG_BC(DDPG_FineTune):
             )
 
         super().on_task_change(task_ix, env, logger)
+
+    def get_actor_auxiliary_loss(self) -> th.Tensor:
+        if self._task_ix == 0:
+            return th.zeros([])
+
+        expert_samples = self.expert_buffer.sample(self.expert_buffer_batch_size)
+        out = self.actor(expert_samples.observations)
+
+        return self.lambda_ * th.mean((out - expert_samples.outputs) ** 2)
