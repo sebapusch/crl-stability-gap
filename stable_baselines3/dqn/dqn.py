@@ -278,11 +278,10 @@ class DQN(OffPolicyAlgorithm):
                 case 'boltzmann':
                     obs_tensor, _ = self.policy.obs_to_tensor(observation)
                     q_values = self.q_net(obs_tensor)
-                    q_exp =  th.exp(q_values / self.tau)
-                    probs = q_exp  / sum(q_exp)
+                    probs = F.softmax(q_values / self.tau, dim=-1)
                     action = th.multinomial(probs, num_samples=1).cpu().numpy().squeeze(1)
                 case _:
-                    raise ValueError(f'Uknown strategy "{self.exploration_strategy}"')
+                    raise ValueError(f'Unknown strategy "{self.exploration_strategy}"')
         else:
             action, state = self.policy.predict(observation, state, episode_start, deterministic)
         return action, state
