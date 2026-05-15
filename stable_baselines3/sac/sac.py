@@ -337,7 +337,8 @@ class SAC(OffPolicyAlgorithm):
         )
 
     def reset_optim(self) -> None:
-        self.ent_coef_optimizer.state.clear()
+        if self.ent_coef_optimizer:
+            self.ent_coef_optimizer.state.clear()
         self.actor.optimizer.state.clear()
         self.critic.optimizer.state.clear()
 
