@@ -961,6 +961,7 @@ class MultiReplayBuffer:
     def __init__(
             self,
             n_envs: int,
+            vec_n_envs: int,
             buffer_size: int,
             observation_space: spaces.Space,
             action_space: spaces.Space,
@@ -972,7 +973,7 @@ class MultiReplayBuffer:
         self.active_index = 0
         self.device = get_device(device)
         self.buffers = [
-            ReplayBuffer(buffer_size, observation_space, action_space, device)
+            ReplayBuffer(buffer_size, observation_space, action_space, device, n_envs=vec_n_envs)
             for _ in range(n_envs)
         ]
 

@@ -275,6 +275,8 @@ class DQN(OffPolicyAlgorithm):
                             action = np.array([self.action_space.sample() for _ in range(n_batch)])
                         else:
                             action = np.array(self.action_space.sample())
+                    else:
+                        action, state = self.policy.predict(observation, state, episode_start, deterministic)
                 case 'boltzmann':
                     obs_tensor, _ = self.policy.obs_to_tensor(observation)
                     q_values = self.q_net(obs_tensor)
@@ -284,6 +286,7 @@ class DQN(OffPolicyAlgorithm):
                     raise ValueError(f'Unknown strategy "{self.exploration_strategy}"')
         else:
             action, state = self.policy.predict(observation, state, episode_start, deterministic)
+
         return action, state
 
     def learn(

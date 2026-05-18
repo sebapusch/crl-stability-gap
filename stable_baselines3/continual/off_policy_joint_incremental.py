@@ -17,6 +17,7 @@ class OffPolicyJointIncremental(ContinualLearning):
             observation_space=env.observation_space,
             action_space=env.action_space,
             balanced_sampling=balanced_sampling,
+            vec_n_envs=self.n_envs
         )
         self.envs: list[GymEnv] = []
         self.task_ix: int = 0

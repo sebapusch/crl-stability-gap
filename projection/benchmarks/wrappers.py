@@ -29,7 +29,7 @@ class ObsSpaceInf(gym.ObservationWrapper):
     def __init__(self, env):
         super().__init__(env)
         self.observation_space = gym.spaces.Box(
-            low=-np.inf, high=np.inf, shape=env.observation_space.shape, dtype=np.float32
+            low=-np.inf, high=np.inf, shape=env.observation_space.shape, dtype=np.float64
         )
 
     def observation(self, obs: NDArray) -> NDArray:
@@ -40,15 +40,15 @@ class ObsLinearTransform(gym.ObservationWrapper):
     def __init__(self, env: Env, projection: np.ndarray, bias: np.ndarray | None = None):
         super().__init__(env)
 
-        assert projection.shape == (env.observation_space.shape[0],
-                                    env.observation_space.shape[0])
+        assert projection.shape == (env.observation_space.shape[-1],
+                                    env.observation_space.shape[-1])
 
-        self.projection = np.asarray(projection, dtype=np.float32)
-        self.bias = np.zeros(env.observation_space.shape[0], dtype=np.float32) \
+        self.projection = np.asarray(projection, dtype=np.float64)
+        self.bias = np.zeros(env.observation_space.shape[-1], dtype=np.float64) \
             if bias is None \
-            else np.asarray(bias, dtype=np.float32)
+            else np.asarray(bias, dtype=np.float64)
 
     def observation(self, obs: NDArray) -> NDArray:
-        obs = np.asarray(obs, dtype=np.float32)
+        obs = np.asarray(obs, dtype=np.float64)
         return self.projection @ obs + self.bias
 

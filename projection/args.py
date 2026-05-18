@@ -11,7 +11,7 @@ METHODS = [
     "a_egem",
 ]
 BENCHMARK = ["V1", "V2", "V3"]
-ENVS = ["cartpole", "inverted_pendulum", "inverted_pendulum_hard"]
+ENVS = ["cartpole", "inverted_pendulum", "inverted_pendulum_hard", "highway_env"]
 OPTIMIZERS = ["adam", "sgd", "rmsprop", "sgd_momentum", "adamw"]
 ALGORITHMS = ["dqn", "sacd", "sac", "ddpg"]
 
@@ -112,6 +112,7 @@ def get_args() -> Namespace:
     parser.add_argument("--multihead", default=False, action="store_true")
     parser.add_argument("--mode", default="continual", type=str)
     parser.add_argument("--store_weights", default=False, action="store_true")
+    parser.add_argument('--n_parallel_envs', default=1, type=int)
 
     # ── DQN-specific (epsilon-greedy) ───────────────────────────────
     parser.add_argument("--epsilon_start", default=1.0, type=float)

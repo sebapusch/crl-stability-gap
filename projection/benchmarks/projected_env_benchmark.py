@@ -7,6 +7,7 @@ from projection.benchmarks.wrappers import (
     ObsSpaceInf,
     OneHotWrapper,
 )
+from stable_baselines3.common.vec_env import VecEnv, SubprocVecEnv
 
 PERMUTATION_SEEDS = range(90, 200)
 
@@ -19,8 +20,8 @@ def _random_orthogonal(
     q, _ = np.linalg.qr(m)
     if np.linalg.det(q) < 0:
         q[:, 0] *= -1
-    q = q.astype(np.float32)
-    b = None if not bias else rng.random(size=size).astype(np.float32)
+    q = q.astype(np.float64)
+    b = None if not bias else rng.random(size=size).astype(np.float64)
 
     return q, b
 
@@ -83,6 +84,24 @@ class ProjectedEnvBenchmark:
         return (
             self.make_train(**env_kwargs),
             self.make_test(**env_kwargs),
+        )
+
+    def make_single_vec(self, n_env: int, version: int, test: bool = False, **env_kwargs) -> SubprocVecEnv:
+        def mk_vec() -> Env:
+            return self.make_single(version, test, **env_kwargs)
+
+        return SubprocVecEnv([mk_vec for _ in range(n_env)])
+
+    def make_train_vec(self, n_envs: int, **env_kwargs) -> list[SubprocVecEnv]:
+        return [self.make_single_vec(n_envs, ix, False, **env_kwargs) for ix in self.benchmark]
+
+    def make_test_vec(self, n_envs: int, **env_kwargs) -> list[SubprocVecEnv]:
+        return [self.make_single_vec(n_envs, ix, True, **env_kwargs) for ix in self.benchmark]
+
+    def make_vec(self, n_envs: int, **env_kwargs) -> tuple[list[SubprocVecEnv], list[SubprocVecEnv]]:
+        return (
+            self.make_train_vec(n_envs, **env_kwargs),
+            self.make_test_vec(n_envs, **env_kwargs),
         )
 
     def __len__(self) -> int:

@@ -1,9 +1,12 @@
 import os
 from copy import deepcopy
+from typing import Callable, ParamSpec
+
+from gymnasium.wrappers import FlattenObservation
+from highway_env.envs import HighwayEnvFast
 
 from args import get_args, parse_eval_freq
 from callbacks import make_callbacks
-from gymnasium import Env
 from gymnasium.envs.classic_control import CartPoleEnv
 from gymnasium.envs.mujoco.inverted_pendulum_v5 import InvertedPendulumEnv
 from torch.optim import SGD, Adam, AdamW, Optimizer, RMSprop
@@ -34,11 +37,19 @@ from stable_baselines3.sacd.sacd_bc import SACD_BC
 from stable_baselines3.sacd.sacd_fine_tune import SACD_FineTune
 from stable_baselines3.sacd.sacd_joint_incremental import SACD_JointIncremental
 
+def make_highway(_ = None) -> GymEnv:
+    env = HighwayEnvFast(render_mode=None)
+    env = FlattenObservation(env)
+
+    return env
+
+
 # ── Environment registry ────────────────────────────────────────────
-ENV_REGISTRY: dict[str, tuple[type[Env], int]] = {
+ENV_REGISTRY: dict[str, tuple[Callable[[ParamSpec.kwargs], GymEnv], int]] = {
     "cartpole": (CartPoleEnv, 500),
     "inverted_pendulum": (InvertedPendulumEnv, 1000),
     "inverted_pendulum_hard": (InvertedPendulumHard, 1000),
+    "highway_env": (make_highway, 1000)
 }
 
 # ── Optimizer registry ───────────────────────────────────────────────
@@ -73,7 +84,7 @@ def get_benchmark(
 
 
 def _build_dqn(
-    train_env: Env,
+    train_env: GymEnv,
     *,
     lr: float,
     gamma: float,
@@ -162,7 +173,7 @@ def _build_dqn(
 
 
 def _build_sacd(
-    train_env: Env,
+    train_env: GymEnv,
     *,
     lr: float,
     gamma: float,
@@ -219,7 +230,7 @@ def _build_sacd(
 
 
 def _build_sac(
-    train_env: Env,
+    train_env: GymEnv,
     *,
     lr: float,
     gamma: float,
@@ -278,7 +289,7 @@ def _build_sac(
 
 
 def _build_ddpg(
-    train_env: Env,
+    train_env: GymEnv,
     *,
     lr: float,
     gamma: float,
@@ -548,9 +559,13 @@ def main(
     store_weights: bool = False,
     model_path: str = "",
     exploration_strategy: str = "eps-greedy",
+    n_parallel_envs: int = 1,
 ):
     bench = get_benchmark(env, benchmark or ["V1", "V2", "V3"], seed, encode_task)
-    envs_train, envs_test = bench.make()
+    if n_parallel_envs == 1:
+        envs_train, envs_test = bench.make()
+    else:
+        envs_train, envs_test = bench.make_vec(n_parallel_envs)
 
     # ── Common builder kwargs ────────────────────────────────────────
     common_build_kwargs = dict(
