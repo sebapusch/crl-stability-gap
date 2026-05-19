@@ -4,7 +4,7 @@
 #SBATCH --mem=32G
 #SBATCH --output=logs/train_%A_%a.out
 #SBATCH --error=logs/train_%A_%a.err
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=16
 
 cd /scratch/$USER/crl-stability-gap
 source .venv/bin/activate
