@@ -14,6 +14,7 @@ from wandb.integration.sb3 import WandbCallback
 from args import get_args
 from continual_world.callbacks import EnvEvalCallback
 from continual_world.wrappers import SuccessToIsSuccess
+from projection.common import make_logger
 from single_task.wrappers import SetArmPositionToObjectiveWrapper
 from stable_baselines3 import SAC
 from stable_baselines3.common.buffers import MultiReplayBuffer
@@ -191,6 +192,8 @@ def main(
         net_arch=net_arch,
         seed=seed,
     )
+
+    model.set_logger(make_logger(project, name_prefix))
 
     print('phase 1...')
     train_phase_1(
