@@ -64,7 +64,7 @@ class EnvEvalCallback(EventCallback):
             eval_env: GymEnv,
             callback_on_new_best: BaseCallback | None = None,
             n_eval_episodes: int = 5,
-            eval_freq: int = 10000,
+            eval_freq: int | list[tuple[int, int]] = 10000,
             deterministic: bool = True,
             verbose: int = 1,
     ):
@@ -80,6 +80,7 @@ class EnvEvalCallback(EventCallback):
         self.evaluations_successes: list[list[bool]] = []
         self.best_mean_reward = 0.0
         self.verbose = verbose
+        self.cur_eval_freq_ix = 0
 
     def _log_success_callback(self, locals_: dict[str, Any], _: dict[str, Any]) -> None:
         """
@@ -100,7 +101,7 @@ class EnvEvalCallback(EventCallback):
     def _on_step(self) -> bool:
         continue_training = True
 
-        if self.eval_freq < 1 or self.n_calls % self.eval_freq != 0:
+        if not self._is_eval_step():
             return continue_training
 
         if self.model.get_vec_normalize_env() is not None:
@@ -160,6 +161,19 @@ class EnvEvalCallback(EventCallback):
             continue_training = continue_training and self._on_event()
 
         return continue_training
+
+    def _is_eval_step(self) -> bool:
+        if isinstance(self.eval_freq, int):
+            freq = self.eval_freq
+        else:
+            max_step, freq = self.eval_freq[self.cur_eval_freq_ix]
+
+            if max_step == self.n_calls and self.cur_eval_freq_ix < len(self.eval_freq) - 1:
+                self.cur_eval_freq_ix += 1
+
+
+        return freq > 0 and self.n_calls % freq == 0
+
 
 
 class RegisterVideoCallback(EventCallback):
