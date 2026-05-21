@@ -18,7 +18,7 @@ def get_args() -> Namespace:
     parser = argparse.ArgumentParser()
 
     # ── Experiment identification ────────────────────────────────────
-    parser.add_argument("--name", type=str)
+    parser.add_argument("--name_prefix", type=str)
     parser.add_argument("--project", type=str)
     parser.add_argument("--seed", type=int)
 

@@ -151,7 +151,7 @@ def swap_to_multi_buffer(model: SAC, buffer_size: int) -> None:
 
 
 def main(
-    name: str,
+    name_prefix: str,
     project: str,
     seed: int,
     env_name: str,
@@ -175,7 +175,7 @@ def main(
 
     print(f"TRAINING ON DEVICE: {DEVICE}")
 
-    run = wandb.init(name=name, project=project, monitor_gym=True)
+    run = wandb.init(name=name_prefix, project=project, monitor_gym=True)
 
     env_train_1, env_test_1 = make_env(env_name, seed, max_episode_steps, 'rgb_array', True)
     env_train_2, env_test_2 = make_env(env_name, seed + 100, max_episode_steps, 'rgb_array', False)
