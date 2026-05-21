@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Literal, Any
+from typing import Literal
 
 import gymnasium as gym
 import metaworld
+import torch
 import wandb
 from gymnasium.wrappers import TimeLimit
 from metaworld import RandomTaskSelectWrapper
@@ -19,6 +20,8 @@ from stable_baselines3.common.buffers import MultiReplayBuffer
 from stable_baselines3.common.callbacks import CallbackList
 
 Render = Literal['rgb_array', 'human'] | None
+
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 # ── Environment ─────────────────────────────────────────────────────
@@ -73,6 +76,7 @@ def build_sac(
     seed: int,
 ) -> SAC:
     return SAC(
+        device=DEVICE,
         policy='MlpPolicy',
         env=env,
         learning_rate=lr,
@@ -116,8 +120,10 @@ def train_phase_2(
     eval_freq: int,
     n_eval_episodes: int,
     gradient_save_freq: int,
+    learning_starts: int,
 ) -> None:
     """Phase 2: train normally, evaluate on both phases."""
+    model.learning_starts = model.num_timesteps + learning_starts
     model.learn(
         total_timesteps=total_timesteps,
         reset_num_timesteps=False,
@@ -145,7 +151,7 @@ def swap_to_multi_buffer(model: SAC, buffer_size: int) -> None:
 
 
 def main(
-    run_name: str,
+    name: str,
     project: str,
     seed: int,
     env_name: str,
@@ -167,7 +173,7 @@ def main(
     #          - sample uniformly from phase 1 and phase 2 buffer
     #          - evaluate on starting state phase 1
 
-    run = wandb.init(name=run_name, project=project, monitor_gym=True)
+    run = wandb.init(name=name, project=project, monitor_gym=True)
 
     env_train_1, env_test_1 = make_env(env_name, seed, max_episode_steps, 'rgb_array', True)
     env_train_2, env_test_2 = make_env(env_name, seed + 100, max_episode_steps, 'rgb_array', False)
@@ -183,6 +189,7 @@ def main(
         seed=seed,
     )
 
+    print('phase 1...')
     train_phase_1(
         model, env_train_1,
         total_timesteps=total_timesteps // 2,
@@ -190,16 +197,20 @@ def main(
         n_eval_episodes=n_eval_episodes,
         gradient_save_freq=gradient_save_freq,
     )
+    print('phase 1 completed')
 
     swap_to_multi_buffer(model, buffer_size)
 
+    print('phase 2...')
     train_phase_2(
         model, env_train_1, env_train_2,
         total_timesteps=total_timesteps,
         eval_freq=eval_freq,
         n_eval_episodes=n_eval_episodes,
         gradient_save_freq=gradient_save_freq,
+        learning_starts=learning_starts,
     )
+    print('phase 2 completed')
 
     env_test_1.close()
     env_test_2.close()

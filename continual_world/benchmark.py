@@ -5,7 +5,7 @@ from metaworld.wrappers import RandomTaskSelectWrapper, OneHotWrapper
 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 from stable_baselines3.common.type_aliases import GymEnv
 
-from wrappers import SuccessToIsSuccess
+from continual_world.wrappers import SuccessToIsSuccess
 
 
 def make_mt1(

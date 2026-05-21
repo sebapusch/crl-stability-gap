@@ -12,7 +12,7 @@ from stable_baselines3.common.callbacks import (EventCallback,
                                                 evaluate_policy)
 from stable_baselines3.common.type_aliases import GymEnv
 
-from benchmark import make_mt1
+from continual_world.benchmark import make_mt1
 
 
 def make_callbacks(
