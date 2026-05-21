@@ -173,9 +173,10 @@ def main(
     #          - sample uniformly from phase 1 and phase 2 buffer
     #          - evaluate on starting state phase 1
 
-    print(f"TRAINING ON DEVICE: {DEVICE}")
 
     run = wandb.init(name=name_prefix, project=project, monitor_gym=True)
+
+    print(f"TRAINING ON DEVICE: {DEVICE}")
 
     env_train_1, env_test_1 = make_env(env_name, seed, max_episode_steps, 'rgb_array', True)
     env_train_2, env_test_2 = make_env(env_name, seed + 100, max_episode_steps, 'rgb_array', False)
