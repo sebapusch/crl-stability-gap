@@ -138,7 +138,7 @@ def train_phase_2(
         callback=CallbackList([
             WandbCallback(gradient_save_freq=gradient_save_freq, verbose=2),
             EnvEvalCallback('1', env_eval_1, eval_freq=eval_freq, n_eval_episodes=n_eval_episodes),
-            EnvEvalCallback('2', env_eval_2, eval_freq=[(10_000, 100), (0, 10_000)], n_eval_episodes=n_eval_episodes),
+            EnvEvalCallback('2', env_eval_2, eval_freq=[(500_000, 10_000), (550_000, 1000), (0, 10_000)], n_eval_episodes=n_eval_episodes),
         ]),
     )
 
