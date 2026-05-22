@@ -15,6 +15,7 @@ Supports two modes:
 import argparse
 import hashlib
 import math
+from scipy.ndimage import uniform_filter1d
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -438,6 +439,13 @@ def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None):
     ax.grid(alpha=0.3)
 
 
+def _smooth(arr: np.ndarray, window: int | None) -> np.ndarray:
+    """Apply a uniform moving-average filter if *window* is set."""
+    if window is None or window <= 1:
+        return arr
+    return uniform_filter1d(arr.astype(float), size=window)
+
+
 def plot_grid(config: dict, use_cache: bool):
     """
     Main driver for YAML-config grid plotting.
@@ -537,6 +545,12 @@ def plot_grid(config: dict, use_cache: bool):
                 print(f"  No data for {method}/{test_env}")
                 continue
 
+            # Per-plot smooth overrides defaults
+            smooth = plot_cfg.get("smooth", defaults.get("smooth"))
+            iqm = _smooth(iqm, smooth)
+            ci_lo = _smooth(ci_lo, smooth)
+            ci_hi = _smooth(ci_hi, smooth)
+
             ax.plot(ts, iqm, label=label, color=color, linewidth=0.7)
             ax.fill_between(ts, ci_lo, ci_hi, alpha=0.2, color=color)
 
@@ -556,7 +570,7 @@ def plot_grid(config: dict, use_cache: bool):
 
     plt.tight_layout()
 
-    out_path = plot_output_dir / f"{output_file}.png"
+    out_path = plot_output_dir / f"{output_file}.svg"
     fig.savefig(out_path, dpi=dpi)
     plt.close(fig)
     print(f"Saved {out_path}")
@@ -635,6 +649,12 @@ def parse_args():
         default=None,
         help="End of global timestep range to zoom into (inclusive).",
     )
+    parser.add_argument(
+        "--smooth",
+        type=int,
+        default=None,
+        help="Window size for uniform moving-average smoothing (default: none).",
+    )
     return parser.parse_args()
 
 
@@ -655,6 +675,8 @@ def main():
             defaults["env_name"] = args.env_name
         if args.output_dir and "output_dir" not in defaults:
             defaults["output_dir"] = args.output_dir
+        if args.smooth is not None and "smooth" not in defaults:
+            defaults["smooth"] = args.smooth
 
         plot_grid(cfg, use_cache)
         print("Done!")
@@ -671,6 +693,7 @@ def main():
     output_subdir = args.output_dir
     t_start = args.t_start
     t_end = args.t_end
+    smooth = args.smooth
 
     if output_subdir:
         plot_output_dir = OUTPUT_DIR / output_subdir
@@ -707,6 +730,9 @@ def main():
 
             label = get_label(prefix)
             color = get_color(method, idx)
+            iqm = _smooth(iqm, smooth)
+            ci_lo = _smooth(ci_lo, smooth)
+            ci_hi = _smooth(ci_hi, smooth)
             ax.plot(ts, iqm, label=label, color=color, linewidth=0.7)
             ax.fill_between(ts, ci_lo, ci_hi, alpha=0.2, color=color)
 
