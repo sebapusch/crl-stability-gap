@@ -145,12 +145,12 @@ def train_phase_2(
 
 def swap_to_multi_buffer(model: SAC, buffer_size: int) -> None:
     """Store phase-1 buffer and replace with a MultiReplayBuffer for phase 2."""
-    buffer_phase_1 = deepcopy(model.replay_buffer)
     buffer_phase_2 = MultiReplayBuffer(
         2, 1, buffer_size,
-        buffer_phase_1.observation_space,
-        buffer_phase_1.action_space,
+        model.replay_buffer.observation_space,
+        model.replay_buffer.action_space,
     )
+    buffer_phase_2.buffers[0] = deepcopy(model.replay_buffer)
     buffer_phase_2.increase_index()
     model.replay_buffer = buffer_phase_2
 
