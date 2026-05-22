@@ -4,8 +4,10 @@ env: "pick-place-v3"
 n_eval_episodes: 15
 gamma: 0.99
 buffer_size: 1_000_000
-learning_starts: 1000
+learning_starts: 10_000
 total_timesteps: 1_000_000
+batch_size: 128
+lr: 1e-3
 
 time: "30:00:00"
 setting: "cpu"

@@ -74,6 +74,7 @@ def build_sac(
     gamma: float,
     learning_starts: int,
     net_arch: list[int],
+    tau: float = 0.005,
     seed: int,
 ) -> SAC:
     return SAC(
@@ -86,8 +87,12 @@ def build_sac(
         gamma=gamma,
         learning_starts=learning_starts,
         seed=seed,
+        tau=tau,
+        train_freq=(1, 'episode'),
+        gradient_steps=-1,
         policy_kwargs={
             'net_arch': net_arch,
+            'layer_norm': True,
         },
     )
 
@@ -115,6 +120,7 @@ def train_phase_1(
 
 def train_phase_2(
     model: SAC,
+    env_train_2: gym.Env,
     env_eval_1: gym.Env,
     env_eval_2: gym.Env,
     total_timesteps: int,
@@ -125,6 +131,7 @@ def train_phase_2(
 ) -> None:
     """Phase 2: train normally, evaluate on both phases."""
     model.learning_starts = model.num_timesteps + learning_starts
+    model.set_env(env_train_2)
     model.learn(
         total_timesteps=total_timesteps,
         reset_num_timesteps=False,
@@ -197,7 +204,7 @@ def main(
 
     print('phase 1...')
     train_phase_1(
-        model, env_train_1,
+        model, env_test_1,
         total_timesteps=total_timesteps // 2,
         eval_freq=eval_freq,
         n_eval_episodes=n_eval_episodes,
@@ -209,7 +216,8 @@ def main(
 
     print('phase 2...')
     train_phase_2(
-        model, env_train_1, env_train_2,
+        model,
+        env_train_2, env_test_1, env_test_2,
         total_timesteps=total_timesteps,
         eval_freq=eval_freq,
         n_eval_episodes=n_eval_episodes,
