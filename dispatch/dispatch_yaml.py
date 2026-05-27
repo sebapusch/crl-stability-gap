@@ -66,6 +66,7 @@ def process_yaml(yaml_path, dry):
         curr_name = f"{name_prefix_base}{suffix}"
 
         sbatch_time = curr_config.pop("time", "03:00:00")
+        sbatch_memo = curr_config.pop("mem", None)
         setting = curr_config.pop("setting", "projection")
 
         final_args = {}
@@ -76,7 +77,10 @@ def process_yaml(yaml_path, dry):
         # Override name prefix
         final_args["name_prefix"] = curr_name
 
-        cmd_lines = [f"sbatch --time={sbatch_time} dispatch/dispatch_{setting}.sh"]
+        cmd_lines = [f"sbatch --time={sbatch_time}"]
+        if sbatch_memo is not None:
+            cmd_lines.append(f"--mem={sbatch_memo}")
+        cmd_lines.append(f"dispatch/dispatch_{setting}.sh")
 
         # Format arguments
         for k, v in final_args.items():
