@@ -18,7 +18,7 @@ total_timesteps: 75_000
 network_size: 256
 time: "12:00:00"
 store_weights: true
-memory: 64
+mem: 64
 n_parallel_envs: 16
 
 ablations:
