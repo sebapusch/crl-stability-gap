@@ -7,7 +7,7 @@ from projection.benchmarks.wrappers import (
     ObsSpaceInf,
     OneHotWrapper,
 )
-from stable_baselines3.common.vec_env import VecEnv, SubprocVecEnv
+from stable_baselines3.common.vec_env import VecEnv, SubprocVecEnv, DummyVecEnv
 
 PERMUTATION_SEEDS = range(90, 200)
 
@@ -86,19 +86,19 @@ class ProjectedEnvBenchmark:
             self.make_test(**env_kwargs),
         )
 
-    def make_single_vec(self, n_env: int, version: int, test: bool = False, **env_kwargs) -> SubprocVecEnv:
+    def make_single_vec(self, n_env: int, version: int, test: bool = False, dummy: bool = True, **env_kwargs) -> VecEnv:
         def mk_vec() -> Env:
             return self.make_single(version, test, **env_kwargs)
 
-        return SubprocVecEnv([mk_vec for _ in range(n_env)])
+        return (DummyVecEnv if dummy else SubprocVecEnv)([mk_vec for _ in range(n_env)])
 
-    def make_train_vec(self, n_envs: int, **env_kwargs) -> list[SubprocVecEnv]:
+    def make_train_vec(self, n_envs: int, **env_kwargs) -> list[VecEnv]:
         return [self.make_single_vec(n_envs, ix, False, **env_kwargs) for ix in self.benchmark]
 
-    def make_test_vec(self, n_envs: int, **env_kwargs) -> list[SubprocVecEnv]:
+    def make_test_vec(self, n_envs: int, **env_kwargs) -> list[VecEnv]:
         return [self.make_single_vec(n_envs, ix, True, **env_kwargs) for ix in self.benchmark]
 
-    def make_vec(self, n_envs: int, **env_kwargs) -> tuple[list[SubprocVecEnv], list[SubprocVecEnv]]:
+    def make_vec(self, n_envs: int, **env_kwargs) -> tuple[list[VecEnv], list[VecEnv]]:
         return (
             self.make_train_vec(n_envs, **env_kwargs),
             self.make_test_vec(n_envs, **env_kwargs),
