@@ -12,19 +12,6 @@ plots:
     test_env: V1
     lines:
       - method: "dqn_cp_ft/dqn_cp_ft-s_<s>"
-        label: "dqn"
+        label: "DQN"
         color: "#FF9800"
 
-  - title: "Eval on CartPole-V2"
-    test_env: V2
-    lines:
-      - method: "dqn_cp_ft/dqn_cp_ft-s_<s>"
-        label: "dqn"
-        color: "#4CAF50"
-
-  - title: "Eval on CartPole-V3"
-    test_env: V3
-    lines:
-      - method: "dqn_cp_ft/dqn_cp_ft-s_<s>"
-        label: "dqn"
-        color: "#2196F3"

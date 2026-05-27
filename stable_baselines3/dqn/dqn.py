@@ -103,7 +103,7 @@ class DQN(OffPolicyAlgorithm):
         device: th.device | str = "auto",
         _init_setup_model: bool = True,
         n_heads: int = 1,
-        exploration_strategy: str = 'eps-greey',
+        exploration_strategy: str = 'eps-greedy',
     ) -> None:
         super().__init__(
             policy,
