@@ -12,4 +12,6 @@ plots:
     test_env: V1
     lines:
       - method: "sacd_cp_bc/sacd_cp_bc-l_000075-b_04-s_<s>"
-        label: "Adam lr=0.00075"
+        label: "SACD BC"
+
+

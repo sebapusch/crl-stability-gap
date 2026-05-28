@@ -382,10 +382,25 @@ def load_config(path: str) -> dict:
                 )
 
     return cfg
+def _nice_floor(value: float) -> float:
+    """Round *value* down to the nearest 'nice' number in {1, 2, 5} × 10^n."""
+    if value <= 0:
+        return 0.0
+    exp = math.floor(math.log10(value))
+    base = 10 ** exp
+    mantissa = value / base  # will be in [1, 10)
+    # Pick the largest nice mantissa that is <= mantissa
+    for nice in (5, 2, 1):
+        if mantissa >= nice:
+            return nice * base
+    return base
 
 
-def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None):
+def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, zoomed=False):
     """Add environment boundary lines, labels, and grid to an axis."""
+    # Font scale factor: 2.3× when zoomed
+    fs = 2.3 if zoomed else 1.0
+
     # Determine visible data range
     x_lo, x_hi = ax.get_xlim()
 
@@ -426,17 +441,34 @@ def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None):
             f"Train {env}",
             ha="center",
             va="bottom",
-            fontsize=9,
+            fontsize=9 * fs,
             color="gray",
             transform=trans,
         )
 
-    ax.set_xlabel("Total Timesteps")
-    ax.set_ylabel("IQM Episodic Return")
-    if title:
-        ax.set_title(title, pad=25)
-    ax.legend(loc="lower right")
-    ax.grid(alpha=0.3)
+    if zoomed:
+        # No legend, title, or axis labels in zoomed mode
+        ax.get_legend_handles_labels()  # ensure legend data exists but don't show
+        legend = ax.get_legend()
+        if legend:
+            legend.remove()
+        ax.tick_params(axis='both', labelsize=10 * fs)
+
+        # Round y_max down to a nice number ({1, 2, 5} × 10^n)
+        y_lo, y_hi = ax.get_ylim()
+        y_max = _nice_floor(y_hi)
+        yticks = [0, y_max / 2, y_max]
+        ax.set_yticks(yticks)
+        ax.yaxis.grid(True, alpha=0.3)
+        ax.xaxis.grid(False)
+    else:
+        ax.set_xlabel("Total Timesteps", fontsize=10 * fs)
+        ax.set_ylabel("IQM Episodic Return", fontsize=10 * fs)
+        if title:
+            ax.set_title(title, pad=25, fontsize=12 * fs)
+        ax.legend(loc="lower right", fontsize=10 * fs)
+        ax.tick_params(axis='both', labelsize=10 * fs)
+        ax.grid(alpha=0.3)
 
 
 def _smooth(arr: np.ndarray, window: int | None) -> np.ndarray:
@@ -557,10 +589,11 @@ def plot_grid(config: dict, use_cache: bool):
         # Apply zoom (per-plot overrides defaults)
         t_start = plot_cfg.get("t_start", defaults.get("t_start"))
         t_end = plot_cfg.get("t_end", defaults.get("t_end"))
-        if t_start is not None or t_end is not None:
+        zoomed = t_start is not None or t_end is not None
+        if zoomed:
             ax.set_xlim(left=t_start, right=t_end)
 
-        _decorate_ax(ax, envs, timesteps, title=title, test_env=test_env)
+        _decorate_ax(ax, envs, timesteps, title=title, test_env=test_env, zoomed=zoomed)
 
     # Hide unused subplot cells
     for idx in range(n_plots, nrows * ncols):
@@ -737,51 +770,16 @@ def main():
             ax.fill_between(ts, ci_lo, ci_hi, alpha=0.2, color=color)
 
         # Apply zoom if specified
-        if t_start is not None or t_end is not None:
+        zoomed = t_start is not None or t_end is not None
+        if zoomed:
             ax.set_xlim(left=t_start, right=t_end)
 
-        # Add vertical lines and env labels (only for regions with data)
-        x_lo, x_hi = ax.get_xlim()
-        test_env_idx = TRAIN_ENVS.index(test_env) if test_env in TRAIN_ENVS else None
-
-        for i in range(1, len(TRAIN_ENVS)):
-            boundary = i * TIMESTEPS_PER_ENV
-            if x_lo < boundary < x_hi:
-                ax.axvline(
-                    x=boundary,
-                    color="black",
-                    linestyle="-",
-                    alpha=0.6,
-                    linewidth=0.5,
-                    zorder=5,
-                )
-
-        trans = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)
-        for i, env in enumerate(TRAIN_ENVS):
-            env_start = i * TIMESTEPS_PER_ENV
-            env_end = (i + 1) * TIMESTEPS_PER_ENV
-            if env_end <= x_lo or env_start >= x_hi:
-                continue
-            # Skip if eval env comes after this training env
-            if test_env_idx is not None and test_env_idx > i:
-                continue
-            center = (i + 0.5) * TIMESTEPS_PER_ENV
-            ax.text(
-                center,
-                1.02,
-                f"Train {env}",
-                ha="center",
-                va="bottom",
-                fontsize=9,
-                color="gray",
-                transform=trans,
-            )
-
-        ax.set_xlabel("Total Timesteps")
-        ax.set_ylabel("IQM Episodic Return")
-        ax.set_title(f"Evaluation on {env_name}-{test_env}", pad=25)
-        ax.legend(loc="lower right")
-        ax.grid(alpha=0.3)
+        _decorate_ax(
+            ax, TRAIN_ENVS, TIMESTEPS_PER_ENV,
+            title=f"Evaluation on {env_name}-{test_env}",
+            test_env=test_env,
+            zoomed=zoomed,
+        )
 
         plt.tight_layout()
 

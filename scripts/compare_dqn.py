@@ -66,18 +66,18 @@ def main():
 
 
     _, env_test = benchmark.make()
-    env_test = env_test[0]
+    env_test = env_test[1]
 
     state, _  = env_test.reset()
 
-    models = load_models(seeds=list(SEEDS), env='V1')
+    models = load_models(seeds=list(SEEDS), env='V2')
 
     q_values = {s: 0 for s in SEEDS}
     target_q_value = sum(GAMMA ** t for t in range(EPISODE_LENGTH))
     action = np.argmax(models[best_seed].predict(state)[0])
 
     for seed in scores:
-        pred = models[seed].q_net_target(torch.tensor(state).unsqueeze(0))
+        pred = models[seed].q_net(torch.tensor(state).unsqueeze(0))
 
         pred = float(pred[0][action])
 

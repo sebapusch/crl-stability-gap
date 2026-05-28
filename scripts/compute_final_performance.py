@@ -80,7 +80,8 @@ def parse_config(config_path: str) -> dict:
         seeds = [seeds]
 
     # Remaining ablation axes (hyperparameters to sweep)
-    hp_keys = [k for k in all_ablation_keys]
+    hp_keys = [k for k in all_ablation_keys if k != "seed"]
+
     hp_values = [ablations[k] if isinstance(ablations[k], list) else [ablations[k]] for k in hp_keys]
 
     return {
@@ -257,7 +258,6 @@ def compute_all(cfg: dict, n_smooth: int, data_dir: Path) -> pd.DataFrame:
                 # P_s(T) = mean across all tasks
                 P_s = np.mean(env_scores)
                 seed_avg_perfs.append(P_s)
-                print(f'performance {seed} env {eval_env}', seed_avg_perfs)
 
         seed_avg_perfs = np.array(seed_avg_perfs)
 
