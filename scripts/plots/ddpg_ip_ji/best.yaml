@@ -1,0 +1,34 @@
+defaults:
+  env_name: CartPole
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  timesteps: 75_000
+  envs: [V1, V2, V3]
+  output_dir: ddpg_ip_ji
+  output_file: lr_comparison
+  dpi: 500 # optional: default is 300
+
+plots:
+  - title: "Eval on InvertedPendulum-V1"
+    test_env: V1
+    lines:
+      - method: "ddpg_ip_ji/ddpg_ip_ji-s_<s>-l_000025"
+        label: "DDPG JI"
+        color: "#FF9800"
+
+  - title: ""
+    test_env: V1
+    t_start: 72_000
+    t_end: 82_000
+    lines:
+      - method: "ddpg_ip_ji/ddpg_ip_ji-s_<s>-l_000025"
+        label: "Adam lr=0.00025"
+        color: "#FF9800"
+
+  - title: ""
+    test_env: V1
+    t_start: 148_000
+    t_end: 162_000
+    lines:
+      - method: "ddpg_ip_ji/ddpg_ip_ji-s_<s>-l_000025"
+        label: "Adam lr=0.00025"
+        color: "#FF9800"

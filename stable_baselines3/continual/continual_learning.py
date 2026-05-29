@@ -8,10 +8,8 @@ from stable_baselines3.common.type_aliases import GymEnv
 
 
 class ContinualLearning(Protocol):
-    """Interface for continual-learning methods.
-
-    All behavior-cloning subclasses (SAC_BC, SACD_BC, DQN_BC) implement this
-    protocol so that the training loop can handle task transitions uniformly.
+    """
+    Interface for continual-learning methods.
     """
 
     def on_task_change(
@@ -35,9 +33,4 @@ class ContinualLearning(Protocol):
         tb_log_name: str = "run",
         reset_num_timesteps: bool = True,
         progress_bar: bool = False,
-    ) -> None: ...
-
-    def save(
-        self,
-        path: str | pathlib.Path | io.BufferedIOBase,
     ) -> None: ...

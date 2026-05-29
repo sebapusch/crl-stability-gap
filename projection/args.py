@@ -119,6 +119,7 @@ def get_args() -> Namespace:
     parser.add_argument("--epsilon_end", default=0.05, type=float)
     parser.add_argument("--epsilon_decay_frac", default=0.1, type=float)
     parser.add_argument("--dqn_tau", default=1.0, type=float)
+    parser.add_argument('--q_net_track_freq', default=0, type=int, nargs="+")
     parser.add_argument(
         "--exploration_strategy",
         default="eps-greedy",
@@ -150,7 +151,7 @@ def get_args() -> Namespace:
 
 
 def parse_eval_freq(
-    raw: list[int],
+    raw: list[int] | int,
     total_timesteps: int,
 ) -> int | list[tuple[int, int]]:
     """Convert a flat list of CLI integers into the eval-frequency format
@@ -165,6 +166,9 @@ def parse_eval_freq(
     * **≥ 3 values, odd count** → same as even, but the last lone value
       becomes ``(total_timesteps, final_freq)``.
     """
+    if isinstance(raw, int):
+        raw: list[int] = [raw]
+    
     n = len(raw)
 
     if n == 1:

@@ -3,10 +3,13 @@ from __future__ import annotations
 from typing import Any, Callable
 
 import numpy as np
+import torch
 import wandb
+from highway_env.vehicle.uncertainty import prediction
 from wandb.integration.sb3 import WandbCallback
 
 from projection.benchmarks.projected_env_benchmark import ProjectedEnvBenchmark
+from stable_baselines3 import DQN
 from stable_baselines3.common.callbacks import (EventCallback,
                                                 BaseCallback,
                                                 CallbackList,
@@ -22,6 +25,7 @@ def make_callbacks(
         n_eval_episodes: int,
         video_freq: int,
         eval_all: bool,
+        q_net_track_freq: int | list[tuple[int, int]],
 ) -> Callable[[int], CallbackList]:
     wandb_callback = WandbCallback(gradient_save_freq=1000, verbose=2)
 
@@ -39,6 +43,8 @@ def make_callbacks(
                 RegisterVideoCallback(video_freq, video_env),
             )
 
+        track_q_net = isinstance(q_net_track_freq, list) or q_net_track_freq > 0
+
         rng = range(len(benchmark) if eval_all else env_ix + 1)
         for i in rng:
             callbacks.append(
@@ -47,6 +53,14 @@ def make_callbacks(
                     eval_env=envs_test[i],
                     eval_freq=eval_freq,
                     n_eval_episodes=n_eval_episodes,
+                )
+            )
+            if not track_q_net: continue
+            callbacks.append(
+                TrackQNet(
+                    f'V{benchmark.benchmark[i]}',
+                    envs_test[i],
+                    q_net_track_freq,
                 )
             )
 
@@ -175,6 +189,45 @@ class EnvEvalCallback(EventCallback):
 
         return freq > 0 and self.n_calls % freq == 0
 
+
+class TrackQNet(EventCallback):
+    model: DQN
+
+    def __init__(
+        self,
+        eval_id: str,
+        env: GymEnv,
+        eval_freq: int | list[tuple[int, int]],
+    ) -> None:
+        super().__init__()
+
+        self.initial_state = torch.tensor(env.reset()[0]).unsqueeze(0)
+        self.eval_freq = eval_freq
+        self.cur_eval_freq_ix = 0
+        self.eval_id = eval_id
+
+    def _on_step(self) -> bool:
+        if not self._is_eval_step():
+            return True
+
+        pred = self.model.q_net_target(self.initial_state)
+
+        for action, q_val in enumerate(pred.squeeze()):
+            self.logger.record(f'eval/{self.eval_id}/init_q_val/{action}', float(q_val))
+
+        return True
+
+
+    def _is_eval_step(self) -> bool:
+        if isinstance(self.eval_freq, int):
+            freq = self.eval_freq
+        else:
+            max_step, freq = self.eval_freq[self.cur_eval_freq_ix]
+
+            if max_step == self.n_calls and self.cur_eval_freq_ix < len(self.eval_freq) - 1:
+                self.cur_eval_freq_ix += 1
+
+        return freq > 0 and self.n_calls % freq == 0
 
 
 

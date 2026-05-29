@@ -350,6 +350,7 @@ def train_continual(
     name_prefix: str,
     project: str,
     eval_freq: int | list[tuple[int, int]],
+    q_net_track_freq: int | list[tuple[int, int]],
     video_freq: int,
     n_eval_episodes: int,
     config: dict,
@@ -380,6 +381,7 @@ def train_continual(
             video_freq=video_freq,
             n_eval_episodes=n_eval_episodes,
             eval_all=eval_all,
+            q_net_track_freq=q_net_track_freq,
         )
 
         model.learn(
@@ -432,6 +434,7 @@ def train_multitask(
         video_freq=video_freq,
         n_eval_episodes=n_eval_episodes,
         eval_all=False,
+        q_net_track_freq=0,
     )
 
     model.learn(
@@ -560,6 +563,7 @@ def main(
     model_path: str = "",
     exploration_strategy: str = "eps-greedy",
     n_parallel_envs: int = 1,
+    q_net_track_freq: int | list[tuple[int, int]] = 0,
 ):
     bench = get_benchmark(env, benchmark or ["V1", "V2", "V3"], seed, encode_task)
     if n_parallel_envs == 1:
@@ -650,6 +654,7 @@ def main(
                 eval_all=eval_all,
                 total_timesteps=total_timesteps,
                 store_weights=store_weights,
+                q_net_track_freq=q_net_track_freq,
             )
         case "multitask":
             train_multitask(
@@ -687,4 +692,5 @@ def main(
 if __name__ == "__main__":
     args = vars(get_args())
     args["eval_freq"] = parse_eval_freq(args["eval_freq"], args["total_timesteps"])
+    args["q_net_track_freq"] = parse_eval_freq(args["q_net_track_freq"], args["total_timesteps"])
     main(**args)
