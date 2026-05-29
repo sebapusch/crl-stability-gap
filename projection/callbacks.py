@@ -183,11 +183,11 @@ class EnvEvalCallback(EventCallback):
         else:
             max_step, freq = self.eval_freq[self.cur_eval_freq_ix]
 
-            if max_step == self.n_calls and self.cur_eval_freq_ix < len(self.eval_freq) - 1:
+            if max_step == self.num_timesteps and self.cur_eval_freq_ix < len(self.eval_freq) - 1:
                 self.cur_eval_freq_ix += 1
 
 
-        return freq > 0 and self.n_calls % freq == 0
+        return freq > 0 and self.num_timesteps % freq == 0
 
 
 class TrackQNet(EventCallback):
@@ -224,10 +224,10 @@ class TrackQNet(EventCallback):
         else:
             max_step, freq = self.eval_freq[self.cur_eval_freq_ix]
 
-            if max_step == self.n_calls and self.cur_eval_freq_ix < len(self.eval_freq) - 1:
+            if max_step == self.num_timesteps and self.cur_eval_freq_ix < len(self.eval_freq) - 1:
                 self.cur_eval_freq_ix += 1
 
-        return freq > 0 and self.n_calls % freq == 0
+        return freq > 0 and self.num_timesteps % freq == 0
 
 
 
