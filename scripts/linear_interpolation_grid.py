@@ -19,7 +19,7 @@ BENCHMARK = ["V1", "V2", "V3"]
 MODEL_PATH = path.abspath(path.join(__file__, "..", "..", "output", "models"))
 
 def generate_combinations() -> jax.Array:
-    vals = jnp.linspace(-0.5, 1, int(N_STEPS * 1.5))
+    vals = jnp.linspace(-0.5, 1, N_STEPS)
     X, Y = jnp.meshgrid(vals, vals)
 
     grid_matrix = jnp.stack([X, Y], axis=-1)
