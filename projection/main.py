@@ -5,8 +5,8 @@ from typing import Callable, ParamSpec
 from gymnasium.wrappers import FlattenObservation
 from highway_env.envs import HighwayEnvFast
 
-from args import get_args, parse_eval_freq
-from callbacks import make_callbacks
+from projection.args import get_args, parse_eval_freq
+from projection.callbacks import make_callbacks
 from gymnasium.envs.classic_control import CartPoleEnv
 from gymnasium.envs.mujoco.inverted_pendulum_v5 import InvertedPendulumEnv
 from torch.optim import SGD, Adam, AdamW, Optimizer, RMSprop

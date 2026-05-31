@@ -18,6 +18,7 @@ total_timesteps: 75_000
 network_size: 256
 time: "7:00:00"
 n_parallel_envs: 16
+store_weights: true
 
 ablations:
   seed: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]

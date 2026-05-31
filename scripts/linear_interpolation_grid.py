@@ -28,27 +28,18 @@ def generate_combinations() -> jax.Array:
     return grid_matrix
 
 
-def init_mlp(params: list[tuple[torch.Tensor, torch.Tensor]]) -> MLP:
-    network = []
-    for layer in params:
-        w, b = layer
-        network.append((
-            jnp.array(w.cpu().numpy(), dtype=jnp.float32),
-            jnp.array(b.cpu().numpy(), dtype=jnp.float32)
-        ))
-
-    return network
-
 def forward(policy: MLP, x: jax.Array) -> jax.Array:
     Wo, bo = policy[-1]
 
     return Wo @ reduce(lambda xo, l: jax.nn.relu(l[0] @ xo + l[1]), policy[:-1], x) + bo
+
 
 def policy_fn(policy: MLP, batch_obs: jax.Array) -> jax.Array:
     vmap_forward = jax.vmap(forward, in_axes=(None, 0))
     q_values = vmap_forward(policy, batch_obs)
 
     return jnp.argmax(q_values, axis=-1)
+
 
 def evaluate(policy: MLP, onehot: jax.Array, proj_mat: jax.Array, key: jax.Array) -> jax.Array:
     env, env_params = gymnax.make('CartPole-v1')
@@ -103,6 +94,7 @@ def evaluate(policy: MLP, onehot: jax.Array, proj_mat: jax.Array, key: jax.Array
 
     return reward_history
 
+
 def combine(a: MLP, b: MLP, c: MLP, d: MLP, alpha: jax.Array, beta: jax.Array) -> MLP:
     comb: MLP = []
     for al, bl, cl, dl in zip(a, b, c, d):
@@ -112,6 +104,7 @@ def combine(a: MLP, b: MLP, c: MLP, d: MLP, alpha: jax.Array, beta: jax.Array) -
         ))
 
     return comb
+
 
 def evaluate_combination(policies: tuple[MLP, MLP, MLP, MLP], vals: jax.Array) -> jax.Array:
     comb = combine(*policies, alpha=vals[0], beta=vals[1])
@@ -126,6 +119,7 @@ def evaluate_combination(policies: tuple[MLP, MLP, MLP, MLP], vals: jax.Array) -
     )
 
     return rh.sum(axis=0)
+
 
 def load_policies(model_path: str) -> tuple[MLP, MLP, MLP, MLP]:
     models = {}
