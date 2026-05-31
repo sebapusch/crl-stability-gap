@@ -1,3 +1,4 @@
+import argparse
 import zipfile
 from functools import reduce
 from os import path
@@ -141,10 +142,14 @@ def load_policies(model_path: str) -> tuple[MLP, MLP, MLP, MLP]:
     return models['V1'], models['V2'], models['V3'], d
 
 
-def main() -> None:
-    for s in range(10):
+def main(
+        seeds: list[int],
+        model_path: str,
+        output_dir: str,
+) -> None:
+    for s in seeds:
         policies = load_policies(
-            path.join(MODEL_PATH, f"dqn_linear_interpolation/dqn_linear_interpolation-s_{s}")
+            path.join(MODEL_PATH, model_path.replace('<s>', str(s)))
         )
 
         combinations = generate_combinations()
@@ -155,9 +160,14 @@ def main() -> None:
 
         data = jnp.column_stack((combinations, res))
 
-        np.savetxt(f"data_{s}.csv", np.asarray(data), delimiter=",")
+        np.savetxt(path.join(output_dir, f"data_{s}.csv"), np.asarray(data), delimiter=",")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_path', type=str)
+    parser.add_argument('--output_dir', type=str)
+    parser.add_argument('--seeds', nargs='+', type=int)
+
+    main(**parser.parse_args().__dict__)
 
