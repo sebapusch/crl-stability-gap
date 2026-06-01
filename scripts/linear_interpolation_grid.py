@@ -19,6 +19,7 @@ GAMMA = 0.99
 BENCHMARK = ["V1", "V2", "V3"]
 MODEL_PATH = path.abspath(path.join(__file__, "..", "..", "output", "models"))
 
+
 def generate_combinations() -> jax.Array:
     vals = jnp.linspace(-0.5, 1, N_STEPS)
     X, Y = jnp.meshgrid(vals, vals)
@@ -126,15 +127,15 @@ def load_policies(model_path: str) -> tuple[MLP, MLP, MLP, MLP]:
     models = {}
 
     for v in BENCHMARK:
-
         with zipfile.ZipFile(f"{model_path}-{v}.zip") as archive:
+            print(archive.namelist())
             with archive.open("policy.pth", mode="r") as param_file:
                 th_object = torch.load(param_file, weights_only=True)
 
                 models[v] = [
-                    (jnp.array(th_object["q_net.q_net.0.weight"].cpu().numpy()), jnp.array(th_object["q_net.q_net.0.bias"].cpu().numpy())),
-                    (jnp.array(th_object["q_net.q_net.2.weight"].cpu().numpy()), jnp.array(th_object["q_net.q_net.2.bias"].cpu().numpy())),
-                    (jnp.array(th_object["q_net.q_net.4.weight"].cpu().numpy()), jnp.array(th_object["q_net.q_net.4.bias"].cpu().numpy())),
+                    (jnp.array(th_object["actor.latent_pi.0.weight"].cpu().numpy()), jnp.array(th_object["actor.latent_pi.0.bias"].cpu().numpy())),
+                    (jnp.array(th_object["actor.latent_pi.2.weight"].cpu().numpy()), jnp.array(th_object["actor.latent_pi.2.bias"].cpu().numpy())),
+                    (jnp.array(th_object["actor.latent_pi.4.weight"].cpu().numpy()), jnp.array(th_object["actor.latent_pi.4.bias"].cpu().numpy())),
                 ]
 
     d = [(lc[0] + lb[0] - la[0], lc[1] + lb[1] - la[1]) for la, lb, lc in zip(models['V1'], models['V2'], models['V3'])]
