@@ -13,16 +13,15 @@ import tqdm
 type MLP = list[tuple[jax.Array, jax.Array]]
 
 
-N_STEPS = 1000
+N_STEPS = 200
 N_ENV_STEPS = 500
 N_EVAL = 15
-GAMMA = 0.99
 BENCHMARK = ["V1", "V2", "V3"]
 MODEL_PATH = path.abspath(path.join(__file__, "..", "..", "output", "models"))
 
 
 def generate_combinations() -> jax.Array:
-    vals = jnp.linspace(-0.5, 1, N_STEPS)
+    vals = jnp.linspace(-0.5, 1.5, N_STEPS)
     X, Y = jnp.meshgrid(vals, vals)
 
     grid_matrix = jnp.stack([X, Y], axis=-1)
@@ -129,7 +128,6 @@ def load_policies(model_path: str) -> tuple[MLP, MLP, MLP, MLP]:
 
     for v in BENCHMARK:
         with zipfile.ZipFile(f"{model_path}-{v}.zip") as archive:
-            print(archive.namelist())
             with archive.open("policy.pth", mode="r") as param_file:
                 th_object = torch.load(param_file, weights_only=True)
 
