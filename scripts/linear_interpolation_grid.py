@@ -8,6 +8,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import torch
+import tqdm
 
 type MLP = list[tuple[jax.Array, jax.Array]]
 
@@ -148,7 +149,7 @@ def main(
         model_path: str,
         output_dir: str,
 ) -> None:
-    for s in seeds:
+    for s in tqdm.tqdm(seeds):
         policies = load_policies(
             path.join(MODEL_PATH, model_path.replace('<s>', str(s)))
         )
