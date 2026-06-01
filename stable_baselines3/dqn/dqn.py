@@ -266,17 +266,24 @@ class DQN(OffPolicyAlgorithm):
         if not deterministic:
             match self.exploration_strategy:
                 case 'eps-greedy':
-                    if np.random.rand() < self.exploration_rate:
-                        if self.policy.is_vectorized_observation(observation):
-                            if isinstance(observation, dict):
-                                n_batch = observation[next(iter(observation.keys()))].shape[0]
-                            else:
-                                n_batch = observation.shape[0]
-                            action = np.array([self.action_space.sample() for _ in range(n_batch)])
+                    if self.policy.is_vectorized_observation(observation):
+                        if isinstance(observation, dict):
+                            n_batch = observation[next(iter(observation.keys()))].shape[0]
                         else:
-                            action = np.array(self.action_space.sample())
-                    else:
+                            n_batch = observation.shape[0]
+                        
                         action, state = self.policy.predict(observation, state, episode_start, deterministic)
+                        
+                        # Apply independent epsilon-greedy exploration for each environment
+                        explore_mask = np.random.rand(n_batch) < self.exploration_rate
+                        for i in range(n_batch):
+                            if explore_mask[i]:
+                                action[i] = self.action_space.sample()
+                    else:
+                        if np.random.rand() < self.exploration_rate:
+                            action = np.array(self.action_space.sample())
+                        else:
+                            action, state = self.policy.predict(observation, state, episode_start, deterministic)
                 case 'boltzmann':
                     obs_tensor, _ = self.policy.obs_to_tensor(observation)
                     q_values = self.q_net(obs_tensor)

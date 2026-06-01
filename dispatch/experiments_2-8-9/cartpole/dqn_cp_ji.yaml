@@ -3,7 +3,7 @@ project: "dqn_cp_ji"
 algorithm: "dqn"
 env: "cartpole"
 method: "joint_incremental"
-benchmark: ["V1", "V2", "V3"]
+benchmark: ["V2", "V8", "V9"]
 batch_size: 128
 encode_task: true
 eval_all: true
