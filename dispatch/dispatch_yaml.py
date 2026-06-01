@@ -113,8 +113,8 @@ def main():
     if len(sys.argv) > 1:
         yamls = sys.argv[1:]
     else:
-        yamls = glob.glob("experiments/**/*.yaml", recursive=True) + glob.glob(
-            "dispatch/experiments/**/*.yaml", recursive=True
+        yamls = glob.glob("experiments_2-8-9/**/*.yaml", recursive=True) + glob.glob(
+            "dispatch/experiments_2-8-9/**/*.yaml", recursive=True
         )
         yamls = list(set(yamls))
 
