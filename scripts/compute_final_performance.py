@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Compute aggregated Final Average Performance P(T) for RL ablation experiments.
+Normalized to a 0-100 scale based on max environment scores.
 
 Follows the Continual World benchmark metric:
   1. For each task i in seed s, smooth the final score p_si(T) by averaging the
@@ -28,11 +29,10 @@ except ImportError:
     print("PyYAML is required. Install with: pip install pyyaml", file=sys.stderr)
     sys.exit(1)
 
-
 DATA_DIR = Path(__file__).resolve().parent.parent / "output" / "output"
 DEFAULT_SMOOTH = 5
 N_BOOTSTRAP = 10_000
-CONFIDENCE = 0.90
+CONFIDENCE = 0.95
 
 
 # ---------------------------------------------------------------------------
@@ -92,6 +92,7 @@ def parse_config(config_path: str) -> dict:
         "hp_values": hp_values,
         "n_eval_episodes": cfg.get("n_eval_episodes", 15),
         "all_ablation_keys": all_ablation_keys,
+        "env": cfg.get("env"),
     }
 
 
@@ -163,14 +164,14 @@ def load_final_reward(filepath: Path, eval_env: str, n_smooth: int) -> float | N
 
 
 def compute_per_env_final_score(
-    name_prefix: str,
-    hp_combo: dict,
-    seed: int,
-    benchmark: list[str],
-    eval_env: str,
-    n_smooth: int,
-    data_dir: Path,
-    all_ablation_keys: list[str],
+        name_prefix: str,
+        hp_combo: dict,
+        seed: int,
+        benchmark: list[str],
+        eval_env: str,
+        n_smooth: int,
+        data_dir: Path,
+        all_ablation_keys: list[str],
 ) -> float | None:
     """
     Compute the smoothed final score p_si(T) for a single (seed, eval_env) pair.
@@ -251,6 +252,12 @@ def compute_all(cfg: dict, n_smooth: int, data_dir: Path) -> pd.DataFrame:
                     n_smooth, data_dir, all_ablation_keys,
                 )
                 if score is not None:
+                    # Normalize the score based on the environment
+                    if "inverted_pendulum" in ENV:
+                        score = (score / 1000.0) * 100.0
+                    elif "cartpole" in ENV:
+                        score = (score / 500.0) * 100.0
+
                     env_scores.append(score)
                     per_env_seed_scores[eval_env].append(score)
 
@@ -309,11 +316,11 @@ def results_to_markdown(df: pd.DataFrame, cfg: dict) -> str:
     hp_keys = cfg["hp_keys"]
 
     lines = []
-    lines.append(f"# Final Average Performance P(T) — {cfg['name_prefix']}")
+    lines.append(f"# Normalized Final Average Performance P(T) — {cfg['name_prefix']}")
     lines.append("")
     lines.append(f"Smoothing window: last evaluation points | "
                  f"Seeds: {len(cfg['seeds'])} | "
-                 f"Confidence: {CONFIDENCE*100:.0f}%")
+                 f"Confidence: {CONFIDENCE * 100:.0f}%")
     lines.append("")
 
     # Build header
@@ -408,13 +415,15 @@ def parse_args():
 
 
 def main():
-    global CONFIDENCE
+    global CONFIDENCE, ENV
 
     args = parse_args()
     CONFIDENCE = args.confidence
 
     data_dir = Path(args.data_dir) if args.data_dir else DATA_DIR
     cfg = parse_config(args.config)
+
+    ENV = cfg["env"]
 
     print(f"Config: {args.config}")
     print(f"  Name prefix:  {cfg['name_prefix']}")
@@ -426,7 +435,7 @@ def main():
         n_combos *= len(v)
     print(f"  Combinations: {n_combos}")
     print(f"  Smoothing:    last {args.smooth} eval points")
-    print(f"  Confidence:   {CONFIDENCE*100:.0f}%")
+    print(f"  Confidence:   {CONFIDENCE * 100:.0f}%")
     print(f"  Data dir:     {data_dir}")
     print()
 

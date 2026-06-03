@@ -1,0 +1,9 @@
+name_prefix: "sac_ip_bc_ent"
+project: "sac_ip_bc_ent"
+env: "inverted_pendulum"
+benchmark: ["V1", "V2", "V3"]
+
+time: "10:00:00"
+ablations:
+  ent_coef: [1.0]
+  seed: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]

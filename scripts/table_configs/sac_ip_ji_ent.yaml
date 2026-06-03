@@ -1,0 +1,10 @@
+name_prefix: "sac_ip_ji_ent"
+project: "sac_ip_ji_ent"
+env: "inverted_pendulum"
+benchmark: ["V1", "V2", "V3"]
+
+
+ablations:
+  seed: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  lr: [0.0005]
+  ent_coef: [0.1]
