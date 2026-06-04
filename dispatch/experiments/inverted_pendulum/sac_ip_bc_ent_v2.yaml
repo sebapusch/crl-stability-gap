@@ -17,7 +17,7 @@ target_update: 1000
 learning_starts: 1000
 total_timesteps: 75_000
 network_size: 256
-time: "14:00:00"
+time: "20:00:00"
 store_weights: true
 mem: "40G"
 n_parallel_envs: 1
