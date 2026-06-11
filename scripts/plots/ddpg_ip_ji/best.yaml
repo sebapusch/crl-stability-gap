@@ -8,12 +8,12 @@ defaults:
   dpi: 500 # optional: default is 300
 
 plots:
-  - title: "Eval on InvertedPendulum-V1"
-    test_env: V1
-    lines:
-      - method: "ddpg_ip_ji/ddpg_ip_ji-s_<s>-l_000025"
-        label: "DDPG JI"
-        color: "#FF9800"
+#  - title: "Eval on InvertedPendulum-V1"
+#    test_env: V1
+#    lines:
+#      - method: "ddpg_ip_ji/ddpg_ip_ji-s_<s>-l_000025"
+#        label: "DDPG JI"
+#        color: "#FF9800"
 
   - title: ""
     test_env: V1

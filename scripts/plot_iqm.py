@@ -16,6 +16,7 @@ import argparse
 import hashlib
 import math
 from scipy.ndimage import uniform_filter1d
+from scipy.signal import find_peaks
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -398,8 +399,8 @@ def _nice_floor(value: float) -> float:
 
 def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, zoomed=False):
     """Add environment boundary lines, labels, and grid to an axis."""
-    # Font scale factor: 2.3× when zoomed
-    fs = 2.3 if zoomed else 1.0
+    # Font scale factor: 2.3× when zoomed, 1.84x (0.8 * 2.3) for unzoomed
+    fs = 2.3 if zoomed else 1.84
 
     # Determine visible data range
     x_lo, x_hi = ax.get_xlim()
@@ -438,7 +439,7 @@ def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, z
         ax.text(
             center,
             1.02,
-            f"Train {env}",
+            f"Task {i + 1}",
             ha="center",
             va="bottom",
             fontsize=9 * fs,
@@ -468,15 +469,92 @@ def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, z
             ax.set_title(title, pad=25, fontsize=12 * fs)
         ax.legend(loc="lower right", fontsize=10 * fs)
         ax.tick_params(axis='both', labelsize=10 * fs)
-        ax.grid(alpha=0.3)
 
+        # Round y_max down to a nice number ({1, 2, 5} × 10^n)
+        y_lo, y_hi = ax.get_ylim()
+        y_max = _nice_floor(y_hi)
+        yticks = [0, y_max / 2, y_max]
+        ax.set_yticks(yticks)
+        ax.yaxis.grid(True, alpha=0.3)
+        ax.xaxis.grid(False)
 
 def _smooth(arr: np.ndarray, window: int | None) -> np.ndarray:
-    """Apply a uniform moving-average filter if *window* is set."""
+    """
+    Apply uniform moving-average smoothing while preserving important extrema.
+
+    Downward peaks/troughs are preserved only if:
+    1. they occur after the global maximum has been achieved, and
+    2. they correspond to a drop of at least 30% from that maximum.
+
+    The smoothing itself remains the original uniform_filter1d behavior.
+    """
     if window is None or window <= 1:
         return arr
-    return uniform_filter1d(arr.astype(float), size=window)
 
+    arr_float = arr.astype(float)
+    smoothed = uniform_filter1d(arr_float, size=window)
+
+    if len(arr_float) < 3:
+        return smoothed
+
+    preserved = smoothed.copy()
+
+    n_keep = max(1, min(5, len(arr_float) // max(window, 1)))
+    radius = max(1, window // 4)
+
+    def _restore_neighbourhood(indices: np.ndarray):
+        for idx in indices:
+            start = max(0, idx - radius)
+            end = min(len(arr_float), idx + radius + 1)
+            preserved[start:end] = arr_float[start:end]
+
+    # First point at which the global maximum is achieved.
+    max_idx = int(np.nanargmax(arr_float))
+    max_value = arr_float[max_idx]
+
+    # Always preserve the global maximum.
+    _restore_neighbourhood(np.array([max_idx]))
+
+    # --- Preserve downward peaks only after the maximum and only if drop >= 30% ---
+    post_max = arr_float[max_idx:]
+
+    if len(post_max) >= 3 and np.isfinite(max_value):
+        troughs_post, _ = find_peaks(-post_max)
+        troughs = troughs_post + max_idx
+
+        # Also consider the lowest post-maximum point, including boundary cases.
+        post_max_min_idx = max_idx + int(np.nanargmin(post_max))
+        troughs = np.unique(np.concatenate([troughs, [post_max_min_idx]]))
+
+        # Relative drop from the achieved maximum.
+        denom = abs(max_value) if max_value != 0 else 1.0
+        drops = (max_value - arr_float[troughs]) / denom
+
+        large_drop_troughs = troughs[drops >= 0.1]
+
+        if len(large_drop_troughs) > 0:
+            # Rank by largest relative drop.
+            drop_order = np.argsort(
+                (max_value - arr_float[large_drop_troughs]) / denom
+            )[::-1]
+
+            selected_troughs = large_drop_troughs[drop_order[:n_keep]]
+            _restore_neighbourhood(selected_troughs)
+
+    # --- Optionally preserve strongest upward peaks, including boundary maximum ---
+    peaks, _ = find_peaks(arr_float)
+
+    if len(peaks) > 0:
+        peak_order = np.argsort(arr_float[peaks])[::-1]
+        selected_peaks = peaks[peak_order[:max(1, n_keep // 2)]]
+
+        selected_peaks = np.unique(
+            np.concatenate([selected_peaks, [max_idx]])
+        )
+
+        _restore_neighbourhood(selected_peaks)
+
+    return preserved
 
 def plot_grid(config: dict, use_cache: bool):
     """
@@ -525,9 +603,20 @@ def plot_grid(config: dict, use_cache: bool):
     if use_cache:
         print(f"Cache key: {cache_key}  (use --no-cache to force recompute)")
 
-    # Create figure
-    fig_w = 7 * ncols
-    fig_h = 5 * nrows
+    # Determine if any plot in this grid is zoomed
+    any_zoomed = any(
+        p.get("t_start", defaults.get("t_start")) is not None
+        or p.get("t_end", defaults.get("t_end")) is not None
+        for p in plots
+    )
+
+    # Create figure – unzoomed grids use 2:1 aspect ratio per cell
+    if any_zoomed:
+        fig_w = 7 * ncols
+        fig_h = 5 * nrows
+    else:
+        fig_w = 10 * ncols
+        fig_h = 5 * nrows
     fig, axes = plt.subplots(
         nrows, ncols,
         figsize=(fig_w, fig_h),
@@ -686,7 +775,7 @@ def parse_args():
         "--smooth",
         type=int,
         default=None,
-        help="Window size for uniform moving-average smoothing (default: none).",
+        help="Window size for peak-aware moving-average smoothing (default: none).",
     )
     return parser.parse_args()
 

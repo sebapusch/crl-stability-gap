@@ -15,23 +15,23 @@ plots:
     lines:
       - method: "sac_ip_ji_ent_v2/sac_ip_ji_ent_v2-s_<s>-l_000075-e_01"
         label: "Entropy coeff=0.1"
-        color: "#FF0000"
+        color: "#1A85FF"
 
 
-  - title: "Eval on CartPole-V2"
-    test_env: V2
-    t_start: 148_000
-    t_end: 157_000
-    lines:
+#  - title: "Eval on CartPole-V2"
+#    test_env: V2
+#    t_start: 148_000
+#    t_end: 157_000
+#    lines:
       - method: "sac_ip_ji_ent_v2/sac_ip_ji_ent_v2-s_<s>-l_000075-e_05"
         label: "Entropy coeff=0.5"
-        color: "#4CAF50"
+        color: "#D41159"
 
-  - title: "Eval on CartPole-V2"
-    test_env: V2
-    t_start: 148_000
-    t_end: 157_000
-    lines:
+#  - title: "Eval on CartPole-V2"
+#    test_env: V2
+#    t_start: 148_000
+#    t_end: 157_000
+#    lines:
       - method: "sac_ip_ji_ent_v2/sac_ip_ji_ent_v2-s_<s>-l_000075-e_1"
         label: "Entropy coeff=1"
-        color: "#00FF00"
+        color: "#008080"
