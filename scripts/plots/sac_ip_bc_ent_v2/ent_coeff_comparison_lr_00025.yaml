@@ -1,0 +1,44 @@
+defaults:
+  env_name: CartPole
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  timesteps: 75_000
+  envs: [V2, V8, V9]
+  output_dir: sac_ip_ji_ent_v2
+  output_file: ent_coeff_comparison_l-000025
+  dpi: 500 # optional: default is 300
+
+plots:
+  - title: "Eval on CartPole-V2"
+    test_env: V2
+    lines:
+      - method: "sac_ip_ji_ent_v2/sac_ip_ji_ent_v2-s_<s>-l_000025-e_0"
+        label: "Entropy coeff=0"
+        color: "#FF9800"
+
+  - title: "Eval on CartPole-V2"
+    test_env: V2
+    lines:
+      - method: "sac_ip_ji_ent_v2/sac_ip_ji_ent_v2-s_<s>-l_000025-e_001"
+        label: "Entropy coeff=0.01"
+        color: "#2196F3"
+
+  - title: "Eval on CartPole-V2"
+    test_env: V2
+    lines:
+      - method: "sac_ip_ji_ent_v2/sac_ip_ji_ent_v2-s_<s>-l_000025-e_01"
+        label: "Entropy coeff=0.1"
+        color: "#FF0000"
+
+  - title: "Eval on CartPole-V2"
+    test_env: V2
+    lines:
+      - method: "sac_ip_ji_ent_v2/sac_ip_ji_ent_v2-s_<s>-l_000025-e_05"
+        label: "Entropy coeff=0.5"
+        color: "#4CAF50"
+
+  - title: "Eval on CartPole-V2"
+    test_env: V2
+    lines:
+      - method: "sac_ip_ji_ent_v2/sac_ip_ji_ent_v2-s_<s>-l_000025-e_1"
+        label: "Entropy coeff=1"
+        color: "#00FF00"

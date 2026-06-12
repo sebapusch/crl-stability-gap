@@ -6,7 +6,7 @@ import torch
 from gymnasium.envs.classic_control import CartPoleEnv
 from highway_env.vehicle.uncertainty import prediction
 
-from compute_final_performance import compute_per_env_final_score
+from common import compute_per_env_final_score
 from projection.benchmarks.projected_env_benchmark import ProjectedEnvBenchmark
 from stable_baselines3 import DQN
 

@@ -15,3 +15,12 @@ plots:
     lines:
       - method: "sacd_cp_bc/sacd_cp_bc-l_000075-b_04-s_<s>"
         label: "Adam lr=0.00075"
+
+
+  - title: "Eval on CartPole-V1 (BC coeff=0.4)"
+    test_env: V1
+    t_start: 195_000
+    t_end: 220_000
+    lines:
+      - method: "sacd_cp_bc/sacd_cp_bc-l_000075-b_04-s_<s>"
+        label: "Adam lr=0.00075"

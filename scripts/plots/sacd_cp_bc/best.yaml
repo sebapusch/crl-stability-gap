@@ -12,6 +12,6 @@ plots:
     test_env: V1
     lines:
       - method: "sacd_cp_bc/sacd_cp_bc-l_000075-b_04-s_<s>"
-        label: "SACD BC"
+        label: "SACD + BC"
 
 

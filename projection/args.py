@@ -129,7 +129,7 @@ def get_args() -> Namespace:
 
     # ── SAC-specific (behavior cloning) ───────────────────────────────
     parser.add_argument("--bc_loss_fn", default="kl", type=str, choices=["kl", "l2"])
-    parser.add_argument("--ent_coef", default=None, type=float)
+    parser.add_argument("--ent_coef", default=None)
 
     # ── CartPole-specific (algorithm) ───────────────────────────────
     parser.add_argument(

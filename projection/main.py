@@ -552,7 +552,7 @@ def main(
     eval_all: bool = True,
     bc_loss_fn: str = "kl",
     algorithm: str = "dqn",
-    ent_coef: float | None = None,
+    ent_coef: float | str | None = None,
     dqn_tau: float = 1.0,
     network_size: int | None = None,
     ewc_lambda: float = 1.0,
@@ -693,4 +693,9 @@ if __name__ == "__main__":
     args = vars(get_args())
     args["eval_freq"] = parse_eval_freq(args["eval_freq"], args["total_timesteps"])
     args["q_net_track_freq"] = parse_eval_freq(args["q_net_track_freq"], args["total_timesteps"])
+    if type(args["ent_coef"]) == str:
+        if args["ent_coef"] == "auto":
+            args["ent_coef"] = None
+        else:
+            args["ent_coef"] = float(args["ent_coef"])
     main(**args)
