@@ -2,7 +2,7 @@ name_prefix: "sac_ip_bc_ent_v2"
 project: "sac_ip_bc_ent_v2"
 algorithm: "sac"
 env: "inverted_pendulum"
-method: "joint_incremental"
+method: "behavior_cloning"
 benchmark: ["V2", "V8", "V9"]
 behavior_cloning_coefficient: 0.1
 batch_size: 128
@@ -17,7 +17,7 @@ target_update: 1000
 learning_starts: 1000
 total_timesteps: 75_000
 network_size: 256
-time: "20:00:00"
+time: "40:00:00"
 store_weights: true
 mem: "40G"
 n_parallel_envs: 1
@@ -25,5 +25,5 @@ lr: 0.0005
 
 ablations:
   seed: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-  ent_coef: [0.0, 0.01, 0.1, 0.5, 1.0]
+  ent_coef: ["auto", "0.0", "0.01", "0.1", "0.5", "1.0"]
 
