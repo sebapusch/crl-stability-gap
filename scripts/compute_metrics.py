@@ -78,6 +78,7 @@ def main():
     benchmark = cfg["benchmark"]
     seeds = cfg["seeds"]
     name_prefix = cfg["name_prefix"]
+    project = cfg["project"]
     all_ablation_keys = cfg["all_ablation_keys"]
     hp_keys = cfg["hp_keys"]
     use_iqm = not args.mean
@@ -88,6 +89,7 @@ def main():
 
     print(f"Config: {args.config}", file=sys.stderr)
     print(f"  Name prefix:  {name_prefix}", file=sys.stderr)
+    print(f"  Project:      {project}", file=sys.stderr)
     print(f"  Benchmark:    {benchmark}", file=sys.stderr)
     print(f"  Seeds:        {seeds}", file=sys.stderr)
     print(f"  Smoothing:    last {args.smooth} eval points", file=sys.stderr)
@@ -105,7 +107,7 @@ def main():
 
     for hp_combo in enumerate_combinations(cfg):
         # 1. Load data once for this HP combination
-        combo_data = load_all_csvs(data_dir, name_prefix, benchmark, hp_combo, seeds, all_ablation_keys)
+        combo_data = load_all_csvs(data_dir, name_prefix, benchmark, hp_combo, seeds, all_ablation_keys, project)
 
         # 2. Compute final performance
         perf = compute_final_performance_from_data(

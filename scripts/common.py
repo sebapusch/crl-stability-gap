@@ -35,8 +35,11 @@ def parse_config(config_path: str) -> dict:
     hp_keys = [k for k in all_ablation_keys if k != "seed"]
     hp_values = [ablations[k] if isinstance(ablations[k], list) else [ablations[k]] for k in hp_keys]
 
+    project = cfg.get("project", name_prefix)
+
     cfg.update({
         "name_prefix": name_prefix,
+        "project": project,
         "benchmark": benchmark,
         "seeds": seeds,
         "hp_keys": hp_keys,
@@ -113,7 +116,7 @@ def load_csv_columns(filepath: Path, target_cols: list[str]) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-def load_all_csvs(data_dir: Path, name_prefix: str, benchmark: list[str], hp_combo: dict, seeds: list[int], all_ablation_keys: list[str]) -> dict:
+def load_all_csvs(data_dir: Path, name_prefix: str, benchmark: list[str], hp_combo: dict, seeds: list[int], all_ablation_keys: list[str], project: str = None) -> dict:
     """
     Load CSV files for all seeds and train_envs under a given hp combination.
     Each file is loaded exactly once.
@@ -124,12 +127,13 @@ def load_all_csvs(data_dir: Path, name_prefix: str, benchmark: list[str], hp_com
     for env in benchmark:
         target_cols.append(f"eval/{env}/mean_reward")
         target_cols.append(f"time/{env}/total_timesteps")
+    dir_name = project if project is not None else name_prefix
     for seed in seeds:
         suffix = build_suffix(hp_combo, seed, all_ablation_keys)
         seed_data = {}
         for train_env in benchmark:
             filename = f"{name_prefix}-{suffix}-{train_env}.csv"
-            filepath = data_dir / name_prefix / filename
+            filepath = data_dir / dir_name / filename
             df = load_csv_columns(filepath, target_cols)
             if not df.empty:
                 seed_data[train_env] = df
@@ -161,12 +165,14 @@ def compute_per_env_final_score(
         n_smooth: int,
         data_dir: Path,
         all_ablation_keys: list[str],
+        project: str = None,
 ) -> float | None:
     """Extract raw (unnormalized) final smoothed reward for a single seed/eval_env."""
     last_train_env = benchmark[-1]
     suffix = build_suffix(hp_combo, seed, all_ablation_keys)
     filename = f"{name_prefix}-{suffix}-{last_train_env}.csv"
-    filepath = data_dir / name_prefix / filename
+    dir_name = project if project is not None else name_prefix
+    filepath = data_dir / dir_name / filename
     return load_final_reward(filepath, eval_env, n_smooth)
 
 
@@ -432,6 +438,8 @@ def compute_final_performance_from_data(
 
     stacked_mapped = {}
     for eval_env in benchmark:
+        if eval_env not in aligned_curves:
+            continue
         ts, curves, seeds = aligned_curves[eval_env]
         seed_indices = [seeds.index(s) for s in valid_seeds]
         stacked_mapped[eval_env] = (curves[seed_indices, :].T / env_max) * 100.0
@@ -439,6 +447,9 @@ def compute_final_performance_from_data(
     def calc_perf_single_bootstrap(boot_col_indices: np.ndarray) -> np.ndarray:
         env_scores = np.empty(len(benchmark))
         for idx, env in enumerate(benchmark):
+            if env not in stacked_mapped:
+                env_scores[idx] = np.nan
+                continue
             sub_curves = stacked_mapped[env][:, boot_col_indices]
             n_pts = min(n_smooth, sub_curves.shape[0])
             if n_pts == 0:
@@ -533,6 +544,8 @@ def compute_min_acc_from_data(
     stacked_curves_mapped = {}
     for i in range(k_idx):
         eval_env = benchmark[i]
+        if eval_env not in aligned_curves:
+            continue
         ts, curves, seeds = aligned_curves[eval_env]
         seed_indices = [seeds.index(s) for s in valid_seeds]
         stacked_curves_mapped[eval_env] = curves[seed_indices, :].T
@@ -541,6 +554,9 @@ def compute_min_acc_from_data(
         task_accs = np.empty(k_idx)
         for i in range(k_idx):
             eval_env = benchmark[i]
+            if eval_env not in stacked_curves_mapped:
+                task_accs[i] = np.nan
+                continue
             ts, _, _ = aligned_curves[eval_env]
             sub_curves = stacked_curves_mapped[eval_env][:, boot_col_indices]
             agg_curve = aggregate_curves_vectorized(sub_curves, use_iqm)
@@ -566,7 +582,9 @@ def compute_min_acc_from_data(
             max_score_safe = max_score if max_score > 0 else 1.0
             norm = (min_score / max_score_safe) * 100.0
             task_accs[i] = norm if max_score > 0 else 0.0
-        return np.mean(task_accs)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            return np.nanmean(task_accs)
 
     observed_stat = calc_metric_single_bootstrap(np.arange(n_valid))
     
