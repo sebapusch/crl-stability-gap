@@ -12,11 +12,17 @@ import tqdm
 
 type MLP = list[tuple[jax.Array, jax.Array]]
 
+MAT_V2 = jax.numpy.array([
+    [ 0.14022304,  0.4014328 , -0.9011977  ,-0.08385649],
+    [ 0.6846759 , -0.34279321, -0.10520617 , 0.63454187],
+    [-0.70954596, -0.14529827, -0.2354287  , 0.64807891],
+    [ 0.09000526,  0.83679922,  0.34834996 , 0.41269653],
+])
 
 N_STEPS = 200
 N_ENV_STEPS = 500
 N_EVAL = 15
-BENCHMARK = ["V1", "V2", "V3"]
+BENCHMARK = ["V2", "V8", "V9"]
 MODEL_PATH = path.abspath(path.join(__file__, "..", "..", "output", "models"))
 
 
@@ -116,7 +122,7 @@ def evaluate_combination(policies: tuple[MLP, MLP, MLP, MLP], vals: jax.Array) -
     rh = evaluate(
         comb,
         jnp.array([1, 0, 0], dtype=jnp.float32),
-        proj_mat=jnp.identity(4),
+        proj_mat=MAT_V2,
         key=key
     )
 

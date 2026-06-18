@@ -10,7 +10,7 @@ defaults:
 plots:
   - title: "Eval on CartPole-V2"
     test_env: V2
-    smooth: 20
+    smooth: 1
     lines:
       - method: "sac_ip_ji_ent_v2/sac_ip_ji_ent_v2-s_<s>-l_00005-e_001"
         label: "$\\alpha=10^{-2}$"

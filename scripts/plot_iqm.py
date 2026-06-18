@@ -123,11 +123,38 @@ def load_config(path: str) -> dict:
     for i, plot in enumerate(cfg["plots"]):
         if "lines" not in plot or not isinstance(plot["lines"], list):
             raise ValueError(f"Plot entry {i} must contain a 'lines' list.")
-        if "test_env" not in plot:
-            raise ValueError(f"Plot entry {i} must specify 'test_env'.")
+        plot_test_env = plot.get("test_env")
         for j, line in enumerate(plot["lines"]):
             if "method" not in line:
                 raise ValueError(f"Line {j} in plot {i} must specify 'method'.")
+            if plot_test_env is None and "test_env" not in line:
+                raise ValueError(
+                    f"Plot entry {i} must specify 'test_env', or each of its lines must specify 'test_env'."
+                )
+            if "envs" in line and not isinstance(line["envs"], list):
+                raise ValueError(
+                    f"Line {j} in plot {i} must specify 'envs' as a list of strings."
+                )
+            if "linewidth" in line and not isinstance(line["linewidth"], (int, float)):
+                raise ValueError(f"Line {j} in plot {i} key 'linewidth' must be a number.")
+        zooms = plot.get("zooms")
+        if zooms is not None:
+            if not isinstance(zooms, list):
+                raise ValueError(f"Plot entry {i} has 'zooms' that is not a list.")
+            for z_idx, z in enumerate(zooms):
+                if "t_start" not in z or "t_end" not in z:
+                    raise ValueError(f"Zoom {z_idx} in plot {i} must specify both 't_start' and 't_end'.")
+        for key in ["show_timesteps", "show_y_label", "show_x_label"]:
+            if key in plot and not isinstance(plot[key], bool):
+                raise ValueError(f"Plot entry {i} key '{key}' must be a boolean.")
+        if "linewidth" in plot and not isinstance(plot["linewidth"], (int, float)):
+            raise ValueError(f"Plot entry {i} key 'linewidth' must be a number.")
+    if "defaults" in cfg and isinstance(cfg["defaults"], dict):
+        for key in ["format", "ext"]:
+            if key in cfg["defaults"] and not isinstance(cfg["defaults"][key], str):
+                raise ValueError(f"YAML config 'defaults' key '{key}' must be a string.")
+        if "linewidth" in cfg["defaults"] and not isinstance(cfg["defaults"]["linewidth"], (int, float)):
+            raise ValueError("YAML config 'defaults' key 'linewidth' must be a number.")
     return cfg
 
 
@@ -144,9 +171,10 @@ def _nice_floor(value: float) -> float:
     return base
 
 
-def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, zoomed=False):
+def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, zoomed=False, show_task_labels=True,
+                 show_timesteps=True, show_y_label=True, show_x_label=True):
     """Add environment boundary lines, labels, and grid to an axis."""
-    fs = 2.3 if zoomed else 1.84
+    fs = 1.84
     x_lo, x_hi = ax.get_xlim()
 
     test_env_idx = None
@@ -167,25 +195,26 @@ def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, z
             )
 
     # Task labels
-    trans = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)
-    for i, env in enumerate(train_envs):
-        env_start = i * timesteps_per_env
-        env_end = (i + 1) * timesteps_per_env
-        if env_end <= x_lo or env_start >= x_hi:
-            continue
-        if test_env_idx is not None and test_env_idx > i:
-            continue
-        center = (i + 0.5) * timesteps_per_env
-        ax.text(
-            center,
-            1.02,
-            f"Task {i + 1}",
-            ha="center",
-            va="bottom",
-            fontsize=9 * fs,
-            color="gray",
-            transform=trans,
-        )
+    if show_task_labels:
+        trans = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)
+        for i, env in enumerate(train_envs):
+            env_start = i * timesteps_per_env
+            env_end = (i + 1) * timesteps_per_env
+            if env_end <= x_lo or env_start >= x_hi:
+                continue
+            if test_env_idx is not None and test_env_idx > i:
+                continue
+            center = (i + 0.5) * timesteps_per_env
+            ax.text(
+                center,
+                -0.08,
+                f"Task {i + 1}",
+                ha="center",
+                va="top",
+                fontsize=9 * fs,
+                color="gray",
+                transform=trans,
+            )
 
     if zoomed:
         ax.get_legend_handles_labels()
@@ -193,6 +222,7 @@ def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, z
         if legend:
             legend.remove()
         ax.tick_params(axis='both', labelsize=10 * fs)
+        ax.tick_params(axis='x', labelbottom=False)
         y_lo, y_hi = ax.get_ylim()
         y_max = _nice_floor(y_hi)
         yticks = [0, y_max / 2, y_max]
@@ -200,18 +230,143 @@ def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, z
         ax.yaxis.grid(True, alpha=0.3)
         ax.xaxis.grid(False)
     else:
-        ax.set_xlabel("Total Timesteps", fontsize=10 * fs)
-        ax.set_ylabel("IQM Episodic Return", fontsize=10 * fs)
+        if show_x_label:
+            ax.set_xlabel("Total Timesteps", fontsize=10 * fs, labelpad=22)
+        if show_y_label:
+            ax.set_ylabel("IQM Episodic Return (95% CI)", fontsize=10 * fs)
         if title:
             ax.set_title(title, pad=25, fontsize=12 * fs)
         ax.legend(loc="lower right", fontsize=10 * fs)
         ax.tick_params(axis='both', labelsize=10 * fs)
+        if not show_timesteps:
+            ax.tick_params(axis='x', labelbottom=False)
+        # Set x-ticks only at task boundaries and 0
+        xticks = [0] + [(idx + 1) * timesteps_per_env for idx in range(len(train_envs))]
+        xticks = [x for x in xticks if x_lo <= x <= x_hi]
+        ax.set_xticks(xticks)
         y_lo, y_hi = ax.get_ylim()
         y_max = _nice_floor(y_hi)
         yticks = [0, y_max / 2, y_max]
         ax.set_yticks(yticks)
         ax.yaxis.grid(True, alpha=0.3)
         ax.xaxis.grid(False)
+
+
+def plot_zoom_figure(plot_cfg, cache_key, use_cache, seeds, envs, timesteps, env_name, plot_output_dir, output_file, dpi, defaults, index, total_plots):
+    import matplotlib.gridspec as gridspec
+    from matplotlib.patches import ConnectionPatch
+
+    zooms = plot_cfg["zooms"]
+    n_zooms = len(zooms)
+
+    fig = plt.figure(figsize=(10, 8))
+    gs = gridspec.GridSpec(2, n_zooms, height_ratios=[1, 1.2])
+
+    ax_zooms = [fig.add_subplot(gs[0, i]) for i in range(n_zooms)]
+    ax_main = fig.add_subplot(gs[1, :])
+
+    test_env = plot_cfg.get("test_env")
+    title = plot_cfg.get("title", None)
+    if title is None and env_name:
+        if test_env:
+            title = f"Evaluation on {env_name}-{test_env}"
+        else:
+            title = f"Evaluation on {env_name}"
+
+    for line_idx, line_cfg in enumerate(plot_cfg["lines"]):
+        method = line_cfg["method"]
+        label = line_cfg.get("label", get_label(method))
+        color = line_cfg.get("color", get_color(method, line_idx))
+        line_test_env = line_cfg.get("test_env", test_env)
+        line_envs = line_cfg.get("envs", envs)
+
+        cached = None
+        if use_cache:
+            cached = load_from_cache(cache_key, method, line_test_env)
+
+        if cached is not None:
+            ts, iqm, ci_lo, ci_hi = cached
+            print(f"Loaded cached IQM for {label} on {line_test_env}")
+        else:
+            print(f"Computing IQM for {label} on {line_test_env}...")
+            ts, iqm, ci_lo, ci_hi = compute_iqm_curve(
+                method, line_test_env,
+                seeds=seeds,
+                train_envs=line_envs,
+                timesteps_per_env=timesteps,
+                data_dir=DATA_DIR,
+            )
+            if len(ts) > 0:
+                save_to_cache(cache_key, method, line_test_env, ts, iqm, ci_lo, ci_hi)
+
+        if len(ts) == 0:
+            print(f"  No data for {method}/{line_test_env}")
+            continue
+
+        smooth = plot_cfg.get("smooth", defaults.get("smooth"))
+        iqm_smoothed = _smooth(iqm, smooth)
+        ci_lo_smoothed = _smooth(ci_lo, smooth)
+        ci_hi_smoothed = _smooth(ci_hi, smooth)
+
+        linewidth = line_cfg.get("linewidth", plot_cfg.get("linewidth", defaults.get("linewidth", 0.7)))
+
+        # Plot on main
+        ax_main.plot(ts, iqm_smoothed, label=label, color=color, linewidth=linewidth)
+        ax_main.fill_between(ts, ci_lo_smoothed, ci_hi_smoothed, alpha=0.2, color=color)
+
+        # Plot on each zoom axis
+        for i, z_cfg in enumerate(zooms):
+            ax_zooms[i].plot(ts, iqm_smoothed, label=label, color=color, linewidth=linewidth)
+            ax_zooms[i].fill_between(ts, ci_lo_smoothed, ci_hi_smoothed, alpha=0.2, color=color)
+
+    show_timesteps = plot_cfg.get("show_timesteps", defaults.get("show_timesteps", True))
+    show_y_label = plot_cfg.get("show_y_label", defaults.get("show_y_label", True))
+    show_x_label = plot_cfg.get("show_x_label", defaults.get("show_x_label", True))
+
+    # Decorate main axis
+    _decorate_ax(ax_main, envs, timesteps, title=None, test_env=test_env, zoomed=False, show_task_labels=True,
+                 show_timesteps=show_timesteps, show_y_label=show_y_label, show_x_label=show_x_label)
+    if title:
+        fig.suptitle(title, fontsize=14, y=0.98)
+
+    # Sync y limits and draw zoom connections
+    y_min, y_max = ax_main.get_ylim()
+    for i, z_cfg in enumerate(zooms):
+        z_start = z_cfg["t_start"]
+        z_end = z_cfg["t_end"]
+
+        ax_zooms[i].set_xlim(left=z_start, right=z_end)
+        ax_zooms[i].set_ylim(bottom=y_min, top=y_max)
+
+        # Decorate zoom axis (hide task labels)
+        _decorate_ax(ax_zooms[i], envs, timesteps, title=None, test_env=test_env, zoomed=True, show_task_labels=False,
+                     show_timesteps=show_timesteps, show_y_label=show_y_label, show_x_label=show_x_label)
+
+        # Draw vertical rectangle box on main plot spanning full y
+        rect = plt.Rectangle((z_start, y_min), z_end - z_start, y_max - y_min,
+                             fill=False, edgecolor='black', linewidth=0.5, zorder=10)
+        ax_main.add_patch(rect)
+
+        # Draw connection lines
+        con_left = ConnectionPatch(xyA=(0, 0), xyB=(z_start, y_max), coordsA="axes fraction", coordsB="data",
+                                   axesA=ax_zooms[i], axesB=ax_main, color="black", linestyle=":", linewidth=0.5)
+        con_right = ConnectionPatch(xyA=(1, 0), xyB=(z_end, y_max), coordsA="axes fraction", coordsB="data",
+                                    axesA=ax_zooms[i], axesB=ax_main, color="black", linestyle=":", linewidth=0.5)
+        fig.add_artist(con_left)
+        fig.add_artist(con_right)
+
+    plt.tight_layout()
+    file_format = defaults.get("format", defaults.get("ext", "svg")).lstrip(".")
+    # Save figure
+    if total_plots == 1:
+        out_path = plot_output_dir / f"{output_file}.{file_format}"
+    else:
+        test_env_suffix = test_env if test_env else f"{index + 1}"
+        out_path = plot_output_dir / f"{output_file}_{test_env_suffix}_zoom.{file_format}"
+
+    fig.savefig(out_path, dpi=dpi)
+    plt.close(fig)
+    print(f"Saved zoom plot to {out_path}")
 
 
 def plot_grid(config: dict, use_cache: bool):
@@ -227,16 +382,6 @@ def plot_grid(config: dict, use_cache: bool):
     output_file = defaults.get("output_file", "iqm_grid")
     dpi = defaults.get("dpi", 300)
 
-    n_plots = len(plots)
-    grid = defaults.get("grid", None)
-    if grid:
-        nrows, ncols = grid
-    elif n_plots == 1:
-        nrows, ncols = 1, 1
-    else:
-        ncols = math.ceil(math.sqrt(n_plots))
-        nrows = math.ceil(n_plots / ncols)
-
     if output_subdir:
         plot_output_dir = OUTPUT_DIR / output_subdir
     else:
@@ -246,15 +391,35 @@ def plot_grid(config: dict, use_cache: bool):
     all_methods = []
     for p in plots:
         for line in p["lines"]:
-            all_methods.append(line["method"])
+            line_envs = line.get("envs", envs)
+            all_methods.append(f"{line['method']}_{'-'.join(line_envs)}")
     cache_key = make_cache_key(all_methods, output_file)
     if use_cache:
         print(f"Cache key: {cache_key}  (use --no-cache to force recompute)")
 
+    zoom_plots = [p for p in plots if "zooms" in p]
+    grid_plots = [p for p in plots if "zooms" not in p]
+
+    for zoom_idx, plot_cfg in enumerate(zoom_plots):
+        plot_zoom_figure(plot_cfg, cache_key, use_cache, seeds, envs, timesteps, env_name, plot_output_dir, output_file, dpi, defaults, zoom_idx, len(plots))
+
+    if not grid_plots:
+        return
+
+    n_plots = len(grid_plots)
+    grid = defaults.get("grid", None)
+    if grid:
+        nrows, ncols = grid
+    elif n_plots == 1:
+        nrows, ncols = 1, 1
+    else:
+        ncols = math.ceil(math.sqrt(n_plots))
+        nrows = math.ceil(n_plots / ncols)
+
     any_zoomed = any(
         p.get("t_start", defaults.get("t_start")) is not None
         or p.get("t_end", defaults.get("t_end")) is not None
-        for p in plots
+        for p in grid_plots
     )
 
     if any_zoomed:
@@ -265,42 +430,47 @@ def plot_grid(config: dict, use_cache: bool):
         fig_h = 5 * nrows
     fig, axes = plt.subplots(nrows, ncols, figsize=(fig_w, fig_h), squeeze=False)
 
-    for plot_idx, plot_cfg in enumerate(plots):
+    for plot_idx, plot_cfg in enumerate(grid_plots):
         row = plot_idx // ncols
         col = plot_idx % ncols
         ax = axes[row][col]
 
-        test_env = plot_cfg["test_env"]
+        test_env = plot_cfg.get("test_env")
         title = plot_cfg.get("title", None)
         if title is None and env_name:
-            title = f"Evaluation on {env_name}-{test_env}"
+            if test_env:
+                title = f"Evaluation on {env_name}-{test_env}"
+            else:
+                title = f"Evaluation on {env_name}"
 
         for line_idx, line_cfg in enumerate(plot_cfg["lines"]):
             method = line_cfg["method"]
             label = line_cfg.get("label", get_label(method))
             color = line_cfg.get("color", get_color(method, line_idx))
+            line_test_env = line_cfg.get("test_env", test_env)
+            line_envs = line_cfg.get("envs", envs)
 
             cached = None
             if use_cache:
-                cached = load_from_cache(cache_key, method, test_env)
+                cached = load_from_cache(cache_key, method, line_test_env)
 
             if cached is not None:
                 ts, iqm, ci_lo, ci_hi = cached
-                print(f"Loaded cached IQM for {label} on {test_env}")
+                print(f"Loaded cached IQM for {label} on {line_test_env}")
             else:
-                print(f"Computing IQM for {label} on {test_env}...")
+                print(f"Computing IQM for {label} on {line_test_env}...")
                 ts, iqm, ci_lo, ci_hi = compute_iqm_curve(
-                    method, test_env,
+                    method, line_test_env,
                     seeds=seeds,
-                    train_envs=envs,
+                    train_envs=line_envs,
                     timesteps_per_env=timesteps,
                     data_dir=DATA_DIR,
                 )
                 if len(ts) > 0:
-                    save_to_cache(cache_key, method, test_env, ts, iqm, ci_lo, ci_hi)
+                    save_to_cache(cache_key, method, line_test_env, ts, iqm, ci_lo, ci_hi)
 
             if len(ts) == 0:
-                print(f"  No data for {method}/{test_env}")
+                print(f"  No data for {method}/{line_test_env}")
                 continue
 
             smooth = plot_cfg.get("smooth", defaults.get("smooth"))
@@ -308,7 +478,8 @@ def plot_grid(config: dict, use_cache: bool):
             ci_lo = _smooth(ci_lo, smooth)
             ci_hi = _smooth(ci_hi, smooth)
 
-            ax.plot(ts, iqm, label=label, color=color, linewidth=0.7)
+            linewidth = line_cfg.get("linewidth", plot_cfg.get("linewidth", defaults.get("linewidth", 0.7)))
+            ax.plot(ts, iqm, label=label, color=color, linewidth=linewidth)
             ax.fill_between(ts, ci_lo, ci_hi, alpha=0.2, color=color)
 
         t_start = plot_cfg.get("t_start", defaults.get("t_start"))
@@ -317,7 +488,13 @@ def plot_grid(config: dict, use_cache: bool):
         if zoomed:
             ax.set_xlim(left=t_start, right=t_end)
 
-        _decorate_ax(ax, envs, timesteps, title=title, test_env=test_env, zoomed=zoomed)
+        show_timesteps = plot_cfg.get("show_timesteps", defaults.get("show_timesteps", True))
+        show_y_label = plot_cfg.get("show_y_label", defaults.get("show_y_label", True))
+        show_x_label = plot_cfg.get("show_x_label", defaults.get("show_x_label", True))
+        _decorate_ax(
+            ax, envs, timesteps, title=title, test_env=test_env, zoomed=zoomed,
+            show_timesteps=show_timesteps, show_y_label=show_y_label, show_x_label=show_x_label
+        )
 
     for idx in range(n_plots, nrows * ncols):
         row = idx // ncols
@@ -325,7 +502,8 @@ def plot_grid(config: dict, use_cache: bool):
         axes[row][col].set_visible(False)
 
     plt.tight_layout()
-    out_path = plot_output_dir / f"{output_file}.svg"
+    file_format = defaults.get("format", defaults.get("ext", "svg")).lstrip(".")
+    out_path = plot_output_dir / f"{output_file}.{file_format}"
     fig.savefig(out_path, dpi=dpi)
     plt.close(fig)
     print(f"Saved {out_path}")
