@@ -143,9 +143,9 @@ def load_policies(model_path: str) -> tuple[MLP, MLP, MLP, MLP]:
                     (jnp.array(th_object["actor.latent_pi.4.weight"].cpu().numpy()), jnp.array(th_object["actor.latent_pi.4.bias"].cpu().numpy())),
                 ]
 
-    d = [(lc[0] + lb[0] - la[0], lc[1] + lb[1] - la[1]) for la, lb, lc in zip(models['V1'], models['V2'], models['V3'])]
+    d = [(lc[0] + lb[0] - la[0], lc[1] + lb[1] - la[1]) for la, lb, lc in zip(models['V2'], models['V8'], models['V9'])]
 
-    return models['V1'], models['V2'], models['V3'], d
+    return models['V2'], models['V8'], models['V9'], d
 
 
 def main(
