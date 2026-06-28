@@ -59,7 +59,7 @@ def evaluate(policy: MLP, onehot: jax.Array, proj_mat: jax.Array, key: jax.Array
     batch_onehot = jnp.tile(onehot, (N_EVAL, 1))
 
     def process_obs(obs_batch: jax.Array) -> jax.Array:
-        proj_obs = obs_batch @ proj_mat
+        proj_obs = obs_batch @ proj_mat.T
 
         return jnp.concatenate([proj_obs, batch_onehot], axis=-1)
 
