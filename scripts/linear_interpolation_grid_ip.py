@@ -268,12 +268,17 @@ def main(
     proj_mat, proj_bias, onehot = get_projection(eval_task, len(benchmark), benchmark)
 
     for s in tqdm.tqdm(seeds):
-        policies = load_policies(
-            path.join(MODEL_PATH, model_path.replace('<s>', str(s))),
-            benchmark
-        )
+        try:
+            policies = load_policies(
+                path.join(MODEL_PATH, model_path.replace('<s>', str(s))),
+                benchmark
+            )
+        except (FileNotFoundError, zipfile.BadZipFile, KeyError) as e:
+            print(f"Warning: Skipping seed {s} due to missing or corrupt model file: {e}")
+            continue
 
         combinations = generate_combinations()
+
         
         # Partially apply env details to evaluate_combination
         eval_fn = lambda pols, comb: evaluate_combination(
