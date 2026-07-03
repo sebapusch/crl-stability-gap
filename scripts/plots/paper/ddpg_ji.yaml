@@ -1,0 +1,29 @@
+defaults:
+  env_name: CartPole
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  timesteps: 75_000
+  output_dir: paper
+  output_file: ddpg_ji_hard
+  dpi: 500 # optional: default is 300
+  show_timesteps: false
+  show_x_label: false
+  show_y_label: false
+  format: svg
+
+plots:
+  - title: "Eval on $\\mathcal{B}_{\\text{easy}}^{\\text{IP}}$"
+    smooth: 15
+    linewidth: 1.6
+    zooms:
+      - t_start: 70_000
+        t_end: 85_000
+      - t_start: 145_000
+        t_end: 160_000
+
+    lines:
+      - method: "ddpg_ip_ji_v2/ddpg_ip_ji-l_000025-s_<s>"
+        envs: [ V1, V2, V3 ]
+        test_env: V1
+        label: "DDPG + JI"
+        color: "#4C78A8"
+

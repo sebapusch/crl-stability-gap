@@ -39,6 +39,7 @@ SEEDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 TRAIN_ENVS = ["V1", "V2", "V3"]
 TEST_ENVS = ["V1", "V2", "V3"]
 TIMESTEPS_PER_ENV = 40_000
+FS = 1.84
 
 # Known labels
 METHOD_LABELS = {
@@ -174,7 +175,7 @@ def _nice_floor(value: float) -> float:
 def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, zoomed=False, show_task_labels=True,
                  show_timesteps=True, show_y_label=True, show_x_label=True):
     """Add environment boundary lines, labels, and grid to an axis."""
-    fs = 1.84
+    fs = FS
     x_lo, x_hi = ax.get_xlim()
 
     test_env_idx = None
@@ -235,7 +236,7 @@ def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, z
         if show_y_label:
             ax.set_ylabel("IQM Episodic Return (95% CI)", fontsize=10 * fs)
         if title:
-            ax.set_title(title, pad=25, fontsize=12 * fs)
+            ax.set_title(title, pad=25, fontsize=10 * fs)
         ax.legend(loc="lower right", fontsize=10 * fs)
         ax.tick_params(axis='both', labelsize=10 * fs)
         if not show_timesteps:
@@ -327,7 +328,7 @@ def plot_zoom_figure(plot_cfg, cache_key, use_cache, seeds, envs, timesteps, env
     _decorate_ax(ax_main, envs, timesteps, title=None, test_env=test_env, zoomed=False, show_task_labels=True,
                  show_timesteps=show_timesteps, show_y_label=show_y_label, show_x_label=show_x_label)
     if title:
-        fig.suptitle(title, fontsize=14, y=0.98)
+        fig.suptitle(title, fontsize=10 * FS, y=0.98)
 
     # Sync y limits and draw zoom connections
     y_min, y_max = ax_main.get_ylim()

@@ -1,0 +1,29 @@
+defaults:
+  env_name: CartPole
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  timesteps: 75_000
+  output_dir: paper
+  output_file: main_ddpg
+  dpi: 500 # optional: default is 300
+  show_timesteps: false
+  show_x_label: false
+  show_y_label: false
+  format: svg
+
+plots:
+  - title: "Eval on $\\mathcal{B}_{\\text{hard}}^{\\text{IP}}$"
+    smooth: 15
+    linewidth: 1.6
+    zooms:
+      - t_start: 70_000
+        t_end: 85_000
+      - t_start: 145_000
+        t_end: 160_000
+
+    lines:
+      - method: "ddpg_ip_bc_v2/ddpg_ip_bc-l_0001-b_01-s_<s>"
+        envs: [ V2, V8, V9 ]
+        test_env: V2
+        label: "DDPG + BC"
+        color: "#4C78A8"
+

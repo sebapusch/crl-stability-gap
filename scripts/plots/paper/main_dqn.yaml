@@ -1,0 +1,29 @@
+defaults:
+  env_name: CartPole
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  timesteps: 200_000
+  output_dir: paper
+  output_file: main_dqn
+  dpi: 500 # optional: default is 300
+  show_timesteps: false
+  show_x_label: false
+  show_y_label: true
+  format: svg
+
+plots:
+  - title: "Eval on $\\mathcal{B}_{\\text{easy}}^{\\text{CP}}$"
+    smooth: 15
+    zooms:
+      - t_start: 195_000
+        t_end: 220_000
+      - t_start: 395_000
+        t_end: 420_000
+
+    lines:
+      - method: "dqn_cp_bc/dqn_cp_bc-b_07-s_<s>-l_00001"
+        linewidth: 1.6
+        envs: [V1, V2, V3]
+        test_env: V1
+        label: "DQN + BC"
+        color: "#D62728"
+
