@@ -2,7 +2,6 @@ import argparse
 from argparse import Namespace
 
 METHODS = [
-    "sequential",
     "fine_tune",
     "joint_incremental",
     "behavior_cloning",
@@ -14,6 +13,7 @@ BENCHMARK = ["V1", "V2", "V3"]
 ENVS = ["cartpole", "inverted_pendulum", "inverted_pendulum_hard", "highway_env"]
 OPTIMIZERS = ["adam", "sgd", "rmsprop", "sgd_momentum", "adamw"]
 ALGORITHMS = ["dqn", "sacd", "sac", "ddpg"]
+MODES = ["continual", "multitask"]
 
 
 def get_args() -> Namespace:
@@ -110,7 +110,7 @@ def get_args() -> Namespace:
     parser.add_argument("--expert_buffer_size", default=1000, type=int)
     parser.add_argument("--network_size", default=None, type=int)
     parser.add_argument("--multihead", default=False, action="store_true")
-    parser.add_argument("--mode", default="continual", type=str)
+    parser.add_argument("--mode", default=MODES[0], type=str, choices=MODES)
     parser.add_argument("--store_weights", default=False, action="store_true")
     parser.add_argument('--n_parallel_envs', default=1, type=int)
 
@@ -141,11 +141,7 @@ def get_args() -> Namespace:
 
     parser.add_argument("--optimizer", default="adam", type=str, choices=OPTIMIZERS)
 
-    # ── EWC-specific (algorithm) ───────────────────────────────
     parser.add_argument("--ewc_lambda", default=1.0, type=float)
-
-    # ── Linear-interpolation-specific (mode) ───────────────────────────────
-    parser.add_argument("--model_path", default="", type=str)
 
     return parser.parse_args()
 

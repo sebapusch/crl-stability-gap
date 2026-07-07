@@ -266,6 +266,11 @@ def plot_zoom_figure(plot_cfg, cache_key, use_cache, seeds, envs, timesteps, env
     ax_zooms = [fig.add_subplot(gs[0, i]) for i in range(n_zooms)]
     ax_main = fig.add_subplot(gs[1, :])
 
+    plot_timesteps = plot_cfg.get("timesteps", timesteps)
+    plot_envs = plot_cfg.get("envs", envs)
+    if "envs" not in plot_cfg and plot_cfg.get("lines"):
+        plot_envs = plot_cfg["lines"][0].get("envs", envs)
+
     test_env = plot_cfg.get("test_env")
     title = plot_cfg.get("title", None)
     if title is None and env_name:
@@ -279,7 +284,8 @@ def plot_zoom_figure(plot_cfg, cache_key, use_cache, seeds, envs, timesteps, env
         label = line_cfg.get("label", get_label(method))
         color = line_cfg.get("color", get_color(method, line_idx))
         line_test_env = line_cfg.get("test_env", test_env)
-        line_envs = line_cfg.get("envs", envs)
+        line_envs = line_cfg.get("envs", plot_envs)
+        line_timesteps = line_cfg.get("timesteps", plot_timesteps)
 
         cached = None
         if use_cache:
@@ -294,7 +300,7 @@ def plot_zoom_figure(plot_cfg, cache_key, use_cache, seeds, envs, timesteps, env
                 method, line_test_env,
                 seeds=seeds,
                 train_envs=line_envs,
-                timesteps_per_env=timesteps,
+                timesteps_per_env=line_timesteps,
                 data_dir=DATA_DIR,
             )
             if len(ts) > 0:
@@ -325,7 +331,7 @@ def plot_zoom_figure(plot_cfg, cache_key, use_cache, seeds, envs, timesteps, env
     show_x_label = plot_cfg.get("show_x_label", defaults.get("show_x_label", True))
 
     # Decorate main axis
-    _decorate_ax(ax_main, envs, timesteps, title=None, test_env=test_env, zoomed=False, show_task_labels=True,
+    _decorate_ax(ax_main, plot_envs, plot_timesteps, title=None, test_env=test_env, zoomed=False, show_task_labels=True,
                  show_timesteps=show_timesteps, show_y_label=show_y_label, show_x_label=show_x_label)
     if title:
         fig.suptitle(title, fontsize=10 * FS, y=0.98)
@@ -340,7 +346,7 @@ def plot_zoom_figure(plot_cfg, cache_key, use_cache, seeds, envs, timesteps, env
         ax_zooms[i].set_ylim(bottom=y_min, top=y_max)
 
         # Decorate zoom axis (hide task labels)
-        _decorate_ax(ax_zooms[i], envs, timesteps, title=None, test_env=test_env, zoomed=True, show_task_labels=False,
+        _decorate_ax(ax_zooms[i], plot_envs, plot_timesteps, title=None, test_env=test_env, zoomed=True, show_task_labels=False,
                      show_timesteps=show_timesteps, show_y_label=show_y_label, show_x_label=show_x_label)
 
         # Draw vertical rectangle box on main plot spanning full y
@@ -391,9 +397,11 @@ def plot_grid(config: dict, use_cache: bool):
 
     all_methods = []
     for p in plots:
+        p_timesteps = p.get("timesteps", timesteps)
         for line in p["lines"]:
-            line_envs = line.get("envs", envs)
-            all_methods.append(f"{line['method']}_{'-'.join(line_envs)}")
+            l_envs = line.get("envs", p.get("envs", envs))
+            l_timesteps = line.get("timesteps", p_timesteps)
+            all_methods.append(f"{line['method']}_{'-'.join(l_envs)}_{l_timesteps}")
     cache_key = make_cache_key(all_methods, output_file)
     if use_cache:
         print(f"Cache key: {cache_key}  (use --no-cache to force recompute)")
@@ -436,6 +444,11 @@ def plot_grid(config: dict, use_cache: bool):
         col = plot_idx % ncols
         ax = axes[row][col]
 
+        plot_timesteps = plot_cfg.get("timesteps", timesteps)
+        plot_envs = plot_cfg.get("envs", envs)
+        if "envs" not in plot_cfg and plot_cfg.get("lines"):
+            plot_envs = plot_cfg["lines"][0].get("envs", envs)
+
         test_env = plot_cfg.get("test_env")
         title = plot_cfg.get("title", None)
         if title is None and env_name:
@@ -449,7 +462,8 @@ def plot_grid(config: dict, use_cache: bool):
             label = line_cfg.get("label", get_label(method))
             color = line_cfg.get("color", get_color(method, line_idx))
             line_test_env = line_cfg.get("test_env", test_env)
-            line_envs = line_cfg.get("envs", envs)
+            line_envs = line_cfg.get("envs", plot_envs)
+            line_timesteps = line_cfg.get("timesteps", plot_timesteps)
 
             cached = None
             if use_cache:
@@ -464,7 +478,7 @@ def plot_grid(config: dict, use_cache: bool):
                     method, line_test_env,
                     seeds=seeds,
                     train_envs=line_envs,
-                    timesteps_per_env=timesteps,
+                    timesteps_per_env=line_timesteps,
                     data_dir=DATA_DIR,
                 )
                 if len(ts) > 0:
@@ -493,7 +507,7 @@ def plot_grid(config: dict, use_cache: bool):
         show_y_label = plot_cfg.get("show_y_label", defaults.get("show_y_label", True))
         show_x_label = plot_cfg.get("show_x_label", defaults.get("show_x_label", True))
         _decorate_ax(
-            ax, envs, timesteps, title=title, test_env=test_env, zoomed=zoomed,
+            ax, plot_envs, plot_timesteps, title=title, test_env=test_env, zoomed=zoomed,
             show_timesteps=show_timesteps, show_y_label=show_y_label, show_x_label=show_x_label
         )
 

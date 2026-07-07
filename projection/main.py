@@ -1,6 +1,4 @@
-import os
-from copy import deepcopy
-from typing import Callable, ParamSpec
+from typing import Any, Callable
 
 from gymnasium.wrappers import FlattenObservation
 from highway_env.envs import HighwayEnvFast
@@ -14,10 +12,7 @@ from torch.optim import SGD, Adam, AdamW, Optimizer, RMSprop
 import wandb
 from projection.benchmarks.inverted_pendulum_hard import InvertedPendulumHard
 from projection.benchmarks.projected_env_benchmark import ProjectedEnvBenchmark
-from projection.callbacks import EnvEvalCallback
-from projection.common import MODEL_PATH, make_logger, model_weight_path
-from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
-from stable_baselines3.common.save_util import load_from_zip_file
+from projection.common import make_logger, model_weight_path
 from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.continual import ContinualLearning
 from stable_baselines3.ddpg.ddpg_bc import DDPG_BC
@@ -37,23 +32,26 @@ from stable_baselines3.sacd.sacd_bc import SACD_BC
 from stable_baselines3.sacd.sacd_fine_tune import SACD_FineTune
 from stable_baselines3.sacd.sacd_joint_incremental import SACD_JointIncremental
 
-def make_highway(_ = None) -> GymEnv:
+
+EnvFactory = Callable[..., GymEnv]
+OptimizerConfig = tuple[type[Optimizer], dict[str, Any]]
+
+
+def make_highway(_: Any = None) -> GymEnv:
     env = HighwayEnvFast(render_mode=None)
     env = FlattenObservation(env)
 
     return env
 
 
-# ── Environment registry ────────────────────────────────────────────
-ENV_REGISTRY: dict[str, tuple[Callable[[ParamSpec.kwargs], GymEnv], int]] = {
+ENV_REGISTRY: dict[str, tuple[EnvFactory, int]] = {
     "cartpole": (CartPoleEnv, 500),
     "inverted_pendulum": (InvertedPendulumEnv, 1000),
     "inverted_pendulum_hard": (InvertedPendulumHard, 1000),
-    "highway_env": (make_highway, 1000)
+    "highway_env": (make_highway, 1000),
 }
 
-# ── Optimizer registry ───────────────────────────────────────────────
-OPTIMIZERS: dict[str, tuple[type[Optimizer], dict]] = {
+OPTIMIZERS: dict[str, OptimizerConfig] = {
     "adam": (Adam, {}),
     "sgd": (SGD, {}),
     "sgd_momentum": (SGD, {"momentum": 0.9}),
@@ -72,15 +70,12 @@ def get_benchmark(
     versions = [int(v.strip("V")) for v in benchmark]
 
     return ProjectedEnvBenchmark(
-        env_cls,  # type: ignore
+        env_cls,
         versions,
         encode,
         seed,
         time_limit,
     )
-
-
-# ── Algorithm construction ──────────────────────────────────────────
 
 
 def _build_dqn(
@@ -104,7 +99,7 @@ def _build_dqn(
     network_size: int,
     n_tasks: int,
     balanced_sampling: bool,
-    policy_kwargs: dict,
+    policy_kwargs: dict[str, Any],
     multihead: bool,
     exploration_strategy: str = "eps-greedy",
 ) -> ContinualLearning:
@@ -141,24 +136,24 @@ def _build_dqn(
                 **common_kwargs,
             )
         case "fine_tune":
-            return DQN_FineTune(**common_kwargs)  # pyright: ignore[reportArgumentType]
+            return DQN_FineTune(**common_kwargs)
         case "joint_incremental":
-            return DQN_JointIncremental(  # pyright: ignore[reportAbstractUsage]
+            return DQN_JointIncremental(
                 n_tasks=n_tasks,
                 balanced_sampling=balanced_sampling,
-                **common_kwargs,  # pyright: ignore[reportArgumentType]
+                **common_kwargs,
             )
         case "joint_incremental_pc_grad":
-            return DQN_JointIncremental_PCGrad(  # pyright: ignore[reportAbstractUsage]
+            return DQN_JointIncremental_PCGrad(
                 n_tasks=n_tasks,
                 balanced_sampling=False,
-                **common_kwargs,  # pyright: ignore[reportArgumentType]
+                **common_kwargs,
             )
         case "joint_incremental_a_gem":
-            return DQN_JointIncremental_AGEM(  # pyright: ignore[reportAbstractUsage]
+            return DQN_JointIncremental_AGEM(
                 n_tasks=n_tasks,
                 balanced_sampling=False,
-                **common_kwargs,  # pyright: ignore[reportArgumentType]
+                **common_kwargs,
             )
         case "a_egem":
             return DQN_AEGEM(
@@ -189,7 +184,7 @@ def _build_sacd(
     network_size: int,
     n_tasks: int,
     balanced_sampling: bool,
-    policy_kwargs: dict,
+    policy_kwargs: dict[str, Any],
     multihead: bool,
 ) -> ContinualLearning:
     policy_kwargs["net_arch"] = [network_size, network_size]
@@ -215,15 +210,15 @@ def _build_sacd(
                 n_tasks=n_tasks,
                 expert_buffer_batch_size=expert_buffer_batch_size,
                 lambda_=behavior_cloning_coefficient,
-                **common_kwargs,  # pyright: ignore[reportArgumentType]
+                **common_kwargs,
             )
         case "fine_tune":
-            return SACD_FineTune(**common_kwargs)  # pyright: ignore[reportArgumentType]
+            return SACD_FineTune(**common_kwargs)
         case "joint_incremental":
-            return SACD_JointIncremental(  # pyright: ignore[reportAbstractUsage]
+            return SACD_JointIncremental(
                 n_tasks=n_tasks,
                 balanced_sampling=balanced_sampling,
-                **common_kwargs,  # pyright: ignore[reportArgumentType]
+                **common_kwargs,
             )
         case _:
             raise ValueError(f'Unknown method "{method}"')
@@ -247,7 +242,7 @@ def _build_sac(
     network_size: int,
     n_tasks: int,
     balanced_sampling: bool,
-    policy_kwargs: dict,
+    policy_kwargs: dict[str, Any],
     multihead: bool,
 ) -> ContinualLearning:
     policy_kwargs["net_arch"] = [network_size, network_size]
@@ -277,12 +272,12 @@ def _build_sac(
                 **common_kwargs,
             )
         case "fine_tune":
-            return SAC_FineTune(**common_kwargs)  # pyright: ignore[reportArgumentType]
+            return SAC_FineTune(**common_kwargs)
         case "joint_incremental":
-            return SAC_JointIncremental(  # pyright: ignore[reportAbstractUsage]
+            return SAC_JointIncremental(
                 n_tasks=n_tasks,
                 balanced_sampling=balanced_sampling,
-                **common_kwargs,  # pyright: ignore[reportArgumentType]
+                **common_kwargs,
             )
         case _:
             raise ValueError(f'Unknown method "{method}"')
@@ -304,7 +299,7 @@ def _build_ddpg(
     network_size: int,
     n_tasks: int,
     balanced_sampling: bool,
-    policy_kwargs: dict,
+    policy_kwargs: dict[str, Any],
     multihead: bool,
 ) -> ContinualLearning:
     policy_kwargs["net_arch"] = [network_size, network_size]
@@ -324,10 +319,10 @@ def _build_ddpg(
 
     match method:
         case "joint_incremental":
-            return DDPG_JointIncremental(  # pyright: ignore[reportAbstractUsage]
+            return DDPG_JointIncremental(
                 balanced_sampling=balanced_sampling,
                 n_tasks=n_tasks,
-                **common_kwargs,  # pyright: ignore[reportArgumentType]
+                **common_kwargs,
             )
         case "behavior_cloning":
             return DDPG_BC(
@@ -353,7 +348,7 @@ def train_continual(
     q_net_track_freq: int | list[tuple[int, int]],
     video_freq: int,
     n_eval_episodes: int,
-    config: dict,
+    config: dict[str, Any],
     eval_all: bool,
     total_timesteps: int,
     store_weights: bool,
@@ -373,7 +368,6 @@ def train_continual(
 
         model.on_task_change(ix, train_env, make_logger(project, run.name))
 
-        # ── Train ───────────────────────────────────────────────────
         callbacks = make_callbacks(
             benchmark=benchmark,
             envs_test=envs_test,
@@ -407,7 +401,7 @@ def train_multitask(
     eval_freq: int | list[tuple[int, int]],
     video_freq: int,
     n_eval_episodes: int,
-    config: dict,
+    config: dict[str, Any],
     total_timesteps: int,
 ) -> None:
     tags += ["multitask"]
@@ -426,7 +420,6 @@ def train_multitask(
         len(envs_train) - 1, envs_train[-1], make_logger(project, run.name)
     )
 
-    # ── Train ───────────────────────────────────────────────────
     callbacks = make_callbacks(
         benchmark=benchmark,
         envs_test=envs_test,
@@ -446,90 +439,12 @@ def train_multitask(
     run.finish()
 
 
-def linear_interpolation(
-    benchmark: ProjectedEnvBenchmark,
-    envs_test: list[GymEnv],
-    model: ContinualLearning,
-    model_path: str,
-    tags: list[str],
-    name_prefix: str,
-    project: str,
-    n_eval_episodes: int,
-    config: dict,
-    alpha: float,
-    seed: str,
-) -> None:
-    assert isinstance(model, OffPolicyAlgorithm)
-
-    eval_envs: list[EnvEvalCallback] = []
-
-    model_path = os.path.join(MODEL_PATH, model_path).replace("<s>", seed)
-
-    for ix, train_env in enumerate(envs_test[:-1]):
-        model.num_timesteps = 0
-
-        version_a = f"V{benchmark.benchmark[ix]}"
-        version_b = f"V{benchmark.benchmark[ix + 1]}"
-
-        run = wandb.init(
-            name=f"{name_prefix}-{version_a}",
-            project=project,
-            config=config,
-            tags=tags,
-        )
-
-        model.set_logger(make_logger(project, run.name))
-
-        path_a, path_b = (
-            f"{model_path}-{version_a}.zip",
-            f"{model_path}-{version_b}.zip",
-        )
-
-        assert os.path.exists(path_a) and os.path.exists(path_b), (
-            f"Invalid path {path_a} or {path_b}"
-        )
-
-        _, params_a, _ = load_from_zip_file(path_a)
-        _, params_b, _ = load_from_zip_file(path_b)
-
-        params = deepcopy(params_a)
-
-        eval_envs.append(
-            EnvEvalCallback(
-                str(benchmark.benchmark[ix]),
-                envs_test[ix],
-                eval_freq=1,
-                n_eval_episodes=n_eval_episodes,
-            )
-        )
-        eval_envs[-1].init_callback(model)
-
-        for t in range(int(1 // alpha)):
-            cur_alpha = t * alpha
-
-            for p in params_a["policy"]:
-                params["policy"][p] = (
-                    cur_alpha * params_a["policy"][p]
-                    + (1 - cur_alpha) * params_b["policy"][p]
-                )
-
-            model.set_parameters(params)
-
-            for eval_env in eval_envs:
-                eval_env.on_step()
-
-            model.num_timesteps += 1
-
-        run.finish()
-
-
-# ── Main training loop ──────────────────────────────────────────────
 def main(
     benchmark: list[str] | None = None,
     env: str = "cartpole",
     seed: int = 42,
     name_prefix: str = "",
-    project: str = "",
+    project: str = "cartpole",
     method: str = "fine_tune",
     eval_freq: int | list[tuple[int, int]] = 500,
     video_freq: int = 0,
@@ -560,18 +475,16 @@ def main(
     multihead: bool = False,
     mode: str = "continual",
     store_weights: bool = False,
-    model_path: str = "",
     exploration_strategy: str = "eps-greedy",
     n_parallel_envs: int = 1,
     q_net_track_freq: int | list[tuple[int, int]] = 0,
-):
+) -> None:
     bench = get_benchmark(env, benchmark or ["V1", "V2", "V3"], seed, encode_task)
     if n_parallel_envs == 1:
         envs_train, envs_test = bench.make()
     else:
         envs_train, envs_test = bench.make_vec(n_parallel_envs)
 
-    # ── Common builder kwargs ────────────────────────────────────────
     common_build_kwargs = dict(
         lr=lr,
         gamma=gamma,
@@ -607,7 +520,6 @@ def main(
         **common_build_kwargs,
         bc_loss_fn=bc_loss_fn,
         ent_coef=ent_coef,
-        # ewc_lambda=ewc_lambda,
     )
 
     sacd_build_kwargs = dict(
@@ -619,7 +531,6 @@ def main(
         **common_build_kwargs,
     )
 
-    # ── Build model ─────────────────────────────────────
     train_env_init = envs_train[0]
     match algorithm:
         case "dqn":
@@ -671,20 +582,6 @@ def main(
                 config=config,
                 total_timesteps=total_timesteps,
             )
-        case "linear_interpolation":
-            linear_interpolation(
-                benchmark=bench,
-                envs_test=envs_test,
-                model=model,
-                tags=[f"s-{str(seed)}", method, optimizer, f"lr-{str(lr)}"],
-                name_prefix=name_prefix,
-                project=project,
-                n_eval_episodes=n_eval_episodes,
-                config=config,
-                alpha=lr,
-                model_path=model_path,
-                seed=str(seed),
-            )
         case _:
             raise ValueError(f'Unknown mode "{mode}"')
 
@@ -692,7 +589,9 @@ def main(
 if __name__ == "__main__":
     args = vars(get_args())
     args["eval_freq"] = parse_eval_freq(args["eval_freq"], args["total_timesteps"])
-    args["q_net_track_freq"] = parse_eval_freq(args["q_net_track_freq"], args["total_timesteps"])
+    args["q_net_track_freq"] = parse_eval_freq(
+        args["q_net_track_freq"], args["total_timesteps"]
+    )
     if type(args["ent_coef"]) == str:
         if args["ent_coef"] == "auto":
             args["ent_coef"] = None

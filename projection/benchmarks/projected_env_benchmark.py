@@ -12,7 +12,7 @@ from stable_baselines3.common.vec_env import VecEnv, SubprocVecEnv, DummyVecEnv
 PERMUTATION_SEEDS = range(90, 200)
 
 
-def _random_orthogonal(
+def random_orthogonal(
     seed: int, size: int, bias: bool = False
 ) -> tuple[np.ndarray, np.ndarray | None]:
     rng = np.random.default_rng(seed)
@@ -54,7 +54,7 @@ class ProjectedEnvBenchmark:
         env = ObsSpaceInf(env)
 
         if version > 1:
-            q, b = _random_orthogonal(
+            q, b = random_orthogonal(
                 PERMUTATION_SEEDS[version - 1],
                 env.observation_space.shape[0],  # type: ignore
                 version > 5,
