@@ -19,7 +19,6 @@ network_size: 256
 store_weights: true
 time: "30:00:00"
 mem: "40G"
-n_parallel_envs: 1
 
 ablations:
   lr: [ 0.0001, 0.00025, 0.0005, 0.00075, 0.001 ]

@@ -23,7 +23,6 @@ dqn_tau: 1.0
 lr: 0.0001
 
 store_weights: true
-n_parallel_envs: 32
 time: "03:00:00"
 mem: "32G"
 

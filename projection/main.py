@@ -468,14 +468,11 @@ def main(
     mode: str = "continual",
     store_weights: bool = False,
     exploration_strategy: str = "eps-greedy",
-    n_parallel_envs: int = 1,
     q_net_track_freq: int | list[tuple[int, int]] = 0,
 ) -> None:
     bench = get_benchmark(env, benchmark or ["V1", "V2", "V3"], seed, encode_task)
-    if n_parallel_envs == 1:
-        envs_train, envs_test = bench.make()
-    else:
-        envs_train, envs_test = bench.make_vec(n_parallel_envs)
+
+    envs_train, envs_test = bench.make()
 
     common_build_kwargs = dict(
         lr=lr,

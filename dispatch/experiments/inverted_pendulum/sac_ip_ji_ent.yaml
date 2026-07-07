@@ -17,7 +17,6 @@ learning_starts: 1000
 total_timesteps: 75_000
 network_size: 256
 time: "30:00:00"
-n_parallel_envs: 1
 store_weights: true
 
 ablations:
