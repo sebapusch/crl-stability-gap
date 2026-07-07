@@ -37,18 +37,10 @@ EnvFactory = Callable[..., GymEnv]
 OptimizerConfig = tuple[type[Optimizer], dict[str, Any]]
 
 
-def make_highway(_: Any = None) -> GymEnv:
-    env = HighwayEnvFast(render_mode=None)
-    env = FlattenObservation(env)
-
-    return env
-
-
 ENV_REGISTRY: dict[str, tuple[EnvFactory, int]] = {
     "cartpole": (CartPoleEnv, 500),
     "inverted_pendulum": (InvertedPendulumEnv, 1000),
     "inverted_pendulum_hard": (InvertedPendulumHard, 1000),
-    "highway_env": (make_highway, 1000),
 }
 
 OPTIMIZERS: dict[str, OptimizerConfig] = {
