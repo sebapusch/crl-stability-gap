@@ -1,9 +1,9 @@
-name_prefix: "dqn_cp_agem"
-project: "dqn_cp_agem"
+name_prefix: "dqn_cp_agem_v2"
+project: "dqn_cp_agem_v2"
 algorithm: "dqn"
 env: "cartpole"
 method: "joint_incremental_a_gem"
-benchmark: ["V1", "V2", "V3"]
+benchmark: ["V2", "V8", "V9"]
 batch_size: 128
 encode_task: true
 eval_all: true
@@ -22,6 +22,7 @@ epsilon_end: 0.05
 epsilon_decay_frac: 0.1
 dqn_tau: 1.0
 lr: 0.0001
+
 store_weights: true
 time: "60:00:00"
 mem: "32G"

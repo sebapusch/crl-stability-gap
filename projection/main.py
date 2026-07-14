@@ -15,20 +15,25 @@ from projection.benchmarks.projected_env_benchmark import ProjectedEnvBenchmark
 from projection.common import make_logger, model_weight_path
 from stable_baselines3.common.type_aliases import GymEnv
 from stable_baselines3.continual import ContinualLearning
+from stable_baselines3.ddpg.ddpg_aegem import DDPG_AEGEM
+from stable_baselines3.ddpg.ddpg_agem import DDPG_AGEM
 from stable_baselines3.ddpg.ddpg_bc import DDPG_BC
 from stable_baselines3.ddpg.ddpg_joint_incremental import DDPG_JointIncremental
 from stable_baselines3.dqn.dqn_a_egem import DQN_AEGEM
 from stable_baselines3.dqn.dqn_bc import DQN_BC
 from stable_baselines3.dqn.dqn_fine_tune import DQN_FineTune
 from stable_baselines3.dqn.dqn_joint_icremental import DQN_JointIncremental
-from stable_baselines3.dqn.dqn_ji_agem import DQN_JointIncremental_AGEM
+from stable_baselines3.dqn.dqn_joint_incremental_a_gem import DQN_JointIncremental_AGEM
 from stable_baselines3.dqn.dqn_joint_incremental_pc_grad import (
     DQN_JointIncremental_PCGrad,
 )
 from stable_baselines3.sac.sac_bc import SAC_BC
 from stable_baselines3.sac.sac_fine_tune import SAC_FineTune
+from stable_baselines3.sac.sac_aegem import SAC_AEGEM
 from stable_baselines3.sac.sac_agem import SAC_AGEM
 from stable_baselines3.sac.sac_joint_incremental import SAC_JointIncremental
+from stable_baselines3.sacd.sacd_aegem import SACD_AEGEM
+from stable_baselines3.sacd.sacd_agem import SACD_AGEM
 from stable_baselines3.sacd.sacd_bc import SACD_BC
 from stable_baselines3.sacd.sacd_fine_tune import SACD_FineTune
 from stable_baselines3.sacd.sacd_joint_incremental import SACD_JointIncremental
@@ -213,6 +218,19 @@ def _build_sacd(
                 balanced_sampling=balanced_sampling,
                 **common_kwargs,
             )
+        case "a_gem":
+            return SACD_AGEM(
+                n_tasks=n_tasks,
+                balanced_sampling=balanced_sampling,
+                **common_kwargs,
+            )
+        case "a_egem":
+            return SACD_AEGEM(
+                expert_buffer_size=expert_buffer_size,
+                n_tasks=n_tasks,
+                expert_buffer_batch_size=expert_buffer_batch_size,
+                **common_kwargs,
+            )
         case _:
             raise ValueError(f'Unknown method "{method}"')
 
@@ -274,14 +292,26 @@ def _build_sac(
             )
         case "a_gem":
             return SAC_AGEM(
+                expert_buffer_size=expert_buffer_size,
                 n_tasks=n_tasks,
+                expert_buffer_batch_size=expert_buffer_batch_size,
                 balanced_sampling=balanced_sampling,
                 **common_kwargs,
             )
         case "joint_incremental_a_gem":
             return SAC_AGEM(
+                expert_buffer_size=expert_buffer_size,
                 n_tasks=n_tasks,
+                expert_buffer_batch_size=expert_buffer_batch_size,
                 balanced_sampling=balanced_sampling,
+                **common_kwargs,
+            )
+        case "a_egem":
+            return SAC_AEGEM(
+                expert_buffer_size=expert_buffer_size,
+                n_tasks=n_tasks,
+                expert_buffer_batch_size=expert_buffer_batch_size,
+                loss_fn=bc_loss_fn,
                 **common_kwargs,
             )
         case _:
@@ -334,6 +364,19 @@ def _build_ddpg(
                 expert_buffer_size=expert_buffer_size,
                 expert_buffer_batch_size=expert_buffer_batch_size,
                 lambda_=behavior_cloning_coefficient,
+                n_tasks=n_tasks,
+                **common_kwargs,
+            )
+        case "a_gem":
+            return DDPG_AGEM(
+                balanced_sampling=balanced_sampling,
+                n_tasks=n_tasks,
+                **common_kwargs,
+            )
+        case "a_egem":
+            return DDPG_AEGEM(
+                expert_buffer_size=expert_buffer_size,
+                expert_buffer_batch_size=expert_buffer_batch_size,
                 n_tasks=n_tasks,
                 **common_kwargs,
             )

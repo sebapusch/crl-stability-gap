@@ -1,4 +1,4 @@
-name_prefix: "sacd_cp_bc_ent"
+xname_prefix: "sacd_cp_bc_ent"
 project: "sacd_cp_bc_ent_v2"
 algorithm: "sacd"
 env: "cartpole"
