@@ -21,12 +21,13 @@ from stable_baselines3.dqn.dqn_a_egem import DQN_AEGEM
 from stable_baselines3.dqn.dqn_bc import DQN_BC
 from stable_baselines3.dqn.dqn_fine_tune import DQN_FineTune
 from stable_baselines3.dqn.dqn_joint_icremental import DQN_JointIncremental
-from stable_baselines3.dqn.dqn_joint_incremental_a_gem import DQN_JointIncremental_AGEM
+from stable_baselines3.dqn.dqn_ji_agem import DQN_JointIncremental_AGEM
 from stable_baselines3.dqn.dqn_joint_incremental_pc_grad import (
     DQN_JointIncremental_PCGrad,
 )
 from stable_baselines3.sac.sac_bc import SAC_BC
 from stable_baselines3.sac.sac_fine_tune import SAC_FineTune
+from stable_baselines3.sac.sac_agem import SAC_AGEM
 from stable_baselines3.sac.sac_joint_incremental import SAC_JointIncremental
 from stable_baselines3.sacd.sacd_bc import SACD_BC
 from stable_baselines3.sacd.sacd_fine_tune import SACD_FineTune
@@ -267,6 +268,18 @@ def _build_sac(
             return SAC_FineTune(**common_kwargs)
         case "joint_incremental":
             return SAC_JointIncremental(
+                n_tasks=n_tasks,
+                balanced_sampling=balanced_sampling,
+                **common_kwargs,
+            )
+        case "a_gem":
+            return SAC_AGEM(
+                n_tasks=n_tasks,
+                balanced_sampling=balanced_sampling,
+                **common_kwargs,
+            )
+        case "joint_incremental_a_gem":
+            return SAC_AGEM(
                 n_tasks=n_tasks,
                 balanced_sampling=balanced_sampling,
                 **common_kwargs,

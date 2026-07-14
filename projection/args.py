@@ -7,6 +7,7 @@ METHODS = [
     "behavior_cloning",
     "joint_incremental_pc_grad",
     "joint_incremental_a_gem",
+    "a_gem",
     "a_egem",
 ]
 BENCHMARK = ["V1", "V2", "V3"]
