@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
+from matplotlib.ticker import FuncFormatter
 
 from common import (
     compute_iqm_curve,
@@ -39,7 +40,9 @@ SEEDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 TRAIN_ENVS = ["V1", "V2", "V3"]
 TEST_ENVS = ["V1", "V2", "V3"]
 TIMESTEPS_PER_ENV = 40_000
-FS = 1.84
+FS = 1.2
+X_LABEL = "Cumulative training timesteps"
+Y_LABEL = "IQM episodic return (95% CI)"
 
 # Known labels
 METHOD_LABELS = {
@@ -148,10 +151,12 @@ def load_config(path: str) -> dict:
         for key in ["show_timesteps", "show_y_label", "show_x_label"]:
             if key in plot and not isinstance(plot[key], bool):
                 raise ValueError(f"Plot entry {i} key '{key}' must be a boolean.")
+        if "output_file" in plot and not isinstance(plot["output_file"], str):
+            raise ValueError(f"Plot entry {i} key 'output_file' must be a string.")
         if "linewidth" in plot and not isinstance(plot["linewidth"], (int, float)):
             raise ValueError(f"Plot entry {i} key 'linewidth' must be a number.")
     if "defaults" in cfg and isinstance(cfg["defaults"], dict):
-        for key in ["format", "ext"]:
+        for key in ["format", "ext", "output_file", "output_dir"]:
             if key in cfg["defaults"] and not isinstance(cfg["defaults"][key], str):
                 raise ValueError(f"YAML config 'defaults' key '{key}' must be a string.")
         if "linewidth" in cfg["defaults"] and not isinstance(cfg["defaults"]["linewidth"], (int, float)):
@@ -170,6 +175,15 @@ def _nice_floor(value: float) -> float:
         if mantissa >= nice:
             return nice * base
     return base
+
+
+def _format_timestep(value: float, _position: int) -> str:
+    """Format timestep ticks compactly without hiding their scale."""
+    if abs(value) >= 1_000_000:
+        return f"{value / 1_000_000:g}M"
+    if abs(value) >= 1_000:
+        return f"{value / 1_000:g}k"
+    return f"{value:g}"
 
 
 def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, zoomed=False, show_task_labels=True,
@@ -222,8 +236,27 @@ def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, z
         legend = ax.get_legend()
         if legend:
             legend.remove()
-        ax.tick_params(axis='both', labelsize=10 * fs)
-        ax.tick_params(axis='x', labelbottom=False)
+        if show_y_label:
+            ax.set_ylabel(Y_LABEL, fontsize=10 * fs)
+        ax.tick_params(axis="both", labelsize=10 * fs)
+        ax.tick_params(axis="x", labelbottom=show_timesteps)
+        transition_ticks = [
+            i * timesteps_per_env
+            for i in range(1, len(train_envs))
+            if x_lo <= i * timesteps_per_env <= x_hi
+        ]
+        ax.set_xticks(transition_ticks)
+        ax.xaxis.set_major_formatter(FuncFormatter(_format_timestep))
+        # Connector lines occupy the corridor below the inset. Keep the lone
+        # transition label readable even when a connector passes behind it.
+        for tick_label in ax.get_xticklabels():
+            tick_label.set_bbox({
+                "facecolor": "white",
+                "edgecolor": "none",
+                "alpha": 0.9,
+                "pad": 1.5,
+            })
+            tick_label.set_zorder(10)
         y_lo, y_hi = ax.get_ylim()
         y_max = _nice_floor(y_hi)
         yticks = [0, y_max / 2, y_max]
@@ -232,12 +265,15 @@ def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, z
         ax.xaxis.grid(False)
     else:
         if show_x_label:
-            ax.set_xlabel("Total Timesteps", fontsize=10 * fs, labelpad=22)
+            task_label_pad = 34 if show_task_labels else 6
+            ax.set_xlabel(X_LABEL, fontsize=10 * fs, labelpad=task_label_pad)
         if show_y_label:
-            ax.set_ylabel("IQM Episodic Return (95% CI)", fontsize=10 * fs)
+            ax.set_ylabel(Y_LABEL, fontsize=10 * fs)
         if title:
-            ax.set_title(title, pad=25, fontsize=10 * fs)
-        ax.legend(loc="lower right", fontsize=10 * fs)
+            ax.set_title(title, pad=14, fontsize=11 * fs)
+        handles, labels = ax.get_legend_handles_labels()
+        if handles:
+            ax.legend(handles, labels, loc="best", fontsize=9 * fs)
         ax.tick_params(axis='both', labelsize=10 * fs)
         if not show_timesteps:
             ax.tick_params(axis='x', labelbottom=False)
@@ -245,6 +281,7 @@ def _decorate_ax(ax, train_envs, timesteps_per_env, title=None, test_env=None, z
         xticks = [0] + [(idx + 1) * timesteps_per_env for idx in range(len(train_envs))]
         xticks = [x for x in xticks if x_lo <= x <= x_hi]
         ax.set_xticks(xticks)
+        ax.xaxis.set_major_formatter(FuncFormatter(_format_timestep))
         y_lo, y_hi = ax.get_ylim()
         y_max = _nice_floor(y_hi)
         yticks = [0, y_max / 2, y_max]
@@ -279,6 +316,7 @@ def plot_zoom_figure(plot_cfg, cache_key, use_cache, seeds, envs, timesteps, env
         else:
             title = f"Evaluation on {env_name}"
 
+    n_lines_plotted = 0
     for line_idx, line_cfg in enumerate(plot_cfg["lines"]):
         method = line_cfg["method"]
         label = line_cfg.get("label", get_label(method))
@@ -320,11 +358,16 @@ def plot_zoom_figure(plot_cfg, cache_key, use_cache, seeds, envs, timesteps, env
         # Plot on main
         ax_main.plot(ts, iqm_smoothed, label=label, color=color, linewidth=linewidth)
         ax_main.fill_between(ts, ci_lo_smoothed, ci_hi_smoothed, alpha=0.2, color=color)
+        n_lines_plotted += 1
 
         # Plot on each zoom axis
         for i, z_cfg in enumerate(zooms):
             ax_zooms[i].plot(ts, iqm_smoothed, label=label, color=color, linewidth=linewidth)
             ax_zooms[i].fill_between(ts, ci_lo_smoothed, ci_hi_smoothed, alpha=0.2, color=color)
+
+    if n_lines_plotted == 0:
+        plt.close(fig)
+        raise RuntimeError(f"No data found for zoom plot: {title or output_file}")
 
     show_timesteps = plot_cfg.get("show_timesteps", defaults.get("show_timesteps", True))
     show_y_label = plot_cfg.get("show_y_label", defaults.get("show_y_label", True))
@@ -332,11 +375,13 @@ def plot_zoom_figure(plot_cfg, cache_key, use_cache, seeds, envs, timesteps, env
 
     # Decorate main axis
     _decorate_ax(ax_main, plot_envs, plot_timesteps, title=None, test_env=test_env, zoomed=False, show_task_labels=True,
-                 show_timesteps=show_timesteps, show_y_label=show_y_label, show_x_label=show_x_label)
+                 show_timesteps=show_timesteps, show_y_label=False, show_x_label=show_x_label)
     if title:
-        fig.suptitle(title, fontsize=10 * FS, y=0.98)
+        fig.suptitle(title, fontsize=11 * FS, y=0.965)
+    if show_y_label:
+        fig.supylabel(Y_LABEL, fontsize=10 * FS, x=0.015)
 
-    # Sync y limits and draw zoom connections
+    # Sync y limits and mark the ranges represented by the zoom panels.
     y_min, y_max = ax_main.get_ylim()
     for i, z_cfg in enumerate(zooms):
         z_start = z_cfg["t_start"]
@@ -347,31 +392,53 @@ def plot_zoom_figure(plot_cfg, cache_key, use_cache, seeds, envs, timesteps, env
 
         # Decorate zoom axis (hide task labels)
         _decorate_ax(ax_zooms[i], plot_envs, plot_timesteps, title=None, test_env=test_env, zoomed=True, show_task_labels=False,
-                     show_timesteps=show_timesteps, show_y_label=show_y_label, show_x_label=show_x_label)
+                     show_timesteps=show_timesteps, show_y_label=False, show_x_label=show_x_label)
 
-        # Draw vertical rectangle box on main plot spanning full y
+        # Draw a lightly shaded range on the main plot.  The visible outline is
+        # also where the connector lines will terminate.
         rect = plt.Rectangle((z_start, y_min), z_end - z_start, y_max - y_min,
-                             fill=False, edgecolor='black', linewidth=0.5, zorder=10)
+                             facecolor=(0, 0, 0, 0.035), edgecolor="0.3",
+                             linewidth=1.0, zorder=6)
         ax_main.add_patch(rect)
 
-        # Draw connection lines
+    # Leave a deliberate corridor between the zooms and the overview.  The
+    # previous default tight layout made the connectors so short that the top
+    # panels looked like independent plots rather than magnified ranges.
+    fig.tight_layout(
+        rect=(0.035 if show_y_label else 0, 0, 1, 0.965 if title else 1),
+        h_pad=3.0,
+        w_pad=2.0,
+    )
+
+    # Draw the connectors only after layout has fixed the axes positions, so
+    # each line precisely joins a zoom-panel corner to its overview range.
+    for i, z_cfg in enumerate(zooms):
+        z_start = z_cfg["t_start"]
+        z_end = z_cfg["t_end"]
+
         con_left = ConnectionPatch(xyA=(0, 0), xyB=(z_start, y_max), coordsA="axes fraction", coordsB="data",
-                                   axesA=ax_zooms[i], axesB=ax_main, color="black", linestyle=":", linewidth=0.5)
+                                   axesA=ax_zooms[i], axesB=ax_main, color="0.3", linestyle="--",
+                                   linewidth=1.0, clip_on=False, zorder=-1)
         con_right = ConnectionPatch(xyA=(1, 0), xyB=(z_end, y_max), coordsA="axes fraction", coordsB="data",
-                                    axesA=ax_zooms[i], axesB=ax_main, color="black", linestyle=":", linewidth=0.5)
+                                    axesA=ax_zooms[i], axesB=ax_main, color="0.3", linestyle="--",
+                                    linewidth=1.0, clip_on=False, zorder=-1)
         fig.add_artist(con_left)
         fig.add_artist(con_right)
 
-    plt.tight_layout()
     file_format = defaults.get("format", defaults.get("ext", "svg")).lstrip(".")
     # Save figure
-    if total_plots == 1:
+    plot_output_file = plot_cfg.get("output_file")
+    if plot_output_file:
+        out_path = plot_output_dir / f"{plot_output_file}.{file_format}"
+    elif total_plots == 1:
         out_path = plot_output_dir / f"{output_file}.{file_format}"
     else:
-        test_env_suffix = test_env if test_env else f"{index + 1}"
-        out_path = plot_output_dir / f"{output_file}_{test_env_suffix}_zoom.{file_format}"
+        # The index prevents plots that share a test environment from silently
+        # overwriting one another.
+        test_env_suffix = test_env if test_env else "mixed"
+        out_path = plot_output_dir / f"{output_file}_{index + 1:02d}_{test_env_suffix}_zoom.{file_format}"
 
-    fig.savefig(out_path, dpi=dpi)
+    fig.savefig(out_path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved zoom plot to {out_path}")
 
@@ -457,6 +524,7 @@ def plot_grid(config: dict, use_cache: bool):
             else:
                 title = f"Evaluation on {env_name}"
 
+        n_lines_plotted = 0
         for line_idx, line_cfg in enumerate(plot_cfg["lines"]):
             method = line_cfg["method"]
             label = line_cfg.get("label", get_label(method))
@@ -496,6 +564,11 @@ def plot_grid(config: dict, use_cache: bool):
             linewidth = line_cfg.get("linewidth", plot_cfg.get("linewidth", defaults.get("linewidth", 0.7)))
             ax.plot(ts, iqm, label=label, color=color, linewidth=linewidth)
             ax.fill_between(ts, ci_lo, ci_hi, alpha=0.2, color=color)
+            n_lines_plotted += 1
+
+        if n_lines_plotted == 0:
+            plt.close(fig)
+            raise RuntimeError(f"No data found for plot: {title or output_file}")
 
         t_start = plot_cfg.get("t_start", defaults.get("t_start"))
         t_end = plot_cfg.get("t_end", defaults.get("t_end"))
@@ -508,7 +581,7 @@ def plot_grid(config: dict, use_cache: bool):
         show_x_label = plot_cfg.get("show_x_label", defaults.get("show_x_label", True))
         _decorate_ax(
             ax, plot_envs, plot_timesteps, title=title, test_env=test_env, zoomed=zoomed,
-            show_timesteps=show_timesteps, show_y_label=show_y_label, show_x_label=show_x_label
+            show_timesteps=show_timesteps, show_y_label=show_y_label, show_x_label=show_x_label,
         )
 
     for idx in range(n_plots, nrows * ncols):
@@ -519,7 +592,7 @@ def plot_grid(config: dict, use_cache: bool):
     plt.tight_layout()
     file_format = defaults.get("format", defaults.get("ext", "svg")).lstrip(".")
     out_path = plot_output_dir / f"{output_file}.{file_format}"
-    fig.savefig(out_path, dpi=dpi)
+    fig.savefig(out_path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved {out_path}")
 
@@ -669,7 +742,7 @@ def main():
         parts.append(test_env)
         out_path = plot_output_dir / f"{'_'.join(parts)}.png"
 
-        fig.savefig(out_path, dpi=1000)
+        fig.savefig(out_path, dpi=1000, bbox_inches="tight")
         plt.close(fig)
         print(f"Saved {out_path}")
 

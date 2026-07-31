@@ -1,17 +1,17 @@
 defaults:
-  env_name: CartPole
+  env_name: Inverted Pendulum
   seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
   timesteps: 75_000
-  output_dir: paper
-  output_file: main_ddpg
+  output_dir: regenerated/paper
+  output_file: ddpg_bc_inverted_pendulum_hard_v2_transition_zooms
   dpi: 500 # optional: default is 300
-  show_timesteps: false
-  show_x_label: false
-  show_y_label: false
+  show_timesteps: true
+  show_x_label: true
+  show_y_label: true
   format: svg
 
 plots:
-  - title: "Eval on $\\mathcal{B}_{\\text{hard}}^{\\text{IP}}$"
+  - title: "DDPG + BC on $\\mathcal{B}^{\\mathrm{IP}}_{\\mathrm{hard}}$ (eval Task 1)"
     smooth: 15
     linewidth: 1.6
     zooms:
@@ -26,4 +26,3 @@ plots:
         test_env: V2
         label: "DDPG + BC"
         color: "#4C78A8"
-

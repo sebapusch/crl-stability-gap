@@ -2,16 +2,16 @@ defaults:
   env_name: CartPole
   seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
   timesteps: 200_000
-  output_dir: paper
-  output_file: main_dqn
+  output_dir: regenerated/paper
+  output_file: dqn_bc_cartpole_easy_v1_transition_zooms
   dpi: 500 # optional: default is 300
-  show_timesteps: false
-  show_x_label: false
+  show_timesteps: true
+  show_x_label: true
   show_y_label: true
   format: svg
 
 plots:
-  - title: "Eval on $\\mathcal{B}_{\\text{easy}}^{\\text{CP}}$"
+  - title: "DQN + BC on $\\mathcal{B}^{\\mathrm{CP}}_{\\mathrm{easy}}$ (eval Task 1)"
     smooth: 15
     zooms:
       - t_start: 195_000
@@ -26,4 +26,3 @@ plots:
         test_env: V1
         label: "DQN + BC"
         color: "#D62728"
-
