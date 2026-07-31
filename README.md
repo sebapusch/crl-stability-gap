@@ -96,17 +96,20 @@ Available CLI methods are:
   adds a cloning loss while learning the next task.
 - `joint_incremental_pc_grad`: DQN joint-incremental training with PCGrad.
 - `joint_incremental_a_gem`: DQN joint-incremental training with A-GEM-style
-  gradient constraints.
-- `a_egem`: DQN behavior-cloning extension using expert-gradient constraints.
+  gradient constraints. SAC also accepts this name as an alias for its A-GEM
+  implementation.
+- `a_gem`: A-GEM-style gradient constraints for DDPG, SAC, and SACD.
+- `a_egem`: behavior-cloning extension using expert-gradient constraints for
+  DQN, DDPG, SAC, and SACD.
 
 Algorithm support in `projection/main.py` is:
 
 | Algorithm | Implementations |
 | --- | --- |
 | `dqn` | `fine_tune`, `joint_incremental`, `behavior_cloning`, `joint_incremental_pc_grad`, `joint_incremental_a_gem`, `a_egem` |
-| `sacd` | `fine_tune`, `joint_incremental`, `behavior_cloning` |
-| `sac` | `fine_tune`, `joint_incremental`, `behavior_cloning` |
-| `ddpg` | `joint_incremental`, `behavior_cloning` |
+| `sacd` | `fine_tune`, `joint_incremental`, `behavior_cloning`, `a_gem`, `a_egem` |
+| `sac` | `fine_tune`, `joint_incremental`, `behavior_cloning`, `a_gem`, `joint_incremental_a_gem`, `a_egem` |
+| `ddpg` | `joint_incremental`, `behavior_cloning`, `a_gem`, `a_egem` |
 
 The concrete implementations live in:
 
@@ -119,13 +122,19 @@ The concrete implementations live in:
 - `stable_baselines3/sac/sac_fine_tune.py`
 - `stable_baselines3/sac/sac_joint_incremental.py`
 - `stable_baselines3/sac/sac_bc.py`
+- `stable_baselines3/sac/sac_agem.py`
+- `stable_baselines3/sac/sac_aegem.py`
 - `stable_baselines3/sac/sac_ewc.py`
 - `stable_baselines3/sacd/sacd_fine_tune.py`
 - `stable_baselines3/sacd/sacd_joint_incremental.py`
 - `stable_baselines3/sacd/sacd_bc.py`
+- `stable_baselines3/sacd/sacd_agem.py`
+- `stable_baselines3/sacd/sacd_aegem.py`
 - `stable_baselines3/ddpg/ddpg_fine_tune.py`
 - `stable_baselines3/ddpg/ddpg_joint_incremental.py`
 - `stable_baselines3/ddpg/ddpg_bc.py`
+- `stable_baselines3/ddpg/ddpg_agem.py`
+- `stable_baselines3/ddpg/ddpg_aegem.py`
 
 `stable_baselines3/sac/sac_ewc.py` also contains a SAC EWC implementation, but
 it is not currently exposed by the `projection/main.py` method selector.
