@@ -292,9 +292,7 @@ def _build_sac(
             )
         case "a_gem":
             return SAC_AGEM(
-                expert_buffer_size=expert_buffer_size,
                 n_tasks=n_tasks,
-                expert_buffer_batch_size=expert_buffer_batch_size,
                 balanced_sampling=balanced_sampling,
                 **common_kwargs,
             )
