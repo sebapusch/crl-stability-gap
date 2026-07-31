@@ -34,6 +34,7 @@ class ProjectedEnvBenchmark:
         encode_task: bool,
         seed: int = 42,
         time_limit: int | None = None,
+        size = None,
     ) -> None:
         assert len(benchmark) > 0
         assert len(benchmark) == len(set(benchmark))
@@ -45,6 +46,34 @@ class ProjectedEnvBenchmark:
         self.encode_task = encode_task
         self.seed = seed
         self.time_limit = time_limit
+        self.size = size
+
+    @property
+    def matrices(self) -> dict[int, tuple[np.ndarray, np.ndarray]]:
+        if self.size is None:
+            raise ValueError("Need size")
+
+        matrices = {}
+
+        for version in self.benchmark:
+            if version == 1:
+                q = np.eye(self.size, dtype=np.float64)
+                b = np.zeros(self.size, dtype=np.float64)
+            else:
+                q, generated_bias = random_orthogonal(
+                    PERMUTATION_SEEDS[version - 1],
+                    self.size,
+                    bias=version > 5,
+                )
+                b = (
+                    np.zeros(self.size, dtype=np.float64)
+                    if generated_bias is None
+                    else generated_bias
+                )
+
+            matrices[version] = (q, b)
+
+        return matrices
 
     def make_single(self, version: int, test: bool = False, **env_kwargs) -> Env:
         if version not in self.benchmark:
